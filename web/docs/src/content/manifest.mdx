@@ -1,0 +1,67 @@
+# The manifest
+
+The one JSON document you publish that is the whole of what Gathering knows about your game. {{ className: 'lead' }}
+
+## Where it goes
+
+At `/.well-known/gathering-game.json` on your game's origin, reachable without authentication.
+Gathering fetches it when an admin registers your game, on request, and about once a day after
+that. If you give the registrar an origin, the path is appended; if you give a full address, it
+is read as it is.
+
+## A complete example
+
+```json {{ title: 'gathering-game.json' }}
+{
+  "id": "yourstudio.game",
+  "name": "اسم لعبتك",
+  "version": "1.0.0",
+  "mode": "embedded",
+  "entry": "https://games.yourstudio.example/",
+  "orientation": "portrait",
+  "splash": true,
+  "publisher": { "tier": "partner", "name": "اسم استوديوك" },
+  "scopes": ["identity:read", "friends:read", "notify:send", "results:write"],
+  "permissions": ["microphone"],
+  "room": {
+    "players": { "min": 2, "max": 8 },
+    "host": "authoritative",
+    "pace": "realtime",
+    "lan": true,
+    "state": "blob",
+    "rejoin": true,
+    "spectators": false
+  }
+}
+```
+
+## Every field
+
+| Field | Required | What it is |
+| --- | --- | --- |
+| `id` | yes | Permanent. Lowercase, dotted, like `yourstudio.game`. It is also your `client_id`. |
+| `name` | yes | What the tile says. |
+| `version` | yes | Yours; a changed manifest with the same version is still re-read. |
+| `mode` | yes | `embedded`. A game runs inside the app; there is no external mode. |
+| `entry` | yes | The https address the frame loads. A one-time `code` is appended on launch. |
+| `orientation` | no | `portrait` (default) or `landscape`. The frame rotates to it. |
+| `splash` | no | `true` when the page needs a moment before it can paint; the app covers it until `gathering:ready`. |
+| `publisher.tier` | yes | `partner`. `first-party` is reserved. |
+| `scopes` | no | What your server may read: `identity:read`, `friends:read`, `notify:send`, `results:write`. |
+| `permissions` | no | Device permissions the app asks the player for: `camera`, `microphone`, `location`, `notification`, `storage`, `contacts`. |
+| `room.players` | yes | `min` and `max`, 1 to 64. The host cannot start under `min`; nobody joins past `max`. |
+| `room.host` | yes | `authoritative`: only the host writes the state. `peer`: any member may. |
+| `room.pace` | yes | `turn` or `realtime`. Informational for players; the relay is the same. |
+| `room.lan` | no | Whether the game may be played on a Wi-Fi relay with no internet. |
+| `room.state` | no | `blob` keeps a versioned shared state; `none` refuses state frames. |
+| `room.rejoin` | no | Whether a member who dropped may come back while the game is playing. |
+| `room.spectators` | no | Whether a room may hold people who watch and do not play. |
+
+## What is not in it
+
+The tagline, description, icon, screenshots and category are **store copy**, written by
+Gathering's team when the game is listed. Publishing is refused without a tagline and an icon.
+
+## What is checked
+
+Every problem is returned at once, as `422 invalid_fields` with a `fields` map naming each one.

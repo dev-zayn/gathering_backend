@@ -1,0 +1,66 @@
+[
+  {
+    "href": "/",
+    "file": "index",
+    "title": "Introduction",
+    "description": "Build a game people play together in one room, inside the app they already open.",
+    "group": "Getting started",
+    "icon": "BookOpen"
+  },
+  {
+    "href": "/manifest",
+    "file": "manifest",
+    "title": "The manifest",
+    "description": "The one JSON document you publish that is the whole of what Gathering knows about your game.",
+    "group": "Getting started",
+    "icon": "FileJson"
+  },
+  {
+    "href": "/listing",
+    "file": "listing",
+    "title": "Getting listed",
+    "description": "From a published manifest to a tile in the store: registration by URL, the store copy, publishing, and what a new version means.",
+    "group": "Getting started",
+    "icon": "Store"
+  },
+  {
+    "href": "/auth",
+    "file": "auth",
+    "title": "Authentication",
+    "description": "The launch, the one-time code, the token your server trades it for, and the bridge that says who arrived.",
+    "group": "Building",
+    "icon": "KeyRound"
+  },
+  {
+    "href": "/bridge",
+    "file": "bridge",
+    "title": "The bridge",
+    "description": "window.gathering: the room, the players, the friends and the host's chrome, from inside your page.",
+    "group": "Building",
+    "icon": "Shuffle"
+  },
+  {
+    "href": "/rooms",
+    "file": "rooms",
+    "title": "Rooms",
+    "description": "How a room is made, who may be in it, the frames the relay carries, and the ticket your server verifies.",
+    "group": "Building",
+    "icon": "KeyRound"
+  },
+  {
+    "href": "/app",
+    "file": "app/index",
+    "title": "The app",
+    "description": "The API behind the app a player opens: what it is, how calls are made, and the one session.",
+    "group": "The app",
+    "icon": "Smartphone"
+  },
+  {
+    "href": "/app/signin",
+    "file": "app/signin",
+    "title": "Sign-in and sessions",
+    "description": "A phone, a code, a session. Refreshing it, ending it, and who is signed in.",
+    "group": "The app",
+    "icon": "LogIn"
+  }
+]

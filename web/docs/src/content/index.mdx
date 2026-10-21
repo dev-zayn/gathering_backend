@@ -1,0 +1,21 @@
+import { Hero, Guides, Player } from '@/components/blocks'
+
+<Hero />
+
+## What Gathering is
+
+Gathering (جمعة) is an app where friends open a **private room** and play a small game together,
+online or sitting next to each other on the same Wi-Fi. A game is an HTML page you host. The app
+loads it in a frame, puts the room's players in front of it, relays every message between them,
+and keeps a shared state if the game wants one. Your page never opens a socket and never holds a
+token: `window.gathering` is the whole of what it needs.
+
+## What you build
+
+- A page at the `entry` address in your [manifest](/manifest), laid out for a phone, Arabic first.
+- Game logic on top of [`window.gathering.room`](/bridge): messages, members, a versioned state.
+- Optionally, a server of your own, which verifies players through a [room ticket](/rooms).
+
+<Guides />
+
+<Player />

@@ -1,0 +1,496 @@
+import { Guides, LaunchFlow } from '@/components/blocks'
+
+# Authentication
+
+A player taps your tile and arrives already signed in. There is no password for you to hold and no account for them to create. This is how that works, and what your server has to do. {{ className: 'lead' }}
+
+<Note>
+  Your credentials live on your server. The game token is minted for your backend and must never
+  reach the page. There is no JavaScript call for this reason — a token in a page is a token any
+  script on that page can take. The page itself has `window.gathering`, which needs no token.
+</Note>
+
+<LaunchFlow />
+
+---
+
+## Your credentials
+
+<Row>
+  <Col>
+
+    Two values, and only one of them is a secret. You are given both at registration; see [Getting listed](/listing).
+
+    <Properties>
+      <Property name="client_id" type="string">
+        Your game id from the manifest, such as `yourstudio.game`. Not secret — it appears in the authorize URL.
+      </Property>
+      <Property name="client_secret" type="string">
+        Given once, at the moment of registration. Only its hash is stored, so it cannot be read back — only rolled, which breaks your server until you have the new one.
+      </Property>
+    </Properties>
+
+    Keep the secret in your environment, not your repository. If it leaks, ask a Gathering admin to roll it; there is no way to check whether a leaked one has been used, so rolling is the only safe answer.
+
+  </Col>
+  <Col sticky>
+
+    <CodeGroup title="On your server">
+
+    ```bash
+    GATHERING_CLIENT_ID=yourstudio.game
+    GATHERING_CLIENT_SECRET=…
+    ```
+
+    </CodeGroup>
+
+  </Col>
+</Row>
+
+---
+
+## The launch {{ tag: 'POST', label: '/v1/games/{game}/session' }}
+
+<Row>
+  <Col>
+
+    The app opens your game. It asks us for a session, and we answer with the address the frame loads: your `entry`, with `?code=…` appended. The code lasts **one minute** and one use — it only has to survive one load of your page.
+
+    The first open puts the game on the player's shelf; there is no install step and no consent screen. When the player arrived from a notification, `&path=…` rides beside the code: the deep link you sent, as you sent it. It is a path on your own origin and never anything else; treat it as input all the same.
+
+    When the game was opened into a room, the room's id rides on the code into the token your server gets, and the bridge names it.
+
+    <Note>
+      You do not call this. The app does, with the player's session. It is here so you know
+      what arrives at your entry and why.
+    </Note>
+
+  </Col>
+  <Col sticky>
+
+    <CodeGroup title="What the app receives">
+
+    ```json
+    {
+      "url": "https://games.yourstudio.example/?code=cod_7f3k9d2m8q1x4b6n&path=%2Fboard",
+      "mode": "embedded",
+      "splash": false,
+      "orientation": "portrait",
+      "expires_in": 60
+    }
+    ```
+
+    </CodeGroup>
+
+    <CodeGroup title="What your entry sees">
+
+    ```text
+    GET /?code=cod_7f3k9d2m8q1x4b6n&path=%2Fboard
+    ```
+
+    </CodeGroup>
+
+  </Col>
+</Row>
+
+---
+
+## Exchange the code {{ tag: 'POST', label: '/oauth/token' }}
+
+<Row>
+  <Col>
+
+    Your server trades the code for a game token. Form-encoded, as the standard says. This is the first place your server proves who it is, and the last place the code exists.
+
+    ### Required attributes
+
+    <Properties>
+      <Property name="grant_type" type="string">
+        `authorization_code`.
+      </Property>
+      <Property name="code" type="string">
+        The one-time code from the query string.
+      </Property>
+      <Property name="client_id" type="string">
+        Your game id.
+      </Property>
+      <Property name="client_secret" type="string">
+        The secret you were handed at registration.
+      </Property>
+    </Properties>
+
+    ### Optional attributes
+
+    <Properties>
+      <Property name="redirect_uri" type="string">
+        For the browser-started flow below: the same `redirect_uri` you sent to `/oauth/authorize`, exactly. A mismatch is an `invalid_grant`. Leave it out on a tile launch.
+      </Property>
+      <Property name="code_verifier" type="string">
+        For the browser-started flow below. Leave it out on a tile launch — a code minted by the tile has no challenge, and a verifier sent against it is refused.
+      </Property>
+    </Properties>
+
+  </Col>
+  <Col sticky>
+
+    <CodeGroup title="Request" tag="POST" label="/oauth/token">
+
+    ```bash {{ title: 'cURL' }}
+    curl -X POST https://api.gathering.example/oauth/token \
+      -d grant_type=authorization_code \
+      -d code=cod_7f3k9d2m8q1x4b6n \
+      -d client_id=yourstudio.game \
+      -d client_secret=$GATHERING_CLIENT_SECRET
+    ```
+
+    ```js
+    const res = await fetch('https://api.gathering.example/oauth/token', {
+      method: 'POST',
+      body: new URLSearchParams({
+        grant_type: 'authorization_code',
+        code,
+        client_id: process.env.GATHERING_CLIENT_ID,
+        client_secret: process.env.GATHERING_CLIENT_SECRET,
+      }),
+    })
+    if (!res.ok) throw new Error(`gathering: ${res.status}`)
+    const tokens = await res.json()
+    ```
+
+    ```python
+    res = requests.post(
+        "https://api.gathering.example/oauth/token",
+        data={
+            "grant_type": "authorization_code",
+            "code": code,
+            "client_id": os.environ["GATHERING_CLIENT_ID"],
+            "client_secret": os.environ["GATHERING_CLIENT_SECRET"],
+        },
+        timeout=10,
+    )
+    res.raise_for_status()
+    tokens = res.json()
+    ```
+
+    </CodeGroup>
+
+    <CodeGroup title="Response">
+
+    ```json
+    {
+      "access_token": "eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9...",
+      "token_type": "Bearer",
+      "expires_in": 3600,
+      "refresh_token": "rft_2m8q1x4b6n7f3k9d",
+      "scope": "identity:read results:write"
+    }
+    ```
+
+    </CodeGroup>
+
+  </Col>
+</Row>
+
+---
+
+## When it fails
+
+<Row>
+  <Col>
+
+    <Properties>
+      <Property name="invalid_grant" type="400">
+        The code was expired, already spent, never ours, does not belong to the client asking, or came with a `redirect_uri` or verifier it was not minted with. **All give the same answer on purpose** — telling them apart would let somebody probe which codes had existed.
+      </Property>
+      <Property name="invalid_client" type="401">
+        The `client_id` and `client_secret` do not match. An unknown game and a wrong secret read the same, for the same reason.
+      </Property>
+      <Property name="unsupported_grant_type" type="400">
+        `grant_type` was something other than `authorization_code` or `refresh_token`.
+      </Property>
+    </Properties>
+
+    <Note>
+      Do not retry an `invalid_grant`. A one-minute code that failed once will not start
+      working; let the player open the game again instead.
+    </Note>
+
+  </Col>
+  <Col sticky>
+
+    <CodeGroup title="Failures">
+
+    ```json {{ title: '400' }}
+    { "error": "invalid_grant" }
+    ```
+
+    ```json {{ title: '401' }}
+    { "error": "invalid_client" }
+    ```
+
+    </CodeGroup>
+
+  </Col>
+</Row>
+
+---
+
+## Who arrived {{ tag: 'GET', label: '/v1/bridge/context' }}
+
+<Row>
+  <Col>
+
+    One call with the game token: who is playing, in which room, with which scopes. Fetch it on every launch rather than caching it — a player who changes their nickname should not have to wait for a webhook.
+
+    <Properties>
+      <Property name="player.id" type="always">
+        What everything in your database should hang off. Stable for the life of the player.
+      </Property>
+      <Property name="player.nickname, handle, avatar" type="with identity:read">
+        Absent, not empty, without the scope. `avatar` is a bundled avatar's id; `avatar_url` a link that expires, when the player uploaded a picture.
+      </Property>
+      <Property name="room" type="when opened into one">
+        `null` for a game opened outside a room. The room's own fields arrive with [Rooms](/rooms).
+      </Property>
+      <Property name="scope" type="string[]">
+        What this token carries. Read it; do not assume it.
+      </Property>
+      <Property name="live" type="boolean">
+        A person was present when the token was minted. A renewal cannot invent one.
+      </Property>
+    </Properties>
+
+    The phone number is never here, under any scope. `GET /oauth/userinfo` is the same answer under the standard OIDC names, for a client library that expects them.
+
+  </Col>
+  <Col sticky>
+
+    <CodeGroup title="Request" tag="GET" label="/v1/bridge/context">
+
+    ```bash
+    curl https://api.gathering.example/v1/bridge/context \
+      -H "Authorization: Bearer $ACCESS_TOKEN"
+    ```
+
+    </CodeGroup>
+
+    <CodeGroup title="Response">
+
+    ```json
+    {
+      "player": {
+        "id": "ply_7f3k9d2m8q1x4b6n",
+        "nickname": "زين",
+        "handle": "zayn_4821",
+        "avatar": "a03"
+      },
+      "room": null,
+      "scope": ["identity:read", "results:write"],
+      "live": true
+    }
+    ```
+
+    </CodeGroup>
+
+  </Col>
+</Row>
+
+---
+
+## Staying signed in {{ tag: 'POST', label: '/oauth/token' }}
+
+<Row>
+  <Col>
+
+    The game token is good for an hour. Renew it with the refresh token rather than waiting for the player to open the game again.
+
+    A renewal keeps the refresh token it used — you are not handed a new one each time. It stops working the moment the player takes the game off their shelf or an admin suspends it, and then the answer is `invalid_grant`.
+
+    ### What to store
+
+    <Properties>
+      <Property name="refresh_token" type="per player">
+        Long-lived. This is the thing worth protecting, so treat it like the secret it is.
+      </Property>
+      <Property name="access_token" type="per player, one hour">
+        Cache it until `expires_in` runs out. Minting a new one on every request is work nobody needs.
+      </Property>
+      <Property name="player id" type="your own key">
+        From the bridge. It is what everything else in your database should hang off.
+      </Property>
+    </Properties>
+
+    <Note>
+      A renewed token is not a person: `live` is false on it, and no room rides on it — a
+      room is where the player was when they opened the game, not where they are an hour later.
+    </Note>
+
+  </Col>
+  <Col sticky>
+
+    <CodeGroup title="Request" tag="POST" label="/oauth/token">
+
+    ```bash {{ title: 'cURL' }}
+    curl -X POST https://api.gathering.example/oauth/token \
+      -d grant_type=refresh_token \
+      -d refresh_token=rft_2m8q1x4b6n7f3k9d \
+      -d client_id=yourstudio.game \
+      -d client_secret=$GATHERING_CLIENT_SECRET
+    ```
+
+    ```js
+    async function tokenFor(playerId) {
+      const row = await db.tokens.get(playerId)
+      if (row.expiresAt > Date.now() + 60_000) return row.accessToken
+
+      const res = await fetch('https://api.gathering.example/oauth/token', {
+        method: 'POST',
+        body: new URLSearchParams({
+          grant_type: 'refresh_token',
+          refresh_token: row.refreshToken,
+          client_id: process.env.GATHERING_CLIENT_ID,
+          client_secret: process.env.GATHERING_CLIENT_SECRET,
+        }),
+      })
+
+      // Removed from the shelf, or suspended. Stop — do not loop.
+      if (res.status === 400) throw new Removed(playerId)
+
+      const next = await res.json()
+      await db.tokens.put(playerId, next)
+      return next.access_token
+    }
+    ```
+
+    </CodeGroup>
+
+  </Col>
+</Row>
+
+---
+
+## Sign in from your own site {{ tag: 'GET', label: '/oauth/authorize' }}
+
+<Row>
+  <Col>
+
+    For a player signing in to your own site with their Gathering session rather than starting from the tile. Standard authorization code with PKCE.
+
+    It starts in a browser, so there is no secret to send at this step — that is what the verifier replaces.
+
+    ### Query parameters
+
+    <Properties>
+      <Property name="client_id" type="string">
+        Your game id.
+      </Property>
+      <Property name="redirect_uri" type="string">
+        One of the `redirect_uris` in your manifest, exactly — or, with none listed, any address on your entry's origin.
+      </Property>
+      <Property name="response_type" type="string">
+        `code`.
+      </Property>
+      <Property name="code_challenge" type="string">
+        The base64url SHA-256 of a verifier you generated and kept.
+      </Property>
+      <Property name="code_challenge_method" type="string">
+        `S256`.
+      </Property>
+      <Property name="state" type="string">
+        Yours, returned untouched. Check it on the way back.
+      </Property>
+    </Properties>
+
+    The player comes back to your `redirect_uri` with `?code=…&state=…`. From there it is the exchange above, plus the `code_verifier` and the same `redirect_uri`. Signing in here counts as the player's first open, the same as tapping your tile.
+
+    ### When they come back with `error`
+
+    <Properties>
+      <Property name="invalid_request" type="bad PKCE">
+        `code_challenge` missing, or `code_challenge_method` not `S256`.
+      </Property>
+      <Property name="unsupported_response_type" type="not code">
+        `response_type` was something other than `code`.
+      </Property>
+      <Property name="access_denied" type="no shelf">
+        The game could not be put on the player's shelf.
+      </Property>
+    </Properties>
+
+    A `redirect_uri` that is not one of yours gets no redirect at all: a `422` with `invalid_fields`, because sending a code to an address we do not know is the whole attack.
+
+  </Col>
+  <Col sticky>
+
+    <CodeGroup title="Send them here" tag="GET" label="/oauth/authorize">
+
+    ```js
+    const verifier = base64url(crypto.randomBytes(32))
+    const challenge = base64url(
+      crypto.createHash('sha256').update(verifier).digest(),
+    )
+    await session.put({ verifier, state })
+
+    const url = new URL('https://api.gathering.example/oauth/authorize')
+    url.search = new URLSearchParams({
+      client_id: 'yourstudio.game',
+      redirect_uri: 'https://games.yourstudio.example/callback',
+      response_type: 'code',
+      code_challenge: challenge,
+      code_challenge_method: 'S256',
+      state,
+    })
+    res.redirect(url.toString())
+    ```
+
+    </CodeGroup>
+
+    <CodeGroup title="Then exchange it, with the verifier">
+
+    ```bash
+    curl -X POST https://api.gathering.example/oauth/token \
+      -d grant_type=authorization_code \
+      -d code=cod_7f3k9d2m8q1x4b6n \
+      -d code_verifier=$VERIFIER \
+      -d client_id=yourstudio.game \
+      -d client_secret=$GATHERING_CLIENT_SECRET \
+      -d redirect_uri=https://games.yourstudio.example/callback
+    ```
+
+    </CodeGroup>
+
+  </Col>
+</Row>
+
+<Note>
+  A verifier that does not match its challenge gets `invalid_grant`, the same answer as an expired
+  code. That is deliberate, and it is why the failure tells you nothing useful — check your own side
+  first.
+</Note>
+
+<Guides
+  title="Where to next"
+  id="where-to-next"
+  guides={[
+    {
+      href: '/bridge',
+      name: 'The bridge',
+      description: 'window.gathering: the room, the players and the friends, from inside your page.',
+    },
+    {
+      href: '/rooms',
+      name: 'Rooms',
+      description: 'How a room is made, the frames the relay carries, and the ticket your server verifies.',
+    },
+    {
+      href: '/listing',
+      name: 'Getting listed',
+      description: 'From a published manifest to a tile in the store, and what a new version means.',
+    },
+    {
+      href: '/manifest',
+      name: 'The manifest',
+      description: 'The one document you publish. It is the whole of what we know about your game.',
+    },
+  ]}
+/>

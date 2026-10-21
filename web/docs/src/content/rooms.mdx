@@ -1,0 +1,29 @@
+# Rooms
+
+How a room is made, who may be in it, the frames the relay carries, and the ticket your server verifies. {{ className: 'lead' }}
+
+A room belongs to one game and one host. The app creates it, hands out a six-character code, and
+admits players by that code, an invite, or a tap on a room announced on the same Wi-Fi. The
+manifest's `room` block sets the bounds. Your page never opens a socket: the app owns the
+connection and delivers every frame through `window.gathering.room`.
+
+## Frames
+
+| From the server | Meaning |
+| --- | --- |
+| `hello` | you are in: the room, your seat, the sequence number, the members, the state |
+| `joined` · `left` · `members` | who is here |
+| `msg` | a member's message, with `from` and `seq` |
+| `state` | the shared state, with its `version` |
+| `started` · `ended` · `host` · `kicked` | the room's life |
+
+Every frame carries a `seq`. Messages arrive in order across every member, whichever server
+relayed them. `data` is yours: the relay never reads inside it.
+
+## The ticket
+
+`gathering.room.ticket()` returns a short-lived JWT: `sub` is the player, `aud` is your game's id,
+`room` the room, `role` and `seat` theirs. Verify it against `/.well-known/jwks.json` and your
+server knows who is in which room without a session of its own.
+
+The full page, with limits and the server-side calls, arrives with the rooms milestone.

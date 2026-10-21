@@ -1,0 +1,27 @@
+.env
+.files/
+*.log
+.DS_Store
+.claude/settings.local.json
+node_modules/
+
+# Build output, which is never committed: the images build what they run, so a
+# copy in here is one nobody reads and nobody keeps in step. web/docs has its
+# own .gitignore covering dist/.
+backend/bin/
+web/console/dist/
+
+# `cd backend && go build ./cmd/api` writes a binary called api into backend/,
+# which is not where make build puts it and not something anybody wants
+# committed. One line per command, because the list this replaces named six
+# services and went on naming them for months after the last was deleted — and
+# the one before that missed a name and a 32 MiB binary went in, found only
+# because somebody happened to look.
+/backend/api
+/backend/worker
+/backend/fixtures
+
+# Agent tooling on this machine, not part of the product.
+.claude/
+.agents/
+skills-lock.json

@@ -1,0 +1,115 @@
+@import 'tailwindcss';
+
+/* The console's own tokens: a neutral light desk with the product's accent.
+ * Nothing here is borrowed from another product. */
+@theme {
+  --font-sans: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+
+  --color-ink: #15172b;
+  --color-ink-2: #5b5f7a;
+  --color-ink-3: #8c91ae;
+
+  --color-ground: #f6f6fa;
+  --color-surface: #ffffff;
+  --color-surface-2: #ecedf5;
+
+  --color-line: #e2e4ee;
+  --color-line-2: #c9ccdc;
+
+  --color-accent: #ffb300;
+  --color-accent-2: #e5a000;
+  --color-accent-ink: #1a1300;
+  --color-second: #7c4dff;
+
+  --color-good: #1f9d6a;
+  --color-warn: #b7791f;
+  --color-bad: #d6455a;
+  --color-info: #2a86c7;
+
+  --radius-sm: 8px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+}
+
+html,
+body {
+  background: var(--color-ground);
+  color: var(--color-ink);
+}
+
+@utility card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-lg);
+}
+
+@utility btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  height: 2.5rem;
+  padding-inline: 1rem;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  font-size: 0.875rem;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: transform 120ms ease, background-color 120ms ease;
+}
+@utility btn-primary {
+  background: var(--color-ink);
+  color: #fff;
+}
+@utility btn-secondary {
+  background: var(--color-surface);
+  border-color: var(--color-line-2);
+  color: var(--color-ink);
+}
+@utility btn-accent {
+  background: var(--color-accent);
+  color: var(--color-accent-ink);
+}
+.btn:active {
+  transform: translateY(1px);
+}
+.btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+@utility navkey {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  height: 2.25rem;
+  padding-inline: 0.625rem;
+  border-radius: var(--radius-md);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--color-ink-2);
+}
+.navkey:hover {
+  background: var(--color-surface-2);
+  color: var(--color-ink);
+}
+.navkey[aria-current='page'] {
+  background: var(--color-ink);
+  color: #fff;
+}
+
+@utility field {
+  height: 2.5rem;
+  width: 100%;
+  padding-inline: 0.75rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-line-2);
+  background: var(--color-surface);
+  font-size: 0.875rem;
+}
+.field:focus {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+}

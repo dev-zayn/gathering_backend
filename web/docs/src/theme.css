@@ -1,0 +1,213 @@
+/* The docs' own materials. The shell's class names are kept (skeu-*, the
+ * Tailwind names index.css points at them); every value here is Gathering's:
+ * a pale desk, ink text, the amber accent, the violet second colour. */
+:root {
+  --skeu-bg: #f6f6fa;
+  --skeu-surface: #ffffff;
+  --skeu-well: #ecedf5;
+  --skeu-well-deep: #e2e4ee;
+  --skeu-edge: #e2e4ee;
+  --skeu-edge-strong: #c9ccdc;
+  --skeu-highlight: rgba(255, 255, 255, 0.9);
+  --skeu-ink: 21, 23, 43; /* an RGB triplet: rgba(var(--skeu-ink), .1) */
+  --skeu-accent: #ffb300;
+  --skeu-accent-deep: #e5a000;
+  --skeu-accent-text: #8a5f00;
+  --skeu-second: #7c4dff;
+  --skeu-success: #1f9d6a;
+  --skeu-warning: #b7791f;
+  --skeu-error: #d6455a;
+  --skeu-info: #2a86c7;
+  --skeu-dark-bg: #0f1222;
+  --skeu-dark-surface: #171b31;
+  --skeu-radius-sm: 8px;
+  --skeu-transition-normal: 160ms ease;
+}
+
+.skeu-panel,
+.skeu-panel-2 {
+  background: var(--skeu-surface);
+  border: 1px solid var(--skeu-edge);
+  box-shadow: 0 1px 2px rgba(var(--skeu-ink), 0.04);
+}
+.skeu-panel-2 {
+  background: linear-gradient(180deg, #ffffff 0%, var(--skeu-bg) 100%);
+}
+.skeu-panel-interactive {
+  transition: transform var(--skeu-transition-normal), box-shadow var(--skeu-transition-normal), border-color var(--skeu-transition-normal);
+}
+.skeu-panel-interactive:hover {
+  border-color: var(--skeu-edge-strong);
+  box-shadow: 0 10px 24px -14px rgba(var(--skeu-ink), 0.35);
+  transform: translateY(-1px);
+}
+.skeu-rail {
+  background: var(--skeu-surface);
+  border: 1px solid var(--skeu-edge);
+}
+.skeu-well,
+.skeu-well-soft {
+  background: var(--skeu-well);
+  border: 1px solid var(--skeu-edge);
+}
+.skeu-well-soft {
+  border-color: transparent;
+}
+.skeu-well-deep {
+  background: var(--skeu-well-deep);
+}
+.skeu-well-accent {
+  background: color-mix(in oklab, var(--skeu-accent) 18%, white);
+}
+.skeu-input {
+  background: var(--skeu-surface);
+  border: 1px solid var(--skeu-edge-strong);
+}
+.skeu-input:focus-within {
+  outline: 2px solid var(--skeu-accent);
+  outline-offset: 1px;
+}
+.skeu-btn {
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: background-color var(--skeu-transition-normal), transform var(--skeu-transition-normal);
+}
+.skeu-btn:active {
+  transform: translateY(1px);
+}
+.skeu-btn-primary {
+  background: rgb(var(--skeu-ink));
+  color: #fff;
+}
+.skeu-btn-secondary {
+  background: var(--skeu-surface);
+  border-color: var(--skeu-edge-strong);
+}
+.skeu-btn-ghost {
+  background: transparent;
+}
+.skeu-btn-ghost:hover {
+  background: var(--skeu-well);
+}
+.skeu-btn-dark {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+.skeu-btn-dark:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+.skeu-tile,
+.skeu-tile-soft,
+.skeu-tile-ceramic {
+  border-radius: var(--skeu-radius-sm);
+}
+.skeu-tile {
+  background: rgb(var(--skeu-ink));
+  color: #fff;
+}
+.skeu-tile-soft {
+  background: color-mix(in oklab, var(--skeu-accent) 18%, white);
+  color: var(--skeu-accent-text);
+}
+.skeu-tile-ceramic {
+  background: var(--skeu-well);
+  border: 1px solid var(--skeu-edge);
+}
+.skeu-chip-solid,
+.skeu-chip-neutral,
+.skeu-chip-error {
+  border: 1px solid transparent;
+}
+.skeu-chip-solid {
+  background: var(--skeu-accent);
+  color: #1a1300;
+}
+.skeu-chip-neutral {
+  background: var(--skeu-well);
+  border-color: var(--skeu-edge);
+}
+.skeu-chip-error {
+  background: color-mix(in oklab, var(--skeu-error) 14%, white);
+  color: var(--skeu-error);
+}
+.skeu-navkey {
+  color: rgba(var(--skeu-ink), 0.75);
+  transition: background-color var(--skeu-transition-normal), color var(--skeu-transition-normal);
+}
+.skeu-navkey:hover {
+  background: var(--skeu-well);
+  color: rgb(var(--skeu-ink));
+}
+.skeu-navkey-current {
+  background: rgb(var(--skeu-ink));
+  color: #fff;
+}
+.skeu-navkey-current:hover {
+  background: rgb(var(--skeu-ink));
+  color: #fff;
+}
+.skeu-tab {
+  background: transparent;
+  color: rgba(var(--skeu-ink), 0.7);
+}
+.skeu-tab-soft-active {
+  background: var(--skeu-surface);
+  color: rgb(var(--skeu-ink));
+  box-shadow: 0 1px 2px rgba(var(--skeu-ink), 0.08);
+}
+.skeu-track {
+  background: var(--skeu-well-deep);
+}
+.skeu-fill {
+  background: var(--skeu-accent);
+}
+.skeu-alert {
+  border: 1px solid var(--skeu-edge);
+  background: var(--skeu-surface);
+}
+.skeu-alert-info {
+  border-color: color-mix(in oklab, var(--skeu-info) 35%, white);
+  background: color-mix(in oklab, var(--skeu-info) 8%, white);
+}
+.skeu-backdrop {
+  background: rgba(var(--skeu-ink), 0.45);
+}
+.skeu-dialog {
+  background: var(--skeu-surface);
+  border: 1px solid var(--skeu-edge);
+  box-shadow: 0 24px 60px -24px rgba(var(--skeu-ink), 0.5);
+}
+.animate-skeu-dialog {
+  animation: skeu-dialog 180ms ease-out;
+}
+@keyframes skeu-dialog {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.98);
+  }
+}
+.skeu-skeleton {
+  background: linear-gradient(90deg, var(--skeu-well) 0%, var(--skeu-well-deep) 50%, var(--skeu-well) 100%);
+  background-size: 200% 100%;
+  animation: skeu-skeleton 1.2s linear infinite;
+}
+@keyframes skeu-skeleton {
+  to {
+    background-position: -200% 0;
+  }
+}
+/* The one dark object: a code panel. */
+.skeu-dark {
+  background: var(--skeu-dark-bg);
+  color: #f4f5fa;
+  --shiki-color-text: #f4f5fa;
+  --shiki-token-constant: #ffc843;
+  --shiki-token-string: #3ddc97;
+  --shiki-token-comment: #8c91ae;
+  --shiki-token-keyword: #b39dff;
+  --shiki-token-parameter: #f4f5fa;
+  --shiki-token-function: #4cc9f0;
+  --shiki-token-string-expression: #3ddc97;
+  --shiki-token-punctuation: #a9adc6;
+  --shiki-token-link: #4cc9f0;
+}

@@ -1,0 +1,364 @@
+/* The docs: Tailwind's names pointed at Gathering's values (theme.css), and
+ * the typography a page of documentation needs. Light only. */
+
+@import 'tailwindcss';
+@import './theme.css';
+
+@theme {
+  --font-sans: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+
+  --color-ink: #15172b;
+  --color-ink-2: #5b5f7a;
+  --color-ink-3: #8c91ae;
+
+  --color-ground: var(--skeu-bg);
+  --color-surface: var(--skeu-surface);
+  --color-surface-2: var(--skeu-well);
+  --color-surface-3: var(--skeu-well-deep);
+
+  --color-line: var(--skeu-edge);
+  --color-line-2: var(--skeu-edge-strong);
+
+  --color-graphite: #0f1222;
+  --color-graphite-2: #171b31;
+  --color-graphite-line: #2a2f4d;
+
+  --color-accent: var(--skeu-accent);
+  --color-accent-2: var(--skeu-accent-deep);
+  --color-accent-ink: var(--skeu-accent-text);
+  --color-accent-soft: #fff3cc;
+
+  --color-good: var(--skeu-success);
+  --color-warn: var(--skeu-warning);
+  --color-bad: var(--skeu-error);
+  --color-info: var(--skeu-info);
+
+  --radius-xs: 6px;
+  --radius-sm: 8px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+  --radius-2xl: 26px;
+
+  --animate-rise: rise 360ms cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
+  --animate-fade: fade 160ms ease-out;
+  --animate-slide-in: slide-in 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  @keyframes rise {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  @keyframes fade {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+  @keyframes slide-in {
+    from {
+      opacity: 0;
+      transform: translateX(-16px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+}
+
+@layer base {
+  html {
+    color-scheme: light;
+    scroll-behavior: smooth;
+  }
+  body {
+    background-color: var(--color-ground);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-size: 14px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+    letter-spacing: -0.01em;
+  }
+  ::selection {
+    background: var(--color-accent-soft);
+    color: var(--color-ink);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+    *,
+    ::before,
+    ::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+/* A small uppercase label, as the console draws one. */
+@utility text-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-ink-3);
+}
+
+/* Ids, paths and codes read in mono, a touch smaller. */
+@utility text-id {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Keyboard hints, as a small ceramic key cap. */
+@utility kbd {
+  display: inline-flex;
+  align-items: center;
+  height: 18px;
+  padding-inline: 6px;
+  border-radius: 5px;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--color-ink-2);
+  background-image: linear-gradient(180deg, #ffffff 0%, var(--skeu-surface) 100%);
+  border: 1px solid var(--skeu-edge);
+  box-shadow:
+    inset 0 1px 0 var(--skeu-highlight),
+    0 1px 1px rgba(var(--skeu-ink), 0.06);
+}
+
+
+/* ── The prose ───────────────────────────────────────────────────────────
+ * What a page of documentation is made of, styled once. Anything that is
+ * not prose — a code panel, a property list, a card — carries `not-prose`
+ * and is left alone. */
+.prose {
+  color: var(--color-ink-2);
+  font-size: 14.5px;
+  line-height: 1.7;
+}
+.prose > :first-child {
+  margin-top: 0;
+}
+.prose h1:not(:where(.not-prose, .not-prose *)) {
+  margin: 0 0 12px;
+  font-size: 34px;
+  line-height: 1.15;
+  font-weight: 800;
+  color: var(--color-ink);
+}
+.prose h2:not(:where(.not-prose, .not-prose *)) {
+  margin: 44px 0 14px;
+  font-size: 21px;
+  line-height: 1.3;
+  font-weight: 700;
+  color: var(--color-ink);
+  scroll-margin-top: 96px;
+}
+.prose h3:not(:where(.not-prose, .not-prose *)) {
+  margin: 28px 0 10px;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-ink);
+  scroll-margin-top: 96px;
+}
+.prose p:not(:where(.not-prose, .not-prose *)) {
+  margin: 16px 0;
+}
+.prose p.lead:not(:where(.not-prose, .not-prose *)) {
+  font-size: 16.5px;
+  line-height: 1.65;
+  color: var(--color-ink-2);
+}
+.prose a:not(.not-prose a):not(:where(.not-prose, .not-prose *)) {
+  color: var(--color-accent-ink);
+  font-weight: 500;
+  text-decoration: underline;
+  text-decoration-color: color-mix(in oklab, var(--skeu-accent) 35%, transparent);
+  text-underline-offset: 3px;
+  transition: text-decoration-color 120ms ease;
+}
+.prose a:not(.not-prose a):hover:not(:where(.not-prose, .not-prose *)) {
+  text-decoration-color: var(--skeu-accent);
+}
+.prose strong:not(:where(.not-prose, .not-prose *)) {
+  color: var(--color-ink);
+  font-weight: 600;
+}
+.prose ul,
+.prose ol:not(:where(.not-prose, .not-prose *)) {
+  margin: 16px 0;
+  padding-inline-start: 26px;
+}
+.prose ul:not(:where(.not-prose, .not-prose *)) {
+  list-style: disc;
+}
+.prose ol:not(:where(.not-prose, .not-prose *)) {
+  list-style: decimal;
+}
+.prose li:not(:where(.not-prose, .not-prose *)) {
+  margin: 6px 0;
+  padding-inline-start: 4px;
+}
+.prose li::marker:not(:where(.not-prose, .not-prose *)) {
+  color: var(--color-ink-3);
+  font-weight: 600;
+}
+.prose hr:not(:where(.not-prose, .not-prose *)) {
+  margin: 40px 0;
+  height: 2px;
+  border: 0;
+  background:
+    linear-gradient(
+        90deg,
+        transparent,
+        rgba(var(--skeu-ink), 0.12) 20%,
+        rgba(var(--skeu-ink), 0.12) 80%,
+        transparent
+      )
+      top / 100% 1px no-repeat,
+    linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.9) 20%,
+        rgba(255, 255, 255, 0.9) 80%,
+        transparent
+      )
+      bottom / 100% 1px no-repeat;
+}
+.prose blockquote:not(:where(.not-prose, .not-prose *)) {
+  margin: 20px 0;
+  padding: 2px 0 2px 18px;
+  border-inline-start: 3px solid var(--skeu-accent);
+  color: var(--color-ink);
+  font-style: italic;
+}
+.prose :not(pre) > code:not(:where(.not-prose, .not-prose *)) {
+  font-family: var(--font-mono);
+  font-size: 0.86em;
+  color: var(--color-ink);
+  background: var(--skeu-well);
+  border: 1px solid var(--skeu-edge);
+  border-radius: 5px;
+  padding: 1px 5px;
+  white-space: nowrap;
+}
+.prose table:not(:where(.not-prose, .not-prose *)) {
+  width: 100%;
+  margin: 20px 0;
+  border-collapse: collapse;
+  font-size: 13.5px;
+  font-variant-numeric: tabular-nums;
+}
+.prose th:not(:where(.not-prose, .not-prose *)) {
+  text-align: start;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-ink-3);
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--skeu-edge-strong);
+}
+.prose td:not(:where(.not-prose, .not-prose *)) {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--skeu-edge);
+  vertical-align: top;
+}
+.prose img:not(:where(.not-prose, .not-prose *)) {
+  max-width: 100%;
+  border-radius: 14px;
+}
+
+/* ── Code, on graphite ───────────────────────────────────────────────────
+ * The brand's one dark object is the instrument surface; code is drawn on
+ * it. The highlighter paints with these variables. */
+.code-panel {
+  --shiki-color-text: #ede6dd;
+  --shiki-color-background: transparent;
+  --shiki-token-constant: #ffb38a;
+  --shiki-token-string: #a8d8a0;
+  --shiki-token-comment: #8a817a;
+  --shiki-token-keyword: #ff9a6a;
+  --shiki-token-parameter: #ede6dd;
+  --shiki-token-function: #f7c7a3;
+  --shiki-token-string-expression: #a8d8a0;
+  --shiki-token-punctuation: #b8afa7;
+  --shiki-token-link: #ffb38a;
+}
+.code-panel pre {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  line-height: 1.7;
+  color: #ede6dd;
+  tab-size: 2;
+}
+
+/* A stack of things that arrive one after another: the page's blocks, the
+ * sections under the open page in the rail. The console's own motion. */
+@utility stagger {
+  & > * {
+    animation: var(--animate-rise);
+  }
+  & > *:nth-child(2) {
+    animation-delay: 40ms;
+  }
+  & > *:nth-child(3) {
+    animation-delay: 80ms;
+  }
+  & > *:nth-child(4) {
+    animation-delay: 120ms;
+  }
+  & > *:nth-child(5) {
+    animation-delay: 160ms;
+  }
+  & > *:nth-child(n + 6) {
+    animation-delay: 200ms;
+  }
+}
+
+/* The page's ground, the console's: the brand's warm base with its
+ * micro-grain, faint enough to be felt rather than seen. */
+@utility bg-ground-lit {
+  background-color: var(--color-ground);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.2 0 0 0 0 0.13 0 0 0 0 0.06 0 0 0 0.16 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* A guide card's icon tile turns solid on hover, the way the brand's keys do. */
+.guide-tile {
+  transition:
+    color var(--skeu-transition-normal),
+    background-color var(--skeu-transition-normal),
+    border-color var(--skeu-transition-normal),
+    box-shadow var(--skeu-transition-normal),
+    transform var(--skeu-transition-normal);
+}
+.guide-card:hover .guide-tile {
+  color: #fff;
+  background-color: var(--skeu-accent);
+  background-image:
+    radial-gradient(120% 90% at 30% 0%, rgba(255, 255, 255, 0.35), transparent 55%),
+    linear-gradient(180deg, #ff7a44 0%, #f05d25 55%, #d94d1c 100%);
+  border-color: #c94a1b;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.4),
+    inset 0 -2px 0 rgba(120, 35, 5, 0.3),
+    0 1px 2px rgba(120, 35, 5, 0.3),
+    0 6px 12px -5px rgba(240, 93, 37, 0.5);
+  transform: translateY(-1px) rotate(-3deg);
+}

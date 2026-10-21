@@ -1,0 +1,93 @@
+# The laptop stack: postgres, redis, the api, the console, the docs and the
+# fixtures. `make up` builds and starts it; `make logs` follows the api.
+name: gathering
+
+services:
+  postgres:
+    image: postgres:17.2-alpine3.20
+    environment:
+      POSTGRES_USER: gathering
+      POSTGRES_PASSWORD: gathering
+      POSTGRES_DB: postgres
+    ports: ["5433:5432"]
+    volumes:
+      - pg:/var/lib/postgresql/data
+      - ./postgres/databases.sql:/docker-entrypoint-initdb.d/databases.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U gathering -d postgres"]
+      interval: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    ports: ["6380:6379"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      retries: 10
+
+  api:
+    build:
+      context: ..
+      dockerfile: deploy/docker/Dockerfile
+      args: { CMD: api }
+    env_file: ../backend/.env
+    environment:
+      DATABASE_URL: postgres://gathering:gathering@postgres:5432/gathering?sslmode=disable
+      REDIS_URL: redis://redis:6379/0
+      CORS_ORIGINS: http://localhost:8085,http://localhost:8092
+      DOCS_URL: http://localhost:8092
+      API_PUBLIC_URL: http://localhost:8080
+      JWT_ISSUER: http://localhost:8080
+      DEBUG: "true"
+      DEV_ADMIN: "true"
+      FILES_DIR: /files
+      ALLOW_PRIVATE_HOSTS: "true"
+    volumes:
+      - files:/files
+    ports: ["8080:8080"]
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8080/health"]
+      interval: 5s
+      retries: 12
+      start_period: 20s
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+
+  console:
+    build:
+      context: ../web/console
+      args:
+        VITE_API_URL: http://localhost:8080
+        VITE_DEV_ADMIN: "true"
+    ports: ["8085:80"]
+
+  docs:
+    build:
+      context: ../web/docs
+    environment:
+      DOCS_USER: gathering
+      DOCS_PASSWORD: gathering
+    ports: ["8092:80"]
+
+  fixtures:
+    build:
+      context: ..
+      dockerfile: deploy/docker/Dockerfile
+      args: { CMD: fixtures }
+    environment:
+      PUBLIC_URL: http://fixtures:8091
+      API_URL: http://api:8080
+      # The partner backend's credentials: the id of the fixture game and the
+      # secret the console showed when it was registered. Set it in the shell
+      # that runs make up, or restart the fixtures with it.
+      PARTNER_CLIENT_ID: ${PARTNER_CLIENT_ID:-fixture.xo}
+      PARTNER_CLIENT_SECRET: ${PARTNER_CLIENT_SECRET:-}
+    volumes:
+      - ./fixtures:/app/games:ro
+    ports: ["8091:8091"]
+
+volumes:
+  pg:
+  files:

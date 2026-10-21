@@ -1,0 +1,48 @@
+# Production runs the images CI published and nothing else. Postgres, Redis and
+# the bucket are managed services; TAG is the full commit sha.
+name: gathering
+
+x-service: &service
+  restart: unless-stopped
+  env_file: .env
+  logging:
+    driver: json-file
+    options: { max-size: "10m", max-file: "3" }
+
+services:
+  api:
+    <<: *service
+    image: ghcr.io/${IMAGE_OWNER:?}/gathering/api:sha-${TAG:?}
+    environment:
+      DATABASE_URL: ${DATABASE_URL:?}
+      REDIS_URL: ${REDIS_URL:?}
+      API_PUBLIC_URL: ${API_PUBLIC_URL:?}
+      JWT_ISSUER: ${API_PUBLIC_URL:?}
+      CORS_ORIGINS: ${CORS_ORIGINS:?}
+      DOCS_URL: ${DOCS_URL:?}
+      S3_BUCKET: ${S3_BUCKET:?}
+      S3_REGION: ${S3_REGION:-me-south-1}
+      SSO_ISSUER: ${SSO_ISSUER:?}
+      SSO_CLIENT_ID: ${SSO_CLIENT_ID:?}
+      SSO_AUDIENCE: ${SSO_AUDIENCE:?}
+      SSO_SERVICE: ${SSO_SERVICE:-gathering}
+      OTP_WEBHOOK_URL: ${OTP_WEBHOOK_URL:?}
+    ports: ["8080:8080"]
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8080/health"]
+      interval: 10s
+      retries: 12
+      start_period: 30s
+
+  console:
+    <<: *service
+    image: ghcr.io/${IMAGE_OWNER:?}/gathering/console:sha-${TAG:?}
+    ports: ["8085:80"]
+
+  docs:
+    <<: *service
+    image: ghcr.io/${IMAGE_OWNER:?}/gathering/docs:sha-${TAG:?}
+    environment:
+      DOCS_USER: ${DOCS_USER:?}
+      DOCS_PASSWORD: ${DOCS_PASSWORD:?}
+    ports: ["8092:80"]

@@ -1,0 +1,21 @@
+# The build context is the repository root for every image, so anything here
+# is read once per image built. The Go image narrows it further with
+# `COPY backend/`, which is why none of the node_modules trees reaches it.
+#
+# These are the directories that are large, are rebuilt inside the image
+# anyway, or are somebody's laptop.
+
+**/node_modules
+**/.next
+**/out
+**/dist
+
+.git
+**/.env
+.files
+bin
+
+design
+*.log
+.DS_Store
+.claude

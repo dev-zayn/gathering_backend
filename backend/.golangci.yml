@@ -1,0 +1,59 @@
+# The architectural rules, enforced instead of remembered: the compiler guards
+# the outside of internal/, these guard the inside, where model is the centre.
+version: "2"
+
+linters:
+  enable:
+    - depguard
+    - errcheck
+    - govet
+    - ineffassign
+    - staticcheck
+    - unused
+
+  settings:
+    # Close on something we have finished with has nothing to tell us: the read
+    # already succeeded or already failed.
+    errcheck:
+      exclude-functions:
+        - (io.Closer).Close
+        - (*os.File).Close
+        - (*mime/multipart.FileHeader).Open
+        - (net/http.Response).Body.Close
+
+    depguard:
+      rules:
+        # enum is the one exception: the closed lists a column may hold. It is a
+        # leaf below model, with no imports of ours, so nothing can cycle through it.
+        # A deny line is a prefix, so internal/data itself cannot be listed without
+        # taking enum with it; TestModelImportsNothingButEnum in pkg/arch covers that.
+        # Tests are outside the rule: an external test package imports model to test it.
+        model-imports-only-enum:
+          files: ["**/internal/data/model/**", "!**/*_test.go"]
+          deny:
+            - pkg: github.com/jamaa/gathering/backend/internal/biz
+              desc: "model is the centre; it imports nothing of ours but enum"
+            - pkg: github.com/jamaa/gathering/backend/internal/http
+              desc: "model is the centre; it imports nothing of ours but enum"
+            - pkg: github.com/jamaa/gathering/backend/internal/conf
+              desc: "model is the centre; it imports nothing of ours but enum"
+            - pkg: github.com/jamaa/gathering/backend/internal/pkg
+              desc: "model is the centre; it imports nothing of ours but enum"
+            - pkg: github.com/jamaa/gathering/backend/internal/data/migrations
+              desc: "model is the centre; it imports nothing of ours but enum"
+            - pkg: github.com/jamaa/gathering/backend/cmd
+              desc: "model is the centre; it imports nothing of ours but enum"
+
+        # pkg is what any layer may use and no layer owns, so anything there that
+        # reaches back out is a cycle waiting. pkg may use pkg, and nothing else.
+        pkg-imports-only-pkg:
+          files: ["**/internal/pkg/**"]
+          deny:
+            - pkg: github.com/jamaa/gathering/backend/internal/biz
+              desc: "pkg is underneath biz; a rule that reaches down is not a helper"
+            - pkg: github.com/jamaa/gathering/backend/internal/http
+              desc: "pkg is underneath http; middleware belongs in http"
+            - pkg: github.com/jamaa/gathering/backend/internal/data
+              desc: "pkg is underneath data; anything that opens a connection belongs there"
+            - pkg: github.com/jamaa/gathering/backend/internal/conf
+              desc: "conf reads the environment for the binary; pkg takes what it needs as arguments"

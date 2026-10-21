@@ -1,0 +1,313 @@
+import { Guides } from '@/components/blocks'
+
+# Getting listed
+
+From a published manifest to a tile a player can open. Four steps, one of which is us reading your document and one of which is a person at Gathering looking at it. {{ className: 'lead' }}
+
+---
+
+## 1. You publish the manifest
+
+<Row>
+  <Col>
+
+    At `/.well-known/gathering-game.json` on your game's origin, reachable without authentication. Nothing happens until somebody at Gathering has the address.
+
+    Check it from outside your own network before you send it. Two things go wrong here more than anything else, and both are invisible from inside.
+
+    <Properties>
+      <Property name="Public" type="no auth">
+        We fetch it before you are listed. A login in front of it is the most common reason a registration fails.
+      </Property>
+      <Property name="application/json" type="content-type">
+        A catch-all route that serves your index page instead is the second. It returns `200`, which is why it looks fine until somebody parses it.
+      </Property>
+    </Properties>
+
+    <Note>
+      Two limits, rarely met: the document must be under 256 KB, and we give up on a fetch
+      after ten seconds. A private or localhost address is refused outright.
+    </Note>
+
+  </Col>
+  <Col sticky>
+
+    <CodeGroup title="Check it yourself" tag="GET" label="/.well-known/gathering-game.json">
+
+    ```bash {{ title: 'cURL' }}
+    curl -sS -o /dev/null -w '%{http_code} %{content_type}\n' \
+      https://games.yourstudio.example/.well-known/gathering-game.json
+    ```
+
+    </CodeGroup>
+
+    <CodeGroup title="What you want back">
+
+    ```text
+    200 application/json
+    ```
+
+    </CodeGroup>
+
+  </Col>
+</Row>
+
+---
+
+## 2. You send us the address
+
+<Row>
+  <Col>
+
+    Send it to your Gathering contact — the origin is enough. An admin registers it in the console, which makes us fetch and validate the document there and then.
+
+    If anything is wrong you get the whole list back at once and nothing is created. Fix and resend; there is no partial state to clean up.
+
+    <Note>
+      You are handed a client secret, **once**. It is shown at the moment of registration
+      and never again — it cannot be read back, only rolled, which breaks your server until
+      you have the new one. Store it before you close the window.
+    </Note>
+
+  </Col>
+  <Col sticky>
+
+    <CodeGroup title="What registration returns">
+
+    ```json
+    {
+      "id": "yourstudio.game",
+      "version": "1.0.0",
+      "listing": "unpublished",
+      "client_secret": "sec_9f2k…shown_once"
+    }
+    ```
+
+    </CodeGroup>
+
+    <CodeGroup title="Or, everything at once">
+
+    ```json
+    {
+      "error": "invalid_fields",
+      "fields": {
+        "mode": "must be embedded",
+        "room.players.max": "must be at least min and at most 64",
+        "scopes": "unknown scope: orders:write"
+      }
+    }
+    ```
+
+    </CodeGroup>
+
+  </Col>
+</Row>
+
+---
+
+## 3. Gathering writes the store copy
+
+<Row>
+  <Col>
+
+    An admin writes your tagline, sets your icon and picks your category. Publishing is refused until a tagline and an icon exist: a row with neither is a broken tile in every player's store.
+
+    This is the part you do not control, and it is deliberate. Say what you want it to read and an admin will usually write that — but the words are Gathering's, so that every tile in the store reads the same way.
+
+    <Properties>
+      <Property name="tagline" type="string, required">
+        The line under your name on the tile, in the language your players read.
+      </Property>
+      <Property name="icon" type="file, required">
+        The tile picture, a PNG or JPEG up to 2 MB, uploaded by the admin and kept by Gathering. Without it you cannot be published.
+      </Property>
+      <Property name="description" type="string">
+        Shown on your page in the store, not on the tile.
+      </Property>
+      <Property name="category" type="one of a list">
+        How the store groups you. One of `speed`, `brain`, `words`, `luck`, `guess`, `draw`, `party`, `other`. A new game waits in `other` until an admin files it.
+      </Property>
+      <Property name="screenshots" type="file[]">
+        Optional, up to six, uploaded by the admin. The page reads fine without them.
+      </Property>
+      <Property name="featured" type="switch">
+        A featured game leads the store, whatever its tier. An admin's call.
+      </Property>
+    </Properties>
+
+  </Col>
+  <Col sticky>
+
+    <CodeGroup title="What the store holds, not your manifest">
+
+    ```json
+    {
+      "tagline": "إكس أو، لكن مع صديقك",
+      "category": "brain",
+      "featured": false,
+      "screenshots": []
+    }
+    ```
+
+    </CodeGroup>
+
+    <Note>
+      None of this is in your manifest, and none of it can be — see
+      [what is not in it](/manifest#what-is-not-in-it).
+    </Note>
+
+  </Col>
+</Row>
+
+---
+
+## 4. An admin publishes it
+
+<Row>
+  <Col>
+
+    Your game becomes visible in the store and players can open it.
+
+    Until then it exists, has a client secret, and is a `404` to every player — not a `403`, because a game they cannot see should not be something they can detect.
+
+    <Properties>
+      <Property name="unpublished" type="404">
+        Exists, has credentials, invisible. Opening it is indistinguishable from opening a game that was never registered.
+      </Property>
+      <Property name="published" type="200">
+        In the store. Players can open it, and the launch flow works.
+      </Property>
+      <Property name="suspended" type="404">
+        Was published, is not now. Live tokens stop immediately.
+      </Property>
+    </Properties>
+
+  </Col>
+  <Col sticky>
+
+    <CodeGroup title="Opening a game you cannot see">
+
+    ```json
+    { "error": "not_found" }
+    ```
+
+    </CodeGroup>
+
+    <Note>
+      The same answer whether the game does not exist, is unpublished, or is suspended.
+      Anything else would let somebody enumerate what is coming.
+    </Note>
+
+  </Col>
+</Row>
+
+---
+
+## Shipping a new version
+
+<Row>
+  <Col>
+
+    Change your manifest and ask us to re-fetch it — or change it and wait, because we re-read every manifest about once a day anyway. What happens next depends on what changed.
+
+    <Properties>
+      <Property name="version, entry, name" type="saved as read">
+        Whatever else you changed, players carry on. A scope you drop is gone for everyone on their next token.
+      </Property>
+      <Property name="scopes wider" type="held">
+        Nothing changes yet. The document waits for an admin to read the new list and accept it; until then every player carries on with the manifest we had.
+      </Property>
+      <Property name="permissions changed" type="held">
+        The same. What the app asks a player's phone for is read by a person first.
+      </Property>
+      <Property name="room changed" type="held">
+        The same. Every room for your game is made under the block an admin accepted, so a new shape waits too.
+      </Property>
+    </Properties>
+
+    <Note>
+      No player is ever asked. A published game holds whatever its accepted manifest asks
+      for, so the only tail to design for is tokens minted before an acceptance: they carry
+      the old list until they renew.
+    </Note>
+
+  </Col>
+  <Col sticky>
+
+    <CodeGroup title="What that means in your code">
+
+    ```js
+    // A token minted before the re-read carries the old
+    // list until it renews. Read scope; do not assume it.
+    const { scope } = await bridgeContext(token)
+
+    if (scope.includes('identity:read')) {
+      greet(player.nickname)
+    } else {
+      greet('يا لاعب')
+    }
+    ```
+
+    </CodeGroup>
+
+  </Col>
+</Row>
+
+---
+
+## Being suspended
+
+<Row>
+  <Col>
+
+    An admin can suspend a game at any time. It leaves every store and shelf at once and its live tokens stop with it — not at their expiry, **immediately**.
+
+    Shelves are not emptied, so reinstating it is another publish and every tile comes back.
+
+    What your server sees is a renewal that stops working. Treat it as removed: stop, and do not loop.
+
+  </Col>
+  <Col sticky>
+
+    <CodeGroup title="Your next renewal">
+
+    ```json
+    { "error": "invalid_grant" }
+    ```
+
+    </CodeGroup>
+
+    <Note>
+      Indistinguishable from a player taking the game off their shelf, and handled the same
+      way — see [Authentication](/auth#staying-signed-in).
+    </Note>
+
+  </Col>
+</Row>
+
+<Guides
+  title="Where to next"
+  id="where-to-next"
+  guides={[
+    {
+      href: '/auth',
+      name: 'Authentication',
+      description: 'How a player arrives already signed in, and what your server does with the code.',
+    },
+    {
+      href: '/manifest',
+      name: 'The manifest',
+      description: 'The one document you publish. It is the whole of what we know about your game.',
+    },
+    {
+      href: '/bridge',
+      name: 'The bridge',
+      description: 'window.gathering: the room, the players and the friends, from inside your page.',
+    },
+    {
+      href: '/rooms',
+      name: 'Rooms',
+      description: 'How a room is made, the frames the relay carries, and the ticket your server verifies.',
+    },
+  ]}
+/>

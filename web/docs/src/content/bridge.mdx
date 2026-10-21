@@ -1,0 +1,34 @@
+# The bridge
+
+`window.gathering`: the room, the players, the friends and the host's chrome, from inside your page. {{ className: 'lead' }}
+
+The host injects `window.gathering` into your page when the document starts loading and again
+when it finishes, after your own scripts have begun. So wait for it: the `gatheringready` event
+fires on `window` once it exists, and `window.GatheringBridge` is there from the first script, so
+a page that sees the channel but no `window.gathering` is hosted and should wait.
+
+```js {{ title: 'app.js' }}
+function bridgeReady() {
+  if (window.gathering?.__installed) return Promise.resolve(window.gathering)
+  if (!window.GatheringBridge) return Promise.resolve(null) // not in the host
+  return new Promise((resolve) => {
+    window.addEventListener('gatheringready', () => resolve(window.gathering), { once: true })
+  })
+}
+```
+
+## The room
+
+| Call | Returns |
+| --- | --- |
+| `room.current()` | `{ id, code, game, status, you: { role, seat }, config, seq }` or `null` outside a room |
+| `room.members()` | `[{ id, nickname, avatarUrl, role, seat, connected }]` |
+| `room.send(data, { to? })` | nothing; the frame goes to every member, or one |
+| `room.getState()` / `room.setState(data, version)` | `{ version, data }` / the new version; rejects `state_stale` |
+| `room.start()` / `room.end({ scores })` | host only; `end` writes the results |
+| `room.leave()` / `room.kick(id)` / `room.invite()` | leave, remove a member (host), open the invite sheet |
+| `room.ticket()` | `{ token, expiresAt }`: a room ticket for your own server |
+| `room.on(event, fn)` | `message`, `members`, `joined`, `left`, `state`, `started`, `ended`, `host`, `kicked`, `connection` |
+
+The full reference, with every chrome, storage, permission and friends call, arrives with the
+bridge milestone.

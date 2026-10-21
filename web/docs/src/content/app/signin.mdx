@@ -1,0 +1,41 @@
+# Sign-in and sessions
+
+A phone, a code, a session. Refreshing it, ending it, and who is signed in. {{ className: 'lead' }}
+
+Every route under `/v1/` takes `Authorization: Bearer <token>`. There are three tokens on the
+way in and one on the way out; the `scope` in every answer says which you hold.
+
+## The flow
+
+1. `POST /v1/auth/signin` `{ "phone": "07701234567" }` → `{ scope: "otp", access_token, expires_in }`.
+   The answer is the same whether or not the number is known.
+2. `POST /v1/auth/otp/verify` `{ "code": "418302" }` with the otp token →
+   a known number: `{ scope: "session", access_token, refresh_token, expires_in, player }`;
+   an unknown one: `{ scope: "signup", access_token, expires_in }` and nothing written.
+   `401 wrong_code` carries `attempts_left`; five wrong codes kill the code.
+   `POST /v1/auth/otp/resend` with the same token sends a new code (two resends per token).
+3. `POST /v1/auth/signup` `{ "nickname", "avatar"?, "language"? }` with the signup token →
+   `201` with a session and the `player`. The `@handle` is made from the nickname.
+4. `POST /v1/auth/refresh` `{ "refresh_token" }` → a new pair. Single use: replaying a spent
+   one revokes the whole session (`401 invalid_refresh_token`).
+5. `POST /v1/auth/logout` → `204`. The record on the server dies; dropping the token alone
+   would leave us willing to refresh it.
+
+`POST /v1/auth/sso/{google|apple}` exists and answers `501 not_supported` until a provider ships.
+
+## Me
+
+| Call | What |
+| --- | --- |
+| `GET /v1/me` | `{ id, nickname, handle, avatar, phone, bio, language, created_at }` |
+| `PATCH /v1/me` | any of `nickname`, `handle`, `bio`, `avatar`, `language`; `422 invalid_fields`, `409 handle_taken`, `409 handle_cooldown` (a week) |
+| `PUT /v1/me/presence` | the foreground heartbeat, every 45 s; friends see online for a minute after the last |
+| `PUT /v1/me/device` `{ platform, token }` · `DELETE /v1/me/device` | the phone's Firebase token, so an invite can ring it |
+| `GET /v1/players/search?q=` | handles starting with `q` (3 characters at least) |
+| `GET /v1/players/{handle}` | the public card: `{ id, nickname, handle, avatar, friendship }` |
+
+## Limits
+
+One code per number per minute, five per hour, 120 per minute across the platform
+(`429 too_many_requests` with `retry_after`). An access token lives an hour, a refresh token
+ninety days. A disabled player is refused with `403 player_disabled`.
