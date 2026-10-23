@@ -8,6 +8,7 @@ import { Note, Tag } from '../components/game-bits.jsx'
 import { Pager } from '../components/list-bits.jsx'
 import { when } from '../lib/games.js'
 import { useMe } from '../lib/me.js'
+import BrandMark from '../components/brand-mark.jsx'
 
 // The limits the API holds an announcement to, counted as it counts them.
 const TITLE_MAX = 60
@@ -244,8 +245,8 @@ function Counter({ n, max }) {
 function Row({ title, body }) {
   return (
     <div dir="rtl" className="bg-surface flex gap-3 rounded-xl border border-line p-3 text-start">
-      <span className="bg-accent text-accent-ink inline-flex size-10 shrink-0 items-center justify-center rounded-full text-base font-extrabold">
-        ج
+      <span className="bg-accent text-accent-ink inline-flex size-10 shrink-0 items-center justify-center rounded-full">
+        <BrandMark className="w-[22px]" />
       </span>
       <span className="min-w-0 flex-1">
         <span className="flex items-baseline gap-2">

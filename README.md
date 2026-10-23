@@ -1,4 +1,4 @@
-# Gathering (جمعة)
+# Gathering (گعدة)
 
 The minigame super app's platform: one sign-in, one player profile, friends,
 rooms, and the games as HTML mini apps inside the app. This file is for

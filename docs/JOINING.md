@@ -41,18 +41,18 @@ phone without the app, a desktop, a link the OS did not verify.
     in an LTR island, with a copy key ("انسخ الرمز", then "انّسخ الرمز";
     "Copy the code", then "Code copied"). The key is the script's to show,
     so a browser that runs no script shows none; the code selects whole;
-  - "عندك جمعة؟ افتحها واكتب الرمز" and its English line, "Have Gathering?
+  - "عندك گعدة؟ افتحها واكتب الرمز" and its English line, "Have Gathering?
     Open it and type the code.";
   - a store key per configured store (`APP_STORE_URL` "App Store",
-    `PLAY_STORE_URL` "Google Play") under "ما عندك جمعة؟ نزّلها" ("Don't
+    `PLAY_STORE_URL` "Google Play") under "ما عندك گعدة؟ نزّلها" ("Don't
     have Gathering yet?"), none and no line when neither is set;
   - not found: "هالغرفة ما موجودة، أو خلصت" and its English line, "This
     room doesn't exist, or it's over.": no game, no code, no copy key, no
     "open it" line; the store keys stay;
   - try again: "ما كدرنا نفتح الرابط هسّه. جرّب بعد شوية." ("We couldn't
     open this link just now. Try again in a moment."), the store keys too.
-- The title is "انضم لغرفة {game} · جمعة" ("Join a {game} room ·
-  Gathering"), and "جمعة" ("Gathering") on the other forms. `<meta
+- The title is "انضم لغرفة {game} · گعدة" ("Join a {game} room ·
+  Gathering"), and "گعدة" ("Gathering") on the other forms. `<meta
   name="robots" content="noindex">` keeps codes out of search engines.
 - It shows nothing about the room beyond its game and code: no host, no
   members, no visibility. A friends-only room's page looks like any other;
@@ -139,7 +139,7 @@ Discovery only: it finds the code of a room hosted on a phone nearby.
   advertising on a start, a leave, a hand-over (the new host's phone takes
   over), a room's end, the visibility not `private`, and the app leaving the
   foreground; it advertises again when the room is back in its lobby.
-- **The service:** type `_gathering._tcp`; name `جمعة <code>`; port `4747`
+- **The service:** type `_gathering._tcp`; name `گعدة <code>`; port `4747`
   (nothing listens there in Phase 1: Android refuses port 0, and Phase 2's
   LAN relay will put its real port here); TXT, every value UTF-8:
   - `v=1`

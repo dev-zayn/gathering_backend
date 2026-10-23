@@ -9,6 +9,7 @@ import {
   XIcon,
 } from 'lucide-react'
 
+import BrandMark from '@/components/brand-mark.jsx'
 import { Search } from '@/components/search'
 import { GROUPS, HOME, PAGES, SECTION } from '@/pages.js'
 import { cn } from '@/lib/utils'
@@ -249,8 +250,8 @@ function Rail({ className, onClose }) {
       <div className="skeu-panel flex h-full flex-col overflow-hidden rounded-2xl">
         <div className="flex items-center gap-3 px-4 pt-4 pb-2">
           <Link to={HOME} className="flex items-center gap-3">
-            <span className="skeu-chip-solid inline-flex size-8 items-center justify-center rounded-lg text-sm font-extrabold">
-              ج
+            <span className="skeu-chip-solid inline-flex size-8 items-center justify-center rounded-lg">
+              <BrandMark className="w-[18px]" />
             </span>
             <span className="text-sm font-extrabold text-ink">Gathering</span>
             <span className="text-label border-s border-line ps-3">

@@ -2,6 +2,7 @@ import { NavLink, Outlet } from 'react-router-dom'
 import { Gamepad2, LayoutDashboard, Users, DoorOpen, Trophy, Bell, ScrollText, ShieldCheck, LogOut } from 'lucide-react'
 
 import { useMe } from '../lib/me.js'
+import BrandMark from './brand-mark.jsx'
 import { signOut } from '../sso.js'
 
 // The frame every page sits in: the rail of sections and who is signed in.
@@ -22,8 +23,8 @@ export default function Shell() {
     <div className="min-h-screen lg:grid lg:grid-cols-[240px_1fr]">
       <aside className="border-line bg-surface flex flex-col gap-1 border-e p-3">
         <div className="mb-3 flex items-center gap-2 px-2 pt-1">
-          <span className="bg-accent text-accent-ink inline-flex size-8 items-center justify-center rounded-lg text-sm font-extrabold">
-            ج
+          <span className="bg-accent text-accent-ink inline-flex size-8 items-center justify-center rounded-lg">
+            <BrandMark className="w-[18px]" />
           </span>
           <span className="text-sm font-bold">Gathering console</span>
         </div>

@@ -4,7 +4,7 @@ Guidance for Claude Code in this repository.
 
 ## Project overview
 
-**Gathering** (جمعة) is the platform behind the minigame super app: one
+**Gathering** (گعدة) is the platform behind the minigame super app: one
 phone sign-in, a player profile, friends and presence, the game registry and
 library, rooms with a realtime relay, results and the inbox. Go, in
 `backend/`; a React admin console in `web/console`; developer docs in

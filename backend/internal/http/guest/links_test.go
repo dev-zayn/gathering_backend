@@ -206,14 +206,14 @@ func TestInviteLinkPage(t *testing.T) {
 	// copy key, the line for a phone with the app, the stores' keys.
 	lobby := open(t, h, path).is(http.StatusOK).has(
 		`<html lang="ar" dir="rtl">`,
-		`<title>انضم لغرفة إكس أو · جمعة</title>`,
+		`<title>انضم لغرفة إكس أو · گعدة</title>`,
 		`<meta name="robots" content="noindex">`,
 		`<img class="icon" src="https://signed.test/games/fixture.xo/icon.png"`,
 		`<h1 dir="auto">إكس أو</h1>`,
 		`<p class="code" id="code" dir="ltr" translate="no">`+room.Code+`</p>`,
 		`<button class="key primary" id="copy" type="button" data-done="انّسخ الرمز" hidden>انسخ الرمز</button>`,
-		"عندك جمعة؟ افتحها واكتب الرمز",
-		"ما عندك جمعة؟ نزّلها",
+		"عندك گعدة؟ افتحها واكتب الرمز",
+		"ما عندك گعدة؟ نزّلها",
 		`<a class="key" href="https://apps.apple.com/app/id6000000000">App Store</a>`,
 		`<a class="key" href="https://play.google.com/store/apps/details?id=app.gathering.jamaa">Google Play</a>`,
 	).lacks(leaks...)
@@ -279,7 +279,7 @@ func TestInviteLinkPage(t *testing.T) {
 	}
 	gone := open(t, h, path).is(http.StatusNotFound).has(
 		`<html lang="ar" dir="rtl">`,
-		`<title>جمعة</title>`,
+		`<title>گعدة</title>`,
 		`<h1>هالغرفة ما موجودة، أو خلصت</h1>`,
 		`href="https://apps.apple.com/app/id6000000000"`,
 		`href="https://play.google.com/store/apps/details?id=app.gathering.jamaa"`,

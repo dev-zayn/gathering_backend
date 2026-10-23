@@ -42,19 +42,19 @@ type words struct {
 }
 
 var arabic = words{
-	Lang: "ar", Dir: "rtl", Brand: "جمعة",
-	Join:      "انضم لغرفة {game} · جمعة",
+	Lang: "ar", Dir: "rtl", Brand: "گعدة",
+	Join:      "انضم لغرفة {game} · گعدة",
 	CodeLabel: "رمز الغرفة",
 	Copy:      "انسخ الرمز",
 	Copied:    "انّسخ الرمز",
-	OpenIt:    "عندك جمعة؟ افتحها واكتب الرمز",
-	GetIt:     "ما عندك جمعة؟ نزّلها",
+	OpenIt:    "عندك گعدة؟ افتحها واكتب الرمز",
+	GetIt:     "ما عندك گعدة؟ نزّلها",
 	NotFound:  "هالغرفة ما موجودة، أو خلصت",
 	TryAgain:  "ما كدرنا نفتح الرابط هسّه. جرّب بعد شوية.",
 
-	TourJoin:      "انضم لبطولة {name} · جمعة",
+	TourJoin:      "انضم لبطولة {name} · گعدة",
 	TourCodeLabel: "رمز البطولة",
-	TourOpenIt:    "عندك جمعة؟ افتحها، ومن البطولات اكتب الرمز",
+	TourOpenIt:    "عندك گعدة؟ افتحها، ومن البطولات اكتب الرمز",
 	TourNotFound:  "هالبطولة ما موجودة، أو خلصت",
 }
 
