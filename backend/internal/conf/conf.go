@@ -3,7 +3,6 @@
 package conf
 
 import (
-	"encoding/base64"
 	"fmt"
 	"os"
 	"strconv"
@@ -58,12 +57,13 @@ type Config struct {
 	// Links is where invite links live and how the phones claim them.
 	Links LinksConfig
 
-	SSO   SSOConfig
-	Token TokenConfig
-	OTP   OTPConfig
-	Push  PushConfig
-	Relay RelayConfig
-	Rooms RoomsConfig
+	SSO         SSOConfig
+	Token       TokenConfig
+	OTP         OTPConfig
+	Push        PushConfig
+	Relay       RelayConfig
+	Rooms       RoomsConfig
+	Tournaments TournamentsConfig
 }
 
 // SSOConfig is the OIDC provider that says who an admin is. Any provider that
@@ -88,19 +88,24 @@ func (s SSOConfig) Configured() bool {
 	return s.Issuer != "" && s.ClientID != "" && s.Audience != ""
 }
 
-// PushConfig is Firebase Cloud Messaging. Without it a push is a log line
-// instead: the inbox still fills, and nothing else is held up by the phones.
+// PushConfig is Firebase Cloud Messaging (docs/PUSH.md). Without a key a
+// push is a "would push" log line instead: the inbox still fills, and
+// nothing else is held up by the phones.
 type PushConfig struct {
+	// ProjectID is the Firebase project, gathering-supergame.
 	ProjectID string
-	// Credentials is the service account's JSON key, decoded.
-	Credentials []byte
-	Timeout     time.Duration
-	// PerGameHourly is how many pushes one game may send one player in an hour.
-	PerGameHourly int
+	// CredentialsFile is the path to the service account's JSON key, kept
+	// outside the repository. The api reads it once, at boot.
+	CredentialsFile string
+	// Endpoint overrides Firebase's base URL, for a test's fake; empty is
+	// https://fcm.googleapis.com.
+	Endpoint string
+	// Timeout bounds one send, and one token exchange.
+	Timeout time.Duration
 }
 
-// Configured says whether there is a Firebase project to push through.
-func (p PushConfig) Configured() bool { return p.ProjectID != "" && len(p.Credentials) > 0 }
+// Configured says whether there is a Firebase project and a key to push with.
+func (p PushConfig) Configured() bool { return p.ProjectID != "" && p.CredentialsFile != "" }
 
 type TokenConfig struct {
 	// PrivateKey signs; its public half verifies and is published as the JWKS.
@@ -184,15 +189,27 @@ type ManifestConfig struct {
 	Batch  int
 }
 
-// LinksConfig is the invite link, https://<host>/r/<code>, and the two files
-// the phones read to claim that host as theirs.
+// LinksConfig is the invite link, https://<host>/r/<code>, the two documents
+// the phones read to claim that host as the app's, and the stores a phone
+// without the app is sent to. docs/JOINING.md is the contract.
 type LinksConfig struct {
-	PublicURL      string
-	AppBundleID    string
+	PublicURL string
+
+	// AndroidPackage and AppLinksSHA256 are Android's claim: the app's
+	// package and its signing certificates' fingerprints. No fingerprint is
+	// no claim, and assetlinks.json answers [].
+	AndroidPackage string
 	AppLinksSHA256 []string
-	AppleTeamID    string
-	StoreURLIOS    string
-	StoreURLAndrd  string
+
+	// AppleTeamID and IOSBundle are iOS's: TEAM.BUNDLE is the app's id. No
+	// team is no claim.
+	AppleTeamID string
+	IOSBundle   string
+
+	// AppStoreURL and PlayStoreURL are where the link's page sends a phone
+	// without the app. Empty is no key for that store.
+	AppStoreURL  string
+	PlayStoreURL string
 }
 
 // RelayConfig bounds what one socket may do. The relay never reads inside a
@@ -209,6 +226,14 @@ type RoomsConfig struct {
 	LobbyIdle time.Duration
 	MaxPlay   time.Duration
 	Alphabet  string
+}
+
+// TournamentsConfig is how big a knockout may be, and how long a tournament
+// with no start time may sit open (docs/TOURNAMENTS.md). Its code is drawn
+// from ROOM_CODE_ALPHABET, as a room's.
+type TournamentsConfig struct {
+	MaxEntrants int
+	OpenFor     time.Duration
 }
 
 // Load fails loudly and immediately: a binary missing a signing key should not
@@ -274,11 +299,12 @@ func Load() (Config, error) {
 
 		Links: LinksConfig{
 			PublicURL:      opt("LINK_PUBLIC_URL", "http://localhost:8080"),
-			AppBundleID:    opt("APP_BUNDLE_ID", "app.gathering.jamaa"),
+			AndroidPackage: opt("APP_ANDROID_PACKAGE", "app.gathering.jamaa"),
 			AppLinksSHA256: list("APP_LINKS_SHA256"),
 			AppleTeamID:    os.Getenv("APPLE_TEAM_ID"),
-			StoreURLIOS:    os.Getenv("STORE_URL_IOS"),
-			StoreURLAndrd:  os.Getenv("STORE_URL_ANDROID"),
+			IOSBundle:      opt("APP_IOS_BUNDLE", "app.gathering.jamaa"),
+			AppStoreURL:    os.Getenv("APP_STORE_URL"),
+			PlayStoreURL:   os.Getenv("PLAY_STORE_URL"),
 		},
 
 		Token: TokenConfig{
@@ -320,19 +346,22 @@ func Load() (Config, error) {
 			MaxPlay:   optDur("ROOM_MAX_PLAY", 2*time.Hour),
 			Alphabet:  opt("ROOM_CODE_ALPHABET", "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"),
 		},
+		Tournaments: TournamentsConfig{
+			MaxEntrants: optInt("TOURNAMENT_MAX_ENTRANTS", 64),
+			OpenFor:     optDur("TOURNAMENT_OPEN_FOR", 7*24*time.Hour),
+		},
 	}
 
 	c.Push = PushConfig{
-		ProjectID:     os.Getenv("FCM_PROJECT_ID"),
-		Timeout:       optDur("FCM_TIMEOUT", 10*time.Second),
-		PerGameHourly: optInt("PUSH_PER_GAME_HOURLY", 20),
+		ProjectID:       strings.TrimSpace(os.Getenv("FCM_PROJECT_ID")),
+		CredentialsFile: strings.TrimSpace(os.Getenv("FCM_CREDENTIALS_FILE")),
+		Endpoint:        strings.TrimSpace(os.Getenv("FCM_ENDPOINT")),
+		Timeout:         optDur("FCM_TIMEOUT", 10*time.Second),
 	}
-	if raw := strings.TrimSpace(os.Getenv("FCM_CREDENTIALS")); raw != "" {
-		key, err := base64.StdEncoding.DecodeString(raw)
-		if err != nil {
-			return Config{}, fmt.Errorf("config: FCM_CREDENTIALS is not base64: %w", err)
-		}
-		c.Push.Credentials = key
+	// A key with no project to send to is a mistake, not a laptop: a laptop
+	// has neither, or the project alone, and pushes to the log.
+	if c.Push.CredentialsFile != "" && c.Push.ProjectID == "" {
+		return Config{}, fmt.Errorf("config: FCM_CREDENTIALS_FILE needs FCM_PROJECT_ID")
 	}
 
 	// Each of these has a laptop stand-in behind Debug and nothing else: no

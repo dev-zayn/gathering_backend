@@ -6,22 +6,20 @@ import (
 
 	"github.com/danielgtaylor/huma/v2"
 
+	"github.com/jamaa/gathering/backend/internal/biz/friends"
 	"github.com/jamaa/gathering/backend/internal/http/authn"
 	"github.com/jamaa/gathering/backend/internal/pkg/caller"
 )
 
-// Other players: the card and the search. Friendship joins the card with the
-// friends milestone.
+// Other players: the card and the search. The card says where the caller
+// stands with them (docs/FRIENDS.md).
 
 type playerCardRequest struct {
-	Handle string `path:"handle" example:"zayn_4821"`
+	Ref string `path:"ref" maxLength:"24" example:"zayn_4821" doc:"A handle, with or without its @, or a player id."`
 }
 
 type playerCardResponse struct {
-	Body struct {
-		playerJSON
-		Friendship string `json:"friendship" enum:"none,requested,incoming,friends,blocked" doc:"Where the caller stands with them."`
-	}
+	Body *friends.PlayerCard
 }
 
 type searchRequest struct {
@@ -46,10 +44,13 @@ func (h *Handler) registerPlayers(api huma.API) {
 	}, h.search)
 
 	huma.Register(api, huma.Operation{
-		OperationID: "player", Method: http.MethodGet, Path: "/v1/players/{handle}",
-		Summary:     "A player's card",
-		Description: "What anybody signed in may see of a player: nickname, handle, avatar, and where the caller stands with them.",
-		Tags:        []string{"players"}, Metadata: session,
+		OperationID: "player", Method: http.MethodGet, Path: "/v1/players/{ref}",
+		Summary: "A player's card",
+		Description: "What anybody signed in may see of a player — nickname, handle, avatar — with " +
+			"where the caller stands with them, the friends they share, and, between friends only, " +
+			"their presence. By handle or by id. not_found for nobody, and for a player who blocked " +
+			"the caller.",
+		Tags: []string{"players"}, Metadata: session,
 	}, h.card)
 }
 
@@ -67,12 +68,9 @@ func (h *Handler) search(ctx context.Context, in *searchRequest) (*searchRespons
 }
 
 func (h *Handler) card(ctx context.Context, in *playerCardRequest) (*playerCardResponse, error) {
-	p, err := h.Profiles.Card(ctx, in.Handle)
+	c, err := h.Friends.Card(ctx, caller.FromContext(ctx).Subject, in.Ref)
 	if err != nil {
 		return nil, err
 	}
-	out := &playerCardResponse{}
-	out.Body.playerJSON = card(p)
-	out.Body.Friendship = "none"
-	return out, nil
+	return &playerCardResponse{Body: c}, nil
 }

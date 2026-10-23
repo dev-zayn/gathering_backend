@@ -30,6 +30,11 @@ type Error struct {
 	// it to know which scope to ask for, rather than guessing.
 	Scope string `json:"scope,omitempty"`
 
+	// Room is the room a refusal is about when it is not the one asked for:
+	// in_another_room names the room the player is still in, so the app can
+	// offer to go back to it.
+	Room string `json:"room,omitempty"`
+
 	// Cause never reaches the client. It is what gets logged.
 	Cause error `json:"-"`
 }
@@ -90,6 +95,12 @@ func Incomplete(missing []string) *Error {
 // a partner does not have to guess which one they are missing.
 func ScopeRequired(scope string) *Error {
 	return &Error{Status: http.StatusForbidden, Code: "scope_required", Scope: scope}
+}
+
+// InAnotherRoom refuses a create or a join for a player who is still a current
+// member of another open room, and names that room.
+func InAnotherRoom(roomID string) *Error {
+	return &Error{Status: http.StatusConflict, Code: "in_another_room", Room: roomID}
 }
 
 // WrongCode is the one failure that tells the client how much room is left. At

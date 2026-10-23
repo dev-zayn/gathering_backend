@@ -83,6 +83,21 @@ const (
 	// it off and ends the game's tokens with it.
 	ActionLibraryAdded   = "library.added"
 	ActionLibraryRemoved = "library.removed"
+
+	// An admin closing a room from the console, for everybody in it.
+	ActionRoomClosed = "room.closed"
+
+	// An admin's announcement: one system notification to many players.
+	ActionNotificationSent = "notification.sent"
+
+	// The console's hand in tournaments (docs/TOURNAMENTS.md, "The
+	// console"): an official one made, any one started, cancelled or
+	// finished, a match decided by an admin.
+	ActionTournamentCreated   = "tournament.created"
+	ActionTournamentStarted   = "tournament.started"
+	ActionTournamentCancelled = "tournament.cancelled"
+	ActionTournamentFinished  = "tournament.finished"
+	ActionMatchAwarded        = "match.awarded"
 )
 
 // ActorWorker is written where a decision had nobody behind it. "The clock did"

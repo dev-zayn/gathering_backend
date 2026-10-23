@@ -64,12 +64,14 @@ type Manifest struct {
 	// Room is how a room for this game is shaped: the platform admits players
 	// by it and the relay enforces it. The game page never configures a room
 	// itself.
-	Room Room `json:"room"`
+	Room RoomBlock `json:"room"`
 }
 
-// Room is the manifest's room block. It is also one jsonb column of the row,
-// whole, so a game's bounds are read without parsing the whole document.
-type Room struct {
+// RoomBlock is the manifest's room block. It is also one jsonb column of the
+// game's row, whole, so a game's bounds are read without parsing the whole
+// document, and it is copied into every room made for the game (rooms.config),
+// so a manifest that changes later does not reshape a room already open.
+type RoomBlock struct {
 	Players struct {
 		Min int `json:"min"`
 		Max int `json:"max"`
@@ -82,9 +84,9 @@ type Room struct {
 	State      enum.StateMode `json:"state"`
 }
 
-func (r *Room) Scan(src any) error { return scanJSON(src, r) }
+func (r *RoomBlock) Scan(src any) error { return scanJSON(src, r) }
 
-func (r Room) Value() (driver.Value, error) { return valueJSON(r) }
+func (r RoomBlock) Value() (driver.Value, error) { return valueJSON(r) }
 
 // FirstParty is the tier, not anybody's word for it.
 func (m *Manifest) FirstParty() bool { return m.Publisher.Tier == enum.TierFirstParty }

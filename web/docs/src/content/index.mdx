@@ -8,14 +8,43 @@ Gathering (جمعة) is an app where friends open a **private room** and play a 
 online or sitting next to each other on the same Wi-Fi. A game is an HTML page you host. The app
 loads it in a frame, puts the room's players in front of it, relays every message between them,
 and keeps a shared state if the game wants one. Your page never opens a socket and never holds a
-token: `window.gathering` is the whole of what it needs.
+token: `window.gathering` is the whole of what it needs, and nothing about the player crosses the
+frame except what [the bridge](/bridge) answers.
 
 ## What you build
 
 - A page at the `entry` address in your [manifest](/manifest), laid out for a phone, Arabic first.
-- Game logic on top of [`window.gathering.room`](/bridge): messages, members, a versioned state.
-- Optionally, a server of your own, which verifies players through a [room ticket](/rooms).
+- Game logic on top of [`window.gathering.room`](/bridge#the-room): messages, members, a versioned
+  state, one round at a time.
+- Optionally, a server of your own: it verifies players through a [room ticket](/rooms#the-ticket),
+  posts a round's [results](/rooms#results), and tells players things through their
+  [inbox](/notifications).
 
-<Guides />
+<Guides
+  title="Guides"
+  id="guides"
+  guides={[
+    {
+      href: '/manifest',
+      name: 'The manifest',
+      description: 'The one document you publish: your game, what it may do and the shape of its rooms.',
+    },
+    {
+      href: '/auth',
+      name: 'Authentication',
+      description: 'How a player arrives already signed in, and what your server does with the code.',
+    },
+    {
+      href: '/bridge',
+      name: 'The bridge',
+      description: "window.gathering: the room, the players, the friends and the app's chrome, from inside your page.",
+    },
+    {
+      href: '/rooms',
+      name: 'Rooms',
+      description: 'Rounds, the frames the relay carries, the ticket your server verifies and the results it posts.',
+    },
+  ]}
+/>
 
 <Player />

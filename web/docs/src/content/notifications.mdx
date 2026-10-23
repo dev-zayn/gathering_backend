@@ -1,0 +1,196 @@
+# Notifications
+
+Tell a player something from your own server — their turn, a match that ended, a score beaten — and it lands in their inbox in the app. A tap opens your game where you say. {{ className: 'lead' }}
+
+Every player has one inbox: friend requests, invites to rooms, Gathering's own announcements and what games raise, newest first, each read or unread. Your server raises a notification for the player whose game token it holds, as your game: the line carries your game's name and icon, and tapping it opens your game at the `deep_link` you gave, the way any launch does — the path arrives beside the one-time code as `path` ([Authentication](/auth)).
+
+<Note>
+  A notification lands in the inbox, where the app shows an unread count on its bell, and is also
+  pushed to the player's phones with the title and body as you gave them: on the lock screen when
+  the app is closed, as the app's own banner when it is open. Tapping it opens your game at the
+  `deep_link`, as the inbox line does. Nothing to change on your side.
+</Note>
+
+---
+
+## Raising one {{ tag: 'POST', label: '/v1/bridge/notifications' }}
+
+<Row>
+  <Col>
+
+    Post with a game token that carries `notify:send` — ask for it in your manifest's `scopes`. Any of your game's tokens for the player will do. The notification is for that token's player and nobody else: there is no way to write to somebody else's inbox, and no way to name another game.
+
+    ### Required attributes
+
+    <Properties>
+      <Property name="title" type="string">
+        1 to 60 characters — characters, not bytes: sixty Arabic letters fit. What the line says in bold. Spaces around it are trimmed.
+      </Property>
+    </Properties>
+
+    ### Optional attributes
+
+    <Properties>
+      <Property name="body" type="string">
+        Up to 160 characters, under the title.
+      </Property>
+      <Property name="deep_link" type="string">
+        A path inside your game, like `/match/42`, up to 512 characters: the app opens your game with it as the launch's `path`. Empty opens your front page. Never an address: `https://…` and `//host` are refused, so a notification can only ever send a player into your own game.
+      </Property>
+      <Property name="idempotency_key" type="string">
+        Up to 64 characters. A key you already used for this player updates that notification instead of adding one — the new words, back at the top, unread — and answers `200` with its id. It is pushed again too, in place of the earlier push on the phone. One key per thing you are telling: `turn:{match}` keeps one line per match however many turns go by, and a retry after a timeout cannot add a second.
+      </Property>
+    </Properties>
+
+    The answer is `201 { id }` for a new notification, or `200 { id }` for a key already used: the same id as the first time.
+
+  </Col>
+  <Col sticky>
+
+    <CodeGroup title="Request" tag="POST" label="/v1/bridge/notifications">
+
+    ```bash {{ title: 'cURL' }}
+    curl -X POST https://api.gathering.example/v1/bridge/notifications \
+      -H "Authorization: Bearer $ACCESS_TOKEN" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "title": "دورك يا بطل",
+        "body": "مريم لعبت، والدور عليك",
+        "deep_link": "/match/42",
+        "idempotency_key": "turn:42"
+      }'
+    ```
+
+    ```js
+    const res = await fetch('https://api.gathering.example/v1/bridge/notifications', {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${await tokenFor(playerId)}`,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        title: 'دورك يا بطل',
+        body: 'مريم لعبت، والدور عليك',
+        deep_link: `/match/${match.id}`,
+        idempotency_key: `turn:${match.id}`,
+      }),
+    })
+    if (res.status === 429) {
+      const { retry_after } = await res.json()
+      return later(retry_after) // seconds
+    }
+    if (!res.ok) throw new Error(`gathering: ${(await res.json()).error}`)
+    const { id } = await res.json()
+    ```
+
+    </CodeGroup>
+
+    <CodeGroup title="Response">
+
+    ```json {{ title: '201' }}
+    { "id": "ntf_7f3k9d2m8q1x4b6n" }
+    ```
+
+    ```json {{ title: '200' }}
+    { "id": "ntf_7f3k9d2m8q1x4b6n" }
+    ```
+
+    </CodeGroup>
+
+  </Col>
+</Row>
+
+---
+
+## Limits
+
+<Row>
+  <Col>
+
+    An inbox is the player's, not a channel of yours: a game that fills it gets switched off by the player, or by us.
+
+    <Properties>
+      <Property name="10 an hour" type="per player, per game">
+        Every call that gets past the field checks counts, a reused key included. The eleventh in the hour is refused with `429 too_many_requests` and `retry_after`, the seconds until the hour that started with your first call is over. Collapse what you send with a key rather than sending more.
+      </Property>
+      <Property name="90 days" type="kept">
+        A notification is kept 90 days from the last time it was raised, read or not, then deleted.
+      </Property>
+      <Property name="the shelf" type="who">
+        Only a player who has your game on their shelf can be told anything. One who took it off, or a game an admin suspended, is a `401`: stop sending for them.
+      </Property>
+    </Properties>
+
+  </Col>
+  <Col sticky>
+
+    <CodeGroup title="Too many">
+
+    ```json {{ title: '429' }}
+    { "error": "too_many_requests", "retry_after": 2412 }
+    ```
+
+    </CodeGroup>
+
+  </Col>
+</Row>
+
+---
+
+## When it is refused
+
+<Row>
+  <Col>
+
+    Asked in this order, so the answer you get is the first thing to fix.
+
+    <Properties>
+      <Property name="revoked_token" type="401">
+        The game left the player's shelf: they took it off, or an admin suspended it. Stop sending for them.
+      </Property>
+      <Property name="wrong_token" type="403">
+        Not a game token. A room ticket opens nothing on our API.
+      </Property>
+      <Property name="scope_required" type="403">
+        The token does not carry `notify:send`; `scope` names it. Add it to your manifest's `scopes` — a scope a published game newly asks for waits until an admin accepts it — and the tokens minted after carry it.
+      </Property>
+      <Property name="invalid_fields" type="422">
+        `title: 1_to_60`, `body: up_to_160`, `deep_link: must_be_a_path`, `idempotency_key: up_to_64`. Every problem comes back at once, and nothing is counted.
+      </Property>
+      <Property name="invalid_token" type="401">
+        The game is no longer on the player's shelf, or the player was switched off: stop sending for them.
+      </Property>
+      <Property name="too_many_requests" type="429">
+        The hour's ten are spent; `retry_after` says for how long.
+      </Property>
+    </Properties>
+
+  </Col>
+  <Col sticky>
+
+    <CodeGroup title="Failures">
+
+    ```json {{ title: '403' }}
+    { "error": "scope_required", "scope": "notify:send" }
+    ```
+
+    ```json {{ title: '422' }}
+    {
+      "error": "invalid_fields",
+      "fields": {
+        "title": "1_to_60",
+        "deep_link": "must_be_a_path"
+      }
+    }
+    ```
+
+    </CodeGroup>
+
+  </Col>
+</Row>
+
+---
+
+## What the player sees
+
+A push on their phone with your title and body, and a line in the inbox with your game's icon and name, the title and body, and how long ago; unread until they open it. Tapping either opens your game at the deep link, with a fresh one-time code like any launch, so your page needs no special path for it: read `path` and go there. The same inbox holds friend requests, invites to rooms and Gathering's announcements, which Gathering raises itself: what your server raises is always your game's own line. Inviting from inside your page is [`room.invite()`](/bridge#inviting-to-the-room).

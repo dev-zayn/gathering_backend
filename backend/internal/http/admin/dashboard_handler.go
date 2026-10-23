@@ -11,14 +11,22 @@ import (
 	"github.com/jamaa/gathering/backend/internal/pkg/caller"
 )
 
+type dashboardRoomsJSON struct {
+	Lobby   int64 `json:"lobby" doc:"Open rooms waiting in their lobby, between rounds included."`
+	Playing int64 `json:"playing" doc:"Open rooms playing a round."`
+	Today   int64 `json:"today" doc:"Rooms made since midnight UTC."`
+}
+
 type dashboardResponse struct {
 	Body struct {
-		Players   int64 `json:"players" doc:"Everybody who may sign in."`
-		NewToday  int64 `json:"new_today" doc:"Signed up since midnight UTC."`
-		Active    int64 `json:"active" doc:"Used the app in the last 7 days."`
-		Online    int   `json:"online" doc:"Here this minute."`
-		Games     int64 `json:"games" doc:"Published games. Arrives with the registry."`
-		RoomsLive int64 `json:"rooms_live" doc:"Rooms being played right now. Arrives with the rooms."`
+		Players     int64              `json:"players" doc:"Everybody who may sign in."`
+		NewToday    int64              `json:"new_today" doc:"Signed up since midnight UTC."`
+		Active      int64              `json:"active" doc:"Used the app in the last 7 days."`
+		Online      int                `json:"online" doc:"Here this minute."`
+		Games       int64              `json:"games" doc:"Published games."`
+		RoomsLive   int64              `json:"rooms_live" doc:"Rooms open right now: in the lobby or playing."`
+		Rooms       dashboardRoomsJSON `json:"rooms" doc:"The open rooms by status, and the rooms made today."`
+		RoundsToday int64              `json:"rounds_today" doc:"Rounds started since midnight UTC."`
 	}
 }
 
@@ -39,5 +47,7 @@ func (h *Handler) dashboard(ctx context.Context, _ *struct{}) (*dashboardRespons
 	out := &dashboardResponse{}
 	out.Body.Players, out.Body.NewToday, out.Body.Active, out.Body.Online = o.Players, o.NewToday, o.Active, o.Online
 	out.Body.Games, out.Body.RoomsLive = o.Games, o.RoomsLive
+	out.Body.Rooms = dashboardRoomsJSON{Lobby: o.RoomsLobby, Playing: o.RoomsPlaying, Today: o.RoomsToday}
+	out.Body.RoundsToday = o.RoundsToday
 	return out, nil
 }

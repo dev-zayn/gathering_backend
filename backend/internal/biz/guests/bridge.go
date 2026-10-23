@@ -2,11 +2,13 @@ package guests
 
 import (
 	"context"
+	stderrors "errors"
 	"strings"
 	"time"
 
 	"github.com/jamaa/gathering/backend/internal/biz/games"
 	"github.com/jamaa/gathering/backend/internal/biz/identity"
+	"github.com/jamaa/gathering/backend/internal/biz/rooms"
 	"github.com/jamaa/gathering/backend/internal/pkg/errors"
 	"github.com/jamaa/gathering/backend/internal/pkg/files"
 	applog "github.com/jamaa/gathering/backend/internal/pkg/log"
@@ -31,7 +33,21 @@ type Bridge struct {
 	// bundled avatars only, where the id is the picture.
 	Files     files.Files
 	AvatarTTL time.Duration
+
+	// Rooms describes the room a token names. Nil is a room that is never
+	// described.
+	Rooms Rooms
+
+	// Inbox is where a game's notifications go; Limiter holds each game to
+	// NotifyHourly a player an hour (NotifyHourly when zero). Nil Limiter
+	// limits nothing, which only a test wants.
+	Inbox        Notifier
+	Limiter      identity.Limiter
+	NotifyHourly int
 }
+
+// errNoInbox is a bridge wired without an inbox asked to raise into one.
+var errNoInbox = stderrors.New("guests: the bridge has no inbox")
 
 // Caller is the game token, read once: who is playing, which game, in which
 // room, with what.
@@ -57,8 +73,9 @@ func (c Caller) has(scope string) bool {
 type Context struct {
 	Player Player
 
-	// Room is the room the game was opened into. Nil until the rooms arrive:
-	// the token may carry an id, but there is nothing to say about it yet.
+	// Room is the room the game was opened into, while the player is still a
+	// current member of it. Nil otherwise: a game opened outside a room, or a
+	// player who has since left it.
 	Room *RoomSummary
 
 	Scopes []string
@@ -78,13 +95,30 @@ type Player struct {
 	AvatarURL string
 }
 
-// RoomSummary is the room as a game's server sees it. Arrives with the rooms.
+// RoomSummary is the room as a game's server sees it: which room, where it
+// stands and which round it is on, the player's place in it, and who else is
+// there.
 type RoomSummary struct {
-	ID     string
-	Code   string
-	Status string
-	Role   string
-	Seat   int
+	ID      string
+	Code    string
+	Status  string
+	Round   int
+	Role    string
+	Seat    int
+	Members []RoomMember
+
+	// Tournament is the match the room plays (docs/TOURNAMENTS.md): ids and
+	// numbers, no names. Nil for any other room.
+	Tournament *rooms.MatchBrief
+}
+
+// RoomMember is one current member. The nickname is there with
+// identity:read only, like the player's own.
+type RoomMember struct {
+	ID       string
+	Nickname string
+	Role     string
+	Seat     int
 }
 
 // Who answers on every launch: a cached nickname goes stale the day the
@@ -104,6 +138,16 @@ func (b *Bridge) Who(ctx context.Context, c Caller) (*Context, error) {
 	}
 	if !grant.InLibrary {
 		return nil, errors.Unauthorized("invalid_token")
+	}
+
+	if c.RoomID != "" && b.Rooms != nil {
+		brief, err := b.Rooms.Brief(ctx, c.RoomID, c.PlayerID)
+		if err != nil {
+			return nil, err
+		}
+		if brief != nil {
+			out.Room = summary(brief, c.has(ScopeIdentityRead))
+		}
 	}
 
 	if !c.has(ScopeIdentityRead) {
@@ -140,4 +184,81 @@ func (b *Bridge) Who(ctx context.Context, c Caller) (*Context, error) {
 		out.Player.Avatar = player.AvatarKey
 	}
 	return out, nil
+}
+
+// ResultLine is one line of a room's results as a game's server reads it:
+// the name and the picture with identity:read only, like everything else on
+// the bridge.
+type ResultLine struct {
+	Player   string
+	Nickname string
+
+	// Avatar is a bundled avatar's id; AvatarURL a signed link to an
+	// uploaded picture. One of them, or neither.
+	Avatar    string
+	AvatarURL string
+
+	Score       float64
+	Rank        int
+	SubmittedBy string
+}
+
+// Written is the answer to a game's server writing results: the round it
+// wrote, and that round's lines as they now stand.
+type Written struct {
+	Round int
+	Lines []ResultLine
+}
+
+// Results is the game's server writing a round's results. The room is the
+// body's, not the token's: any of this game's tokens for a player who was in
+// the room will do. round is the body's too: nil is the room's own round, the
+// one playing or the one just finished. The route already refuses a token
+// without results:write; asking again here keeps the rule with the bridge
+// rather than the route.
+func (b *Bridge) Results(ctx context.Context, c Caller, roomID string, round *int, scores []rooms.ScoreIn) (*Written, error) {
+	if !c.has(ScopeResultsWrite) {
+		return nil, errors.ScopeRequired(ScopeResultsWrite)
+	}
+	if b.Rooms == nil {
+		return nil, errors.NotFound("not_found")
+	}
+	written, err := b.Rooms.SubmitResults(ctx, rooms.Submission{
+		GameID: c.GameID, PlayerID: c.PlayerID, RoomID: roomID, Round: round, Scores: scores,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	names := c.has(ScopeIdentityRead)
+	out := &Written{Round: written.Round, Lines: make([]ResultLine, 0, len(written.Results))}
+	for _, r := range written.Results {
+		line := ResultLine{Player: r.Player, Score: r.Score, Rank: r.Rank, SubmittedBy: r.SubmittedBy}
+		if names {
+			line.Nickname, line.Avatar = r.Nickname, r.Avatar
+			if r.AvatarURL != nil {
+				line.AvatarURL = *r.AvatarURL
+			}
+		}
+		out.Lines = append(out.Lines, line)
+	}
+	return out, nil
+}
+
+// summary is the room as the bridge hands it over: the nicknames with
+// identity:read only.
+func summary(b *rooms.Brief, names bool) *RoomSummary {
+	out := &RoomSummary{
+		ID: b.ID, Code: b.Code, Status: b.Status, Round: b.Round, Role: b.Role, Seat: b.Seat,
+		Tournament: b.Tournament,
+	}
+	out.Members = make([]RoomMember, 0, len(b.Members))
+	for _, m := range b.Members {
+		member := RoomMember{ID: m.ID, Role: m.Role, Seat: m.Seat}
+		if names {
+			member.Nickname = m.Nickname
+		}
+		out.Members = append(out.Members, member)
+	}
+	return out
 }

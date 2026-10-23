@@ -1,10 +1,13 @@
 // Command fixtures is a development stand-in for game studios: it serves a
 // directory of games, each with its manifest at /.well-known/gathering-game.json,
-// so a laptop stack has something to register and open. It also runs a tiny
+// so a laptop stack has something to register and open. The games are the
+// workspace's gathering_games/, one folder each: a plain one (xo, tap) served
+// as it is, a built one (the arcade's) from its dist/. It also runs a tiny
 // "partner backend" under /partner/: a game's own server that receives the
 // launch code on its entry page, spends it at the api's token endpoint with
-// its client secret, and asks the bridge who arrived. That is the proof the
-// partner model works end to end, and the sweep drives it.
+// its client secret, asks the bridge who arrived, and verifies a room ticket
+// against the api's public keys. That is the proof the partner model works
+// end to end, and the sweep drives it.
 package main
 
 import (
@@ -40,9 +43,14 @@ func main() {
 		w.Header().Set("Content-Type", "application/json")
 		_, _ = w.Write([]byte(`{"status":"ok"}`))
 	})
-	partner := &partner{cfg: cfg, client: &http.Client{Timeout: 10 * time.Second}}
+	client := &http.Client{Timeout: 10 * time.Second}
+	partner := &partner{
+		cfg: cfg, client: client,
+		tickets: newTickets(cfg.api+"/.well-known/jwks.json", cfg.clientID, client),
+	}
 	mux.HandleFunc("/partner/entry", partner.entry)
 	mux.HandleFunc("/partner/exchange", partner.exchange)
+	mux.HandleFunc("/partner/verify-ticket", partner.verifyTicket)
 	mux.Handle("/", &games{dir: cfg.dir, public: cfg.public})
 
 	srv := &http.Server{
@@ -80,7 +88,7 @@ func (g *games) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
 	}
-	clean := path.Clean("/" + r.URL.Path)
+	clean := g.built(path.Clean("/" + r.URL.Path))
 	file := filepath.Join(g.dir, filepath.FromSlash(clean))
 	info, err := os.Stat(file)
 	if err == nil && info.IsDir() {
@@ -97,6 +105,9 @@ func (g *games) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
+	// Named rather than guessed: the system's MIME table differs between a
+	// laptop and the image, and a module script with the wrong type does not
+	// run.
 	switch filepath.Ext(file) {
 	case ".json":
 		w.Header().Set("Content-Type", "application/json")
@@ -104,16 +115,38 @@ func (g *games) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	case ".html":
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		data = bytes.ReplaceAll(data, []byte("${PUBLIC_URL}"), []byte(g.public))
+	case ".js", ".mjs":
+		w.Header().Set("Content-Type", "text/javascript; charset=utf-8")
+	case ".css":
+		w.Header().Set("Content-Type", "text/css; charset=utf-8")
+	case ".svg":
+		w.Header().Set("Content-Type", "image/svg+xml")
 	}
 	w.Header().Set("Cache-Control", "no-store")
 	http.ServeContent(w, r, filepath.Base(file), info.ModTime(), bytes.NewReader(data))
 }
 
+// built answers a game that has a dist/ from it: that folder is a project, its
+// sources and node_modules beside the build, and only what it built is the
+// game. /outsider/assets/x.js is then outsider/dist/assets/x.js.
+func (g *games) built(clean string) string {
+	id, rest, _ := strings.Cut(strings.TrimPrefix(clean, "/"), "/")
+	if id == "" {
+		return clean
+	}
+	if info, err := os.Stat(filepath.Join(g.dir, id, "dist")); err == nil && info.IsDir() {
+		return "/" + id + "/dist/" + rest
+	}
+	return clean
+}
+
 // partner is the game's own server, as small as one can be: an entry page
-// that shows the code arrived, and the exchange that spends it.
+// that shows the code arrived, the exchange that spends it, and the check
+// that a room ticket is ours and for this game.
 type partner struct {
-	cfg    config
-	client *http.Client
+	cfg     config
+	client  *http.Client
+	tickets *tickets
 }
 
 // entry is where a launch lands when the manifest's entry points here. It

@@ -35,7 +35,7 @@
     "href": "/bridge",
     "file": "bridge",
     "title": "The bridge",
-    "description": "window.gathering: the room, the players, the friends and the host's chrome, from inside your page.",
+    "description": "window.gathering: the room, the players, the friends and the app's chrome, from inside your page.",
     "group": "Building",
     "icon": "Shuffle"
   },
@@ -43,9 +43,25 @@
     "href": "/rooms",
     "file": "rooms",
     "title": "Rooms",
-    "description": "How a room is made, who may be in it, the frames the relay carries, and the ticket your server verifies.",
+    "description": "Who may be in a room, the rounds it plays, the frames the relay carries, the ticket your server verifies and the results it posts.",
     "group": "Building",
-    "icon": "KeyRound"
+    "icon": "Users"
+  },
+  {
+    "href": "/notifications",
+    "file": "notifications",
+    "title": "Notifications",
+    "description": "Tell a player something from your own server: the inbox and the push to their phone, the deep link that opens your game, the key that keeps one line per thing, and the limits.",
+    "group": "Building",
+    "icon": "Bell"
+  },
+  {
+    "href": "/tournaments",
+    "file": "tournaments",
+    "title": "Tournaments",
+    "description": "Knockouts and leagues of your game: match rooms, why every round must be ranked, and the bridge's tournament calls.",
+    "group": "Building",
+    "icon": "Trophy"
   },
   {
     "href": "/app",

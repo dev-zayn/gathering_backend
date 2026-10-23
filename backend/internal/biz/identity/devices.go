@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 
 	"github.com/jamaa/gathering/backend/internal/data"
 	"github.com/jamaa/gathering/backend/internal/data/enum"
@@ -47,7 +48,7 @@ func (d *Devices) Register(ctx context.Context, sessionID, playerID string, plat
 		ID: ids.New(ids.Device), SessionID: sessionID, PlayerID: playerID,
 		Platform: platform, FCMToken: token, CreatedAt: now, LastSeenAt: now,
 	}
-	err := d.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+	err := quiet(d.db).WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		if err := tx.Where("session_id = ? OR fcm_token = ?", sessionID, token).Delete(&model.Device{}).Error; err != nil {
 			return err
 		}
@@ -59,6 +60,13 @@ func (d *Devices) Register(ctx context.Context, sessionID, playerID string, plat
 	return dev, nil
 }
 
+// quiet is the connection for a statement that carries a Firebase token:
+// the SQL trace (DEBUG, and the slow-query log) writes values inline, and a
+// token belongs in this table, not in a log.
+func quiet(db *gorm.DB) *gorm.DB {
+	return db.Session(&gorm.Session{Logger: db.Logger.LogMode(logger.Silent)})
+}
+
 // Forget stops pushes to this session's phone: the person turned them off,
 // or is signing out.
 func (d *Devices) Forget(ctx context.Context, sessionID string) error {
@@ -68,12 +76,37 @@ func (d *Devices) Forget(ctx context.Context, sessionID string) error {
 	return nil
 }
 
-// Drop removes tokens Firebase said are dead: the app was uninstalled.
-func (d *Devices) Drop(ctx context.Context, tokens []string) error {
-	if len(tokens) == 0 {
+// Live is the phones a push may reach for these players: each on a session
+// that has not ended (signed out, revoked, or past its time), of a player
+// not switched off. A phone whose session ended is passed over here, and the
+// sweep deletes it a minute later at most.
+func (d *Devices) Live(ctx context.Context, playerIDs []string, now time.Time) ([]model.Device, error) {
+	if len(playerIDs) == 0 {
+		return nil, nil
+	}
+	var out []model.Device
+	err := data.Conn(ctx, d.db).Raw(`
+		SELECT d.* FROM devices d
+		JOIN sessions s ON s.id = d.session_id
+		JOIN players p ON p.id = d.player_id
+		WHERE d.player_id IN ? AND s.revoked_at IS NULL AND s.expires_at > ? AND NOT p.disabled
+		ORDER BY d.player_id, d.created_at, d.id`, playerIDs, now).Scan(&out).Error
+	if err != nil {
+		return nil, errors.Internal(err)
+	}
+	return out, nil
+}
+
+// Drop removes phones Firebase said are dead: the app was uninstalled, or
+// the token was never one. By id, so the token stays out of every log.
+func (d *Devices) Drop(ctx context.Context, ids ...string) error {
+	if len(ids) == 0 {
 		return nil
 	}
-	return d.db.WithContext(ctx).Where("fcm_token IN ?", tokens).Delete(&model.Device{}).Error
+	if err := data.Conn(ctx, d.db).Where("id IN ?", ids).Delete(&model.Device{}).Error; err != nil {
+		return errors.Internal(err)
+	}
+	return nil
 }
 
 // Sweep removes phones whose session ended: revoked, or past its time.

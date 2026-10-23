@@ -33,6 +33,14 @@ var publicOperations = map[string]string{
 	"oauth-protected-resource": "discovery: names the authorization server for this API",
 	"openid-configuration":     "discovery: the OIDC spelling of the same document",
 	"jwks":                     "the public half of the signing key, which is public by definition",
+
+	// The invite link (docs/JOINING.md). Whoever opens a room's link holds
+	// nothing of ours yet, and neither does a phone checking that the link
+	// host is the app's before it lets the app catch the link.
+	"invite-link":                "the page behind a room's link: the game and the code, and nothing else about the room",
+	"tournament-link":            "the page behind a tournament's link (docs/TOURNAMENTS.md): its name, its game and its code, nothing else",
+	"assetlinks":                 "Android's check of the link host: the app's package and certificate fingerprints, public by design",
+	"apple-app-site-association": "iOS's check of the link host: the app's id and the paths it takes, public by design",
 }
 
 // atLeast is a floor, not a count: it only has to fail if Mount silently stops
@@ -124,4 +132,57 @@ func TestEveryRuleIsAPlainString(t *testing.T) {
 			}
 		}
 	}
+}
+
+// consoleOpenToEveryRole is every console change an operator may make as well
+// as an admin, one id at a time like the public list above.
+var consoleOpenToEveryRole = map[string]string{
+	"admin-session-close": "anybody signed in may sign themselves out",
+}
+
+// Reading is any console role's; changing something is an admin's. A console
+// route that changes something and forgets the role is open to every
+// operator, which looks exactly like deciding it should be: the rooms' close
+// and the announcements are the newest of these.
+func TestConsoleChangesNeedTheAdminRole(t *testing.T) {
+	_, api := New("gathering", "test", applog.New("gathering"))
+	Mount(api, Deps{})
+
+	checked := 0
+	for path, item := range api.OpenAPI().Paths {
+		for _, op := range []*huma.Operation{item.Post, item.Put, item.Patch, item.Delete} {
+			if op == nil || op.Metadata[authn.ScopeKey] != "admin" {
+				continue
+			}
+			if why, ok := consoleOpenToEveryRole[op.OperationID]; ok {
+				t.Logf("any role on purpose: %s %s — %s", op.Method, path, why)
+				continue
+			}
+			checked++
+			if op.Metadata[authn.RoleKey] != "admin" {
+				t.Errorf("%s %s (%s) changes something from the console without the admin role",
+					op.Method, path, op.OperationID)
+			}
+		}
+	}
+	for _, id := range []string{"admin-room-close", "admin-notify"} {
+		if !registered(api, id) {
+			t.Errorf("%s is not registered", id)
+		}
+	}
+	if checked == 0 {
+		t.Fatal("no console change was checked: Mount is not registering what it used to")
+	}
+}
+
+// registered says whether an operation id is mounted.
+func registered(api huma.API, id string) bool {
+	for _, item := range api.OpenAPI().Paths {
+		for _, op := range []*huma.Operation{item.Get, item.Post, item.Put, item.Patch, item.Delete} {
+			if op != nil && op.OperationID == id {
+				return true
+			}
+		}
+	}
+	return false
 }

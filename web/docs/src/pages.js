@@ -21,6 +21,7 @@ import {
   SparklesIcon,
   StoreIcon,
   TriangleAlertIcon,
+  TrophyIcon,
   UsersIcon,
 } from 'lucide-react'
 
@@ -57,6 +58,7 @@ export const ICONS = {
   Inbox: InboxIcon,
   LifeBuoy: LifeBuoyIcon,
   Sparkles: SparklesIcon,
+  Trophy: TrophyIcon,
 }
 
 // The section's own pages and no others. The test is a build-time constant,

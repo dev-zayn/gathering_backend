@@ -1,29 +1,796 @@
 # Rooms
 
-How a room is made, who may be in it, the frames the relay carries, and the ticket your server verifies. {{ className: 'lead' }}
+How a room is made, who is in it, the rounds it plays, the frames the relay carries to your page, the shared state, the limits, the ticket your server verifies, the results it posts, and the invite link that brings players in. {{ className: 'lead' }}
 
-A room belongs to one game and one host. The app creates it, hands out a six-character code, and
-admits players by that code, an invite, or a tap on a room announced on the same Wi-Fi. The
-manifest's `room` block sets the bounds. Your page never opens a socket: the app owns the
-connection and delivers every frame through `window.gathering.room`.
+A room belongs to one game and one host. The app makes it, hands out a six-symbol code, and admits
+players who type it. Your manifest's `room` block is the room's shape, copied when the room is made:
+how many may play, who may write the shared state, the pace, whether a player who stepped out may
+come back. Your page never opens a socket. The app holds the room's connection — one per member,
+reconnecting by itself — and hands your page every frame through `window.gathering.room`.
+
+<Note>
+  Everything below is the same for every member's phone: the same frames, in the same order, with
+  the same sequence numbers, whichever server relayed them. Build your game on that order and it
+  plays the same everywhere.
+</Note>
+
+---
+
+## The room's life
+
+<Row>
+  <Col>
+
+    A room is in the **lobby** while players gather, **playing** while a round is under way, back in the **lobby** after every round, and **ended** once it closes. One room plays as many [rounds](#rounds) as its players like. A player is in one open room at a time.
+
+    <Properties>
+      <Property name="lobby" type="status">
+        Players join by code and take the lowest free seat, 0-based; the host sits in seat 0. The lobby is the app's: your game opens when a round starts. Between rounds the room waits here again, with the same code, seats and connections.
+      </Property>
+      <Property name="playing" type="status">
+        A round. The host started it, with at least `room.players.min` members. Nobody new joins; a member who left comes back only when your manifest says `"rejoin": true`. In the lobby after the round, anybody who left may come back; nobody kicked ever does.
+      </Property>
+      <Property name="ended" type="status">
+        For good. The host closed the room, the last member left, the lobby sat idle with nobody connected for ten minutes, or Gathering closed it from its console. Every member hears `ended`, and the connections close. A round that runs past two hours is not ended: it is finished for you, and the room goes back to its lobby.
+      </Property>
+    </Properties>
+
+    Starting a round, ending it, kicking and leaving are calls on `window.gathering.room` — `start()`, `end({ scores })`, `kick(id)`, `leave()` — made by the app over HTTP on the player's behalf. The relay itself carries no commands: everybody, the caller included, hears the result as a frame. Handing the host over and closing the room are the app's, not your page's.
+
+    A room is **private** — anybody with its code — or **friends-only**, the host's friends alone (the current host's, if it changes hands), and nobody either side of a block with the host. Friends reach a room by its code or by an invite (`room.invite()`, see [The bridge](/bridge#inviting-to-the-room)); an invite holds no seat. Either way your page sees the same frames.
+
+  </Col>
+  <Col sticky>
+
+    <CodeGroup title="The manifest's room block">
+
+    ```json
+    "room": {
+      "players": { "min": 2, "max": 2 },
+      "host": "authoritative",
+      "pace": "turn",
+      "state": "blob",
+      "rejoin": true,
+      "spectators": false,
+      "lan": true
+    }
+    ```
+
+    </CodeGroup>
+
+    <CodeGroup title="Ending the round with scores">
+
+    ```js
+    await gathering.room.end({
+      scores: [
+        { player: 'ply_7f3k9d2m8q1x4b6n', score: 30 },
+        { player: 'ply_4kx8dmzq7v2urybe', score: 10 },
+      ],
+    })
+    // The round is over; the room goes back to its lobby.
+    // Leave rank out and it is computed by score, highest
+    // first, ties sharing a rank: 1, 1, 3.
+    ```
+
+    </CodeGroup>
+
+  </Col>
+</Row>
+
+---
+
+## Rooms from inside your game
+
+<Row>
+  <Col>
+
+    A player who opens your game from the store is in no room. Your page can make one for your game, or join one, without the player leaving it: a "play with a friend" key on your first screen is all it takes.
+
+    <Properties>
+      <Property name="room.create({ visibility })" type="Promise<{ id, code }>">
+        Makes a room for your game, with the player as its host. `visibility` is `private`, the default, or `friends`: the host's friends alone.
+      </Property>
+      <Property name="room.join({ code })" type="Promise<{ id, code }>">
+        Joins the room holding `code`, read as if the player had typed it, for your game only: a code another game's room holds is refused `another_game`.
+      </Property>
+      <Property name="room.join()" type="Promise<{ id, code }>">
+        Opens the app's Join sheet over your page, for your game only: the rooms nearby are your game's, and a code for another game is refused in words. It resolves once the player is in, and rejects `cancelled` when they close the sheet.
+      </Property>
+    </Properties>
+
+    **The lobby takes your page's place.** Once the player is in, the app closes your game and opens the room's lobby, where the host shares the code and starts. Your game opens again, in the room, when the round starts, or at once for a player let into a round under way. Neither call asks the player first: make it from the player's own tap, and do not count on your page running after the promise settles.
+
+    Both are for a page outside a room, with `room.current()` null. They reject with a bare code:
+
+    | Code | When |
+    | --- | --- |
+    | `in_room` | your page is already in a room |
+    | `not_a_room_game` | your manifest has no `room` block |
+    | `invalid_code` | a code that cannot be one |
+    | `cancelled` | the player closed the Join sheet |
+    | `in_another_room` | the player is still in another open room; the app offers the way back to it |
+    | `another_game` | the code is another game's room |
+    | `room_not_found`, `room_closed`, `room_full`, `room_started`, `friends_only`, `kicked` | the room turned the player away, as it would a code typed in the app |
+    | `not_found` | your game is not published |
+
+    The game frame's own menu offers the same without a line of yours. On a page outside a room, a game with a `room` block gets two entries: "سوّي غرفة", a private room as `room.create()` makes it, and "انضم لغرفة", the Join sheet for your game.
+
+  </Col>
+  <Col sticky>
+
+    <CodeGroup title="Play with a friend">
+
+    ```js
+    const room = gathering.room
+
+    if (!(await room.current())) {
+      playWithFriend.onclick = () =>
+        room.create().catch(showRefusal)
+      joinFriend.onclick = () =>
+        room.join().catch((code) => {
+          if (code !== 'cancelled') showRefusal(code)
+        })
+    }
+    // Once a promise resolves, the lobby takes
+    // this page's place: draw nothing after it.
+    ```
+
+    </CodeGroup>
+
+    <CodeGroup title="A code the player read out">
+
+    ```js
+    try {
+      await gathering.room.join({ code: 'k7m-2qx' })
+    } catch (code) {
+      // invalid_code, another_game, room_full, …
+      showRefusal(code)
+    }
+    ```
+
+    </CodeGroup>
+
+  </Col>
+</Row>
+
+---
+
+## Rounds
+
+<Row>
+  <Col>
+
+    Players who finish a game play again in the same room: same code, same seats, nobody joins again. Each game played is a **round**, numbered from 1.
+
+    <Properties>
+      <Property name="room.end({ scores })" type="the round">
+        Ends the round, not the room. The scores are the round's [results](#results), and the room goes back to its lobby. Every member hears it, and no connection closes. It is the host's: call it once, from the host's page, when your game is over.
+      </Property>
+      <Property name="room.start()" type="the next round">
+        The host starts the next round from the lobby, as the first: the app's "play again" button calls it. `round` counts on, and the shared state starts again at version 0 with no data.
+      </Property>
+      <Property name="round" type="in room.current()">
+        The round your page plays, from 1; back in the lobby, the round just finished.
+      </Property>
+    </Properties>
+
+    **One page load is one round.** When the host starts the next round, the app opens your game again, fresh, on every phone, with the state back at version 0. A page from a finished round is replaced, not reused. So start every round from nothing: read `room.current()` and the state as on a first load, and keep nothing in the page from the round before. Anything that lasts across rounds, like a running tally, belongs on your server.
+
+    Your page hears `ended` once per round: when the round is over, whether the host finished it or the room closed while it was under way. To your game, the game is over either way; the room's own life is the app's business.
+
+  </Col>
+  <Col sticky>
+
+    <CodeGroup title="A round, start to end">
+
+    ```js
+    const room = gathering.room
+    const { round, you } = await room.current()
+    let { version, data } = await room.getState() // version 0 in a new round
+
+    room.on('ended', ({ round, results }) => {
+      showResults(round, results) // this round's, ranked
+    })
+
+    // The host, when the game is over:
+    if (you.role === 'host' && gameOver()) {
+      await room.end({ scores: finalScores() })
+    }
+    ```
+
+    </CodeGroup>
+
+  </Col>
+</Row>
+
+---
 
 ## Frames
 
-| From the server | Meaning |
-| --- | --- |
-| `hello` | you are in: the room, your seat, the sequence number, the members, the state |
-| `joined` · `left` · `members` | who is here |
-| `msg` | a member's message, with `from` and `seq` |
-| `state` | the shared state, with its `version` |
-| `started` · `ended` · `host` · `kicked` | the room's life |
+<Row>
+  <Col>
 
-Every frame carries a `seq`. Messages arrive in order across every member, whichever server
-relayed them. `data` is yours: the relay never reads inside it.
+    Every frame is a JSON object with a type, `t`. The ones that are part of the room's history carry a `seq`: one counter per room, the order every member sees. Your page receives each as a DOM event, `gathering:room:<event>`, with the frame's fields as `detail` — or through `room.on(event, fn)`.
 
-## The ticket
+    | Event | Frame | Fields | When |
+    | --- | --- | --- | --- |
+    | `message` | `msg` | `seq`, `from`, `data`, `to?` | a member sent something |
+    | `state` | `state` | `seq`, `version`, `data`, `by`, `ref?` (after a reconnect, `version` and `data` alone) | the shared state changed |
+    | `joined` | `joined` | `seq`, `player` (a member) | somebody joined |
+    | `left` | `left` | `seq`, `player` (an id), `reason`: `left` or `kicked` | somebody left, or was kicked |
+    | `members` | `members` | the list itself, every member | after any join, leave, kick, new host, connect or disconnect |
+    | `started` | `started` | `seq`, `at`, `by`, `round` | the host started a round; the state went back to version 0 with it |
+    | `ended` | `finished`, or `ended` during a round | `seq`, `at`, `by` (null when nobody did), `reason`, `round`, `results` | your round is over: once per round |
+    | `host` | `host` | `seq`, `player`, `by` (null when the old host left) | the host changed |
+    | `kicked` | `kicked` | `seq`, `player`, `by` | the host removed somebody; `left` follows |
 
-`gathering.room.ticket()` returns a short-lived JWT: `sub` is the player, `aud` is your game's id,
-`room` the room, `role` and `seat` theirs. Verify it against `/.well-known/jwks.json` and your
-server knows who is in which room without a session of its own.
+    A member is `{ id, nickname, handle, avatar, avatarUrl, role, seat, connected }`, as `room.members()` answers: `avatar` a bundled avatar's id, or `avatarUrl` a link to an uploaded picture. `connected` says the member's app has the room's connection open right now — a phone that lost its signal shows as disconnected until it is back.
 
-The full page, with limits and the server-side calls, arrives with the rooms milestone.
+    The relay has two frames for an ending. `finished` is a round over: `reason` `host`, or `timeout` when the round ran past two hours (with `by` null), and the room goes back to its lobby; no connection closes. `ended` is the room closing for good, with `reason` `host`, `empty`, `idle`, `admin` (Gathering closed it from its console, with `by` null) or `tournament` (the round decided the [tournament](/tournaments) match the room was made for), and `round`, the latest round started (0 when none); every connection closes after it. Both carry `round` and `results`: the round's scores with their ranks, in the order the host sent them, or, when your server posted that round's [results](#results) first, yours, ranked. Your page hears either as one `ended` event, once per round. A room that closes in its lobby, between rounds, has no round to end, and your page hears nothing.
+
+  </Col>
+  <Col sticky>
+
+    <CodeGroup title="Listening">
+
+    ```js
+    const room = gathering.room
+
+    room.on('message', ({ from, data, seq }) => {
+      if (from === me) return // your own echo
+      apply(data)
+    })
+    room.on('members', (list) => drawSeats(list))
+    room.on('ended', ({ reason, results }) => showResults(results))
+    ```
+
+    </CodeGroup>
+
+    <CodeGroup title="A message, as every member gets it">
+
+    ```json
+    {
+      "t": "msg",
+      "seq": 41,
+      "from": "ply_7f3k9d2m8q1x4b6n",
+      "data": { "type": "move", "cell": 4 }
+    }
+    ```
+
+    </CodeGroup>
+
+  </Col>
+</Row>
+
+---
+
+## Who gets what
+
+<Row>
+  <Col>
+
+    <Properties>
+      <Property name="send(data)" type="everybody">
+        Every connected member gets it, **the sender included**, with the same `seq` everywhere. Tell your own echo by `from`. Acting on the echo rather than on the send is the simplest way to keep every phone in step: everybody applies the same moves in the same order.
+      </Property>
+      <Property name="send(data, { to })" type="one member">
+        Only that member gets it, and it is not echoed to you. `to` has to be a current member, or the relay refuses it (`not_member`) and the message goes nowhere.
+      </Property>
+      <Property name="data" type="any JSON">
+        Yours. The relay never reads inside it; `null` is data too. At most 16 KiB for the whole frame.
+      </Property>
+    </Properties>
+
+    Every frame is safe to apply twice. When the app reconnects it asks for what it missed, and the room it gets back may already include a change whose frame follows. So: replace the member list with each `members` frame, ignore a `state` whose `version` is not above the one you have, and drop any frame whose `seq` you have already seen.
+
+  </Col>
+  <Col sticky>
+
+    <CodeGroup title="Applying once">
+
+    ```js
+    let lastSeq = 0
+    room.on('message', (f) => {
+      if (f.seq <= lastSeq) return
+      lastSeq = f.seq
+      apply(f.data)
+    })
+    ```
+
+    </CodeGroup>
+
+  </Col>
+</Row>
+
+---
+
+## The shared state
+
+<Row>
+  <Col>
+
+    With `"state": "blob"` a room keeps one shared value for your game: `{ version, data }`. `version` starts at 0 and `data` at `null`. A write names the version it was based on, and lands only if that is still the current one — compare-and-set — so two writes made at once cannot both win.
+
+    <Properties>
+      <Property name="setState(data, version)" type="Promise<number>">
+        Resolves to the new version when the `state` frame carrying this write comes back — every member gets the same frame. Rejects with `state_stale` when somebody wrote first: read the current state and decide again. `timeout` when nothing came back in ten seconds.
+      </Property>
+      <Property name="getState()" type="Promise<{ version, data }>">
+        The state as this phone has it.
+      </Property>
+      <Property name="host" type="authoritative | peer">
+        With `authoritative` only the host writes; a player's write is refused with `host_only`. The common shape: players send their moves as messages, the host checks each one and writes the result. With `peer` any member writes.
+      </Property>
+      <Property name="state: none" type="manifest">
+        No shared state at all: every write is refused with `no_state`. Messages are all a realtime race needs.
+      </Property>
+    </Properties>
+
+    The state lives with the room, and every round starts it again at version 0 with no data: a write based on the last round's version is refused `state_stale`, with `version` 0. A player who opens your page late, or comes back after a dropped connection, gets the round's state with everything else: there is nothing to request.
+
+  </Col>
+  <Col sticky>
+
+    <CodeGroup title="The host as referee">
+
+    ```js
+    room.on('message', async ({ from, data }) => {
+      const { you } = await room.current()
+      if (you.role !== 'host') return
+      if (!legal(board, from, data)) return
+      const next = play(board, from, data)
+      try {
+        await room.setState(next, version)
+      } catch (code) {
+        if (code === 'state_stale') resync()
+      }
+    })
+
+    room.on('state', ({ version: v, data }) => {
+      if (v <= version) return
+      version = v
+      board = data
+      draw(board)
+    })
+    ```
+
+    </CodeGroup>
+
+  </Col>
+</Row>
+
+---
+
+## Limits
+
+<Row>
+  <Col>
+
+    The relay's only rules are about size and pace. A refused frame is answered on the sender's phone alone; the connection stays open. On your page a refused `setState` rejects with the code, and a refused `send` is dropped.
+
+    <Properties>
+      <Property name="too_large" type="16 KiB">
+        The most one frame may hold, `data` and all. Send a diff, not the world.
+      </Property>
+      <Property name="rate_limited" type="30 a second">
+        Per member, with a burst of 30. A realtime game sending positions should batch them a few times a second rather than every frame it draws.
+      </Property>
+      <Property name="members" type="64">
+        No room holds more, whatever the manifest says.
+      </Property>
+      <Property name="bad_frame" type="error">
+        Not JSON, an unknown type, a missing field.
+      </Property>
+    </Properties>
+
+    A phone that cannot keep up with the room is disconnected rather than allowed to hold it up, and catches up when it reconnects. A connection silent for 45 seconds is closed; the app keeps it alive by itself. Your page sees the connection come and go as the `connection` event — `connecting`, `open`, `reconnecting`, `closed` — and needs to do nothing about it.
+
+  </Col>
+  <Col sticky>
+
+    <CodeGroup title="A refusal">
+
+    ```json
+    { "t": "error", "code": "state_stale", "version": 7, "ref": "w12" }
+    ```
+
+    </CodeGroup>
+
+  </Col>
+</Row>
+
+---
+
+## The ticket {{ tag: 'GET', label: '/v1/rooms/{room}/ticket' }}
+
+<Row>
+  <Col>
+
+    Your page knows which room it is in. Your server should not take the page's word for it. `gathering.room.ticket()` resolves to `{ token, expiresAt }`, the token a short-lived JWT, signed by Gathering, that says who this player is, in which room, as what — send it to your server and verify it there. It opens nothing on our API; it is for you.
+
+    <Properties>
+      <Property name="iss" type="string">
+        Gathering's issuer, the same as in `/.well-known/openid-configuration`.
+      </Property>
+      <Property name="sub" type="string">
+        The player's id: the same `ply_…` your server gets from `/v1/bridge/context`.
+      </Property>
+      <Property name="aud" type="string[]">
+        Your game id, as a one-element list. Check it: a ticket for somebody else's game is not one for yours.
+      </Property>
+      <Property name="room" type="string">
+        The room's id.
+      </Property>
+      <Property name="role, seat" type="string, number">
+        `host` or `player`, and the seat, from 0. Always present: the host's seat is 0.
+      </Property>
+      <Property name="round" type="number">
+        The room's round when the ticket was issued: the one playing, or the one just finished, 0 before the first. Always present.
+      </Property>
+      <Property name="scope, kind" type="string">
+        Both `room`.
+      </Property>
+      <Property name="exp" type="number">
+        Ten minutes after it was issued. Ask for a new one rather than keeping one.
+      </Property>
+    </Properties>
+
+    Verify the signature against `/.well-known/jwks.json` — ES256, the key named by the token's `kid` — then the issuer, the audience, the expiry, and that `kind` is `room`: your game token is signed with the same key for the same audience, and only `kind` tells a ticket from it. Cache the key set for a few minutes; fetch it again when a `kid` is one you have not seen, which is how a new key reaches you.
+
+    <Note>
+      The key in the set is an EC P-256 point: `x` and `y`, base64url, 32 bytes each. Most JWT
+      libraries take the JWK as it is; where yours wants a key, it is `0x04`, then `x`, then `y`.
+      The fixtures server in the development stack does all of this at `POST /partner/verify-ticket`,
+      answering `{ valid, claims }`.
+    </Note>
+
+  </Col>
+  <Col sticky>
+
+    <CodeGroup title="Verifying a ticket">
+
+    ```js
+    import { createRemoteJWKSet, jwtVerify } from 'jose'
+
+    const jwks = createRemoteJWKSet(
+      new URL('https://api.gathering.example/.well-known/jwks.json'),
+    )
+
+    export async function readTicket(token) {
+      const { payload } = await jwtVerify(token, jwks, {
+        issuer: 'https://api.gathering.example',
+        audience: process.env.GATHERING_CLIENT_ID,
+        algorithms: ['ES256'],
+      })
+      if (payload.kind !== 'room') throw new Error('not a room ticket')
+      const { sub: player, room, role, seat, round } = payload
+      return { player, room, role, seat, round }
+    }
+    ```
+
+    ```go
+    // keyFromJWKS finds the ticket's key in the set you fetched
+    // from /.well-known/jwks.json and keep for a few minutes.
+    func keyFromJWKS(t *jwt.Token) (any, error) {
+        for _, k := range jwks.Keys {
+            if k.Kid != t.Header["kid"] {
+                continue
+            }
+            x, _ := base64.RawURLEncoding.DecodeString(k.X)
+            y, _ := base64.RawURLEncoding.DecodeString(k.Y)
+            return ecdsa.ParseUncompressedPublicKey(elliptic.P256(),
+                append(append([]byte{4}, x...), y...))
+        }
+        return nil, errors.New("unknown kid: fetch the key set again")
+    }
+
+    claims := jwt.MapClaims{}
+    _, err := jwt.ParseWithClaims(ticket, claims, keyFromJWKS,
+        jwt.WithValidMethods([]string{"ES256"}),
+        jwt.WithIssuer("https://api.gathering.example"),
+        jwt.WithAudience(os.Getenv("GATHERING_CLIENT_ID")),
+        jwt.WithExpirationRequired(),
+    )
+    if err == nil && claims["kind"] != "room" {
+        err = errors.New("not a room ticket")
+    }
+    ```
+
+    </CodeGroup>
+
+    <CodeGroup title="The claims">
+
+    ```json
+    {
+      "iss": "https://api.gathering.example",
+      "sub": "ply_7f3k9d2m8q1x4b6n",
+      "aud": ["yourstudio.game"],
+      "room": "room_7f3k9d2m8q1x4b6n",
+      "role": "host",
+      "seat": 0,
+      "round": 2,
+      "scope": "room",
+      "kind": "room",
+      "iat": 1792573806,
+      "exp": 1792574406
+    }
+    ```
+
+    </CodeGroup>
+
+  </Col>
+</Row>
+
+---
+
+## Your server and the room
+
+<Row>
+  <Col>
+
+    When the app opens your game into a room, the room rides on the one-time code into the game token your server gets ([Authentication](/auth)). `/v1/bridge/context` then names it, for as long as the player is in it:
+
+    <Properties>
+      <Property name="room" type="object | null">
+        `{ id, code, status, round, role, seat, members }`, the members as `{ id, nickname, role, seat }` by seat — the nicknames with `identity:read` only. `round` is the round playing, or the one just finished. `null` for a game opened outside a room, and once the player has left it.
+      </Property>
+    </Properties>
+
+    A game can only be opened into a room the player is in, still open, and made for that game: anything else is refused before your page loads.
+
+  </Col>
+  <Col sticky>
+
+    <CodeGroup title="The context, in a room">
+
+    ```json
+    {
+      "player": { "id": "ply_7f3k9d2m8q1x4b6n", "nickname": "زين" },
+      "room": {
+        "id": "room_7f3k9d2m8q1x4b6n",
+        "code": "K7M2QX",
+        "status": "playing",
+        "round": 2,
+        "role": "host",
+        "seat": 0,
+        "members": [
+          { "id": "ply_7f3k9d2m8q1x4b6n", "nickname": "زين", "role": "host", "seat": 0 },
+          { "id": "ply_4kx8dmzq7v2urybe", "nickname": "مريم", "role": "player", "seat": 1 }
+        ]
+      },
+      "scope": ["identity:read", "results:write"],
+      "live": true
+    }
+    ```
+
+    </CodeGroup>
+
+  </Col>
+</Row>
+
+---
+
+## Results {{ tag: 'POST', label: '/v1/bridge/results' }}
+
+<Row>
+  <Col>
+
+    Results are kept for good, **one set per round**: every player's history lists a line for each round they played, and the app's results page reads a round at a time (`GET /v1/rooms/{room}/results?round=N`, which also lists the room's `rounds`), long after the room itself is gone. They come from one of two places. The host's `room.end({ scores })` writes them as the round ends — enough for a game every phone plays out in the open. When your server is the one that knows who won, post them from there: **your server's word is the stronger.** What it posts replaces that round's results whole, and a host's end that comes later leaves them as they are and carries them to every phone.
+
+    Post with a game token that carries `results:write` — ask for it in your manifest's `scopes`. It need not be the token minted into the room: any of your game's tokens for a player who was in it will do.
+
+    ### Required attributes
+
+    <Properties>
+      <Property name="room" type="string">
+        The room's id, from the ticket or from `/v1/bridge/context`.
+      </Property>
+      <Property name="scores" type="array">
+        One to 256 lines, `{ player, score, rank? }`, each for somebody who was in the room — still there or not — once.
+      </Property>
+    </Properties>
+
+    ### Optional attributes
+
+    <Properties>
+      <Property name="round" type="number">
+        Which round, from 1 to the room's round: the ticket and `/v1/bridge/context` say which one your player is in. Leave it out for the room's round: the one playing, or the one just finished while the room waits in its lobby.
+      </Property>
+      <Property name="scores[].rank" type="number">
+        At least 1. Leave it out and it is computed by score, highest first, ties sharing a rank: 1, 1, 3. Send your own when lower is better, or when your game ranks by something other than the score.
+      </Property>
+    </Properties>
+
+    The room has to be your game's and have started a round: a fresh lobby has nothing to rank yet. A lobby between rounds is fine. Posting into a round under way does not end it — the host still does, and the results stand. Posting again replaces what you posted for that round before. The answer names the `round` written and its results as they now stand, ranked, ties in seat order: `nickname`, `avatar` and `avatar_url` with `identity:read` only, `submitted_by` saying whose they are.
+
+  </Col>
+  <Col sticky>
+
+    <CodeGroup title="Request" tag="POST" label="/v1/bridge/results">
+
+    ```bash {{ title: 'cURL' }}
+    curl -X POST https://api.gathering.example/v1/bridge/results \
+      -H "Authorization: Bearer $ACCESS_TOKEN" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "room": "room_7f3k9d2m8q1x4b6n",
+        "round": 2,
+        "scores": [
+          { "player": "ply_7f3k9d2m8q1x4b6n", "score": 30 },
+          { "player": "ply_4kx8dmzq7v2urybe", "score": 10 }
+        ]
+      }'
+    ```
+
+    ```js
+    const res = await fetch('https://api.gathering.example/v1/bridge/results', {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${await tokenFor(hostId)}`,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({ room: roomId, round, scores }),
+    })
+    if (!res.ok) throw new Error(`gathering: ${(await res.json()).error}`)
+    const { results } = await res.json()
+    ```
+
+    </CodeGroup>
+
+    <CodeGroup title="Response">
+
+    ```json
+    {
+      "round": 2,
+      "results": [
+        { "player": "ply_7f3k9d2m8q1x4b6n", "nickname": "زين", "avatar": "a03",
+          "score": 30, "rank": 1, "submitted_by": "game" },
+        { "player": "ply_4kx8dmzq7v2urybe", "nickname": "مريم", "avatar": "a11",
+          "score": 10, "rank": 2, "submitted_by": "game" }
+      ]
+    }
+    ```
+
+    </CodeGroup>
+
+  </Col>
+</Row>
+
+---
+
+## When results are refused
+
+<Row>
+  <Col>
+
+    Asked in this order, so the answer you get is the first thing to fix.
+
+    <Properties>
+      <Property name="wrong_token" type="403">
+        Not a game token. A room ticket opens nothing on our API.
+      </Property>
+      <Property name="scope_required" type="403">
+        The token does not carry `results:write`; `scope` names it. Add it to your manifest's `scopes` — a scope a published game newly asks for waits until an admin accepts it — and the tokens minted after carry it.
+      </Property>
+      <Property name="not_found" type="404">
+        No such room, or one that ended more than a day ago and is gone. Post when the game ends, not later.
+      </Property>
+      <Property name="invalid_fields: room" type="422">
+        `another_game`: the room was made for another game.
+      </Property>
+      <Property name="not_member" type="403">
+        The token's player was never in the room. Use the token of somebody who played.
+      </Property>
+      <Property name="room_not_started" type="409">
+        No round has started yet: the room is still in its first lobby.
+      </Property>
+      <Property name="invalid_fields: round, scores" type="422">
+        `round: unknown` for a round the room has not reached; `scores: required` for an empty list, `scores.N.player`: `not_a_member` or `duplicate`, `scores.N.rank: must_be_positive`. Every problem comes back at once.
+      </Property>
+    </Properties>
+
+  </Col>
+  <Col sticky>
+
+    <CodeGroup title="Failures">
+
+    ```json {{ title: '403' }}
+    { "error": "scope_required", "scope": "results:write" }
+    ```
+
+    ```json {{ title: '409' }}
+    { "error": "room_not_started" }
+    ```
+
+    ```json {{ title: '422' }}
+    {
+      "error": "invalid_fields",
+      "fields": {
+        "scores.1.player": "not_a_member",
+        "scores.2.rank": "must_be_positive"
+      }
+    }
+    ```
+
+    </CodeGroup>
+
+  </Col>
+</Row>
+
+---
+
+## Invite links {{ tag: 'GET', label: '/r/{code}' }}
+
+<Row>
+  <Col>
+
+    Every room has a link, the Room's `link`: `https://go.gathering.example/r/K7M2QX`. Where the app is installed, opening it opens the app's Join sheet with the code filled in. Everywhere else — a phone without the app, a desktop, a chat's link preview — it opens a small page. Either way it ends in a join by code, which admits nobody the typed code would not.
+
+    <Properties>
+      <Property name="/r/{code}" type="text/html">
+        The room's game and its code, large, with a copy key, and a key for each store. Nothing else about the room: not the host, not who is in it, not who may join, so a friends-only room's page looks like any other. **200** while the room is open — in its lobby, during a round and between rounds — and **404**, the page's "not found" form, once it has ended or for a code no room holds. The code is read like a typed one: case, spaces and dashes do not count. Arabic, or English when the browser prefers it. Never cached, and never the API's error body.
+      </Property>
+      <Property name="/.well-known/assetlinks.json" type="Android">
+        The app's package and its signing certificates' fingerprints, so Android opens `/r/` links in the app without asking. `[]` until the fingerprints are configured.
+      </Property>
+      <Property name="/.well-known/apple-app-site-association" type="iOS">
+        The app's id and the one path it takes, `/r/*`. No details until the team id is configured.
+      </Property>
+    </Properties>
+
+    Both documents are JSON, cached for an hour, and served as they are: the phones read them before they let the app catch a link, and refuse one behind a redirect.
+
+    <Note>
+      Deploying: the links live on their own host, `LINK_PUBLIC_URL`, which serves nothing of its own. It routes `/r/*` and `/.well-known/*` to the api, as a proxy and never a redirect. On a laptop the api is the link host.
+    </Note>
+
+  </Col>
+  <Col sticky>
+
+    <CodeGroup title="Request" tag="GET" label="/r/{code}">
+
+    ```bash {{ title: 'cURL' }}
+    curl -i https://go.gathering.example/r/k7m-2qx \
+      -H "Accept-Language: en"
+    ```
+
+    </CodeGroup>
+
+    <CodeGroup title="Response">
+
+    ```text
+    200 text/html; charset=utf-8
+    Cache-Control: no-store
+    Content-Security-Policy: default-src 'none'; script-src 'sha256-…'; …
+    ```
+
+    </CodeGroup>
+
+    <CodeGroup title="The two documents">
+
+    ```json {{ title: 'assetlinks.json' }}
+    [{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "app.gathering.jamaa",
+        "sha256_cert_fingerprints": ["14:6D:E9:83:…"]
+      }
+    }]
+    ```
+
+    ```json {{ title: 'apple-app-site-association' }}
+    {
+      "applinks": {
+        "details": [{
+          "appIDs": ["ABCDE12345.app.gathering.jamaa"],
+          "components": [{ "/": "/r/*" }]
+        }]
+      }
+    }
+    ```
+
+    </CodeGroup>
+
+  </Col>
+</Row>

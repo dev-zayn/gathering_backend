@@ -30,14 +30,15 @@ type Reader interface {
 // The areas the log is partitioned by. Every write is scoped to one, so a
 // game's history and a player's do not mix even sharing a table.
 const (
-	AreaAuth    = "auth"
-	AreaPlayers = "players"
-	AreaGames   = "games"
-	AreaRooms   = "rooms"
-	AreaAdmin   = "admin"
+	AreaAuth        = "auth"
+	AreaPlayers     = "players"
+	AreaGames       = "games"
+	AreaRooms       = "rooms"
+	AreaTournaments = "tournaments"
+	AreaAdmin       = "admin"
 )
 
-var Areas = []string{AreaAuth, AreaPlayers, AreaGames, AreaRooms, AreaAdmin}
+var Areas = []string{AreaAuth, AreaPlayers, AreaGames, AreaRooms, AreaTournaments, AreaAdmin}
 
 // storeLog is where the log lives: the logs schema, on the log store's own pool.
 type storeLog struct{ store *logstore.Audit }

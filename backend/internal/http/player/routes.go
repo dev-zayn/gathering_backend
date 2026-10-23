@@ -6,9 +6,13 @@ import (
 	"github.com/danielgtaylor/huma/v2"
 
 	"github.com/jamaa/gathering/backend/internal/biz"
+	"github.com/jamaa/gathering/backend/internal/biz/friends"
 	"github.com/jamaa/gathering/backend/internal/biz/games"
 	"github.com/jamaa/gathering/backend/internal/biz/identity"
+	"github.com/jamaa/gathering/backend/internal/biz/inbox"
 	"github.com/jamaa/gathering/backend/internal/biz/players"
+	"github.com/jamaa/gathering/backend/internal/biz/rooms"
+	"github.com/jamaa/gathering/backend/internal/biz/tournaments"
 	"github.com/jamaa/gathering/backend/internal/pkg/files"
 )
 
@@ -27,6 +31,18 @@ type Handler struct {
 	// in it.
 	Games *games.Catalogue
 	Files files.Files
+
+	// Rooms is every rule about rooms; the relay hears each change.
+	Rooms *rooms.Service
+
+	// Tournaments is every rule about tournaments; a match is played in a
+	// room, made or joined through it.
+	Tournaments *tournaments.Service
+
+	// Friends is who is whose friend, and the cards that say so; Inbox is
+	// the player's notifications.
+	Friends *friends.Service
+	Inbox   *inbox.Inbox
 }
 
 func (h *Handler) Register(api huma.API) {
@@ -38,4 +54,9 @@ func (h *Handler) Register(api huma.API) {
 	h.registerDevice(api)
 	h.registerPlayers(api)
 	h.registerGames(api)
+	h.registerRooms(api)
+	h.registerResults(api)
+	h.registerFriends(api)
+	h.registerNotifications(api)
+	h.registerTournaments(api)
 }

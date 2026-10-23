@@ -194,7 +194,7 @@ func TestRoomRoundTripsThroughTheColumn(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	var back Room
+	var back RoomBlock
 	if err := back.Scan(v); err != nil {
 		t.Fatal(err)
 	}

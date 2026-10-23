@@ -195,6 +195,8 @@ func TestGames(t *testing.T) {
 	}, 200, nil)
 	a.redirectStatus("GET", strings.Replace(authorize, url.QueryEscape(studio+"/callback"), url.QueryEscape("https://evil.example/cb"), 1), 422)
 
+	gameServerResults(t, admin, a, partner, id, pa)
+
 	// Taking the game off the shelf ends every token the game holds, now.
 	a.call("DELETE", "/v1/games/"+id, nil, 204, nil)
 	partner.call("GET", "/v1/bridge/context", nil, 401, nil)
@@ -247,10 +249,136 @@ func TestGames(t *testing.T) {
 	}
 }
 
+// gameServerResults is the game's own server writing a room's results with
+// the game token it holds for a: refused for a lobby; then, after the host
+// ended the game with scores, its own results replace the host's for good.
+// A token without results:write is refused before anything is read, naming
+// the scope.
+func gameServerResults(t *testing.T, admin, a, server *client, id string, pa map[string]any) {
+	t.Helper()
+	b, pb := player(t, "Mariam")
+	aID, bID := pa["id"].(string), pb["id"].(string)
+
+	var room roomJSON
+	a.call("POST", "/v1/rooms", map[string]any{"game": id}, 201, &room)
+	var refused errorJSON
+	server.call("POST", "/v1/bridge/results", map[string]any{
+		"room": room.ID, "scores": []map[string]any{{"player": aID, "score": 1}},
+	}, 409, &refused)
+	if refused.Error != "room_not_started" {
+		t.Fatalf("results for a lobby: %+v", refused)
+	}
+	t.Logf("ok   the game's server is refused results for a lobby: room_not_started")
+
+	b.call("POST", "/v1/rooms/join", map[string]any{"code": room.Code}, 200, nil)
+	a.call("POST", "/v1/rooms/"+room.ID+"/start", nil, 200, nil)
+	a.call("POST", "/v1/rooms/"+room.ID+"/end", map[string]any{"scores": []map[string]any{
+		{"player": aID, "score": 3}, {"player": bID, "score": 5},
+	}}, 200, nil)
+	var sheet sheetJSON
+	b.call("GET", "/v1/rooms/"+room.ID+"/results", nil, 200, &sheet)
+	if len(sheet.Results) != 2 || sheet.Results[0].Player != bID || sheet.Results[0].SubmittedBy != "host" {
+		t.Fatalf("the host's results: %+v", sheet)
+	}
+	t.Logf("ok   the host's end wrote the results (submitted_by host)")
+
+	var posted struct {
+		Round   int          `json:"round"`
+		Results []resultJSON `json:"results"`
+	}
+	server.call("POST", "/v1/bridge/results", map[string]any{"room": room.ID, "scores": []map[string]any{
+		{"player": aID, "score": 7}, {"player": bID, "score": 2},
+	}}, 200, &posted)
+	if posted.Round != 1 || len(posted.Results) != 2 || posted.Results[0].Player != aID || posted.Results[0].Rank != 1 ||
+		posted.Results[0].SubmittedBy != "game" || posted.Results[0].Nickname != "زين" || posted.Results[1].Rank != 2 {
+		t.Fatalf("posted: %+v", posted)
+	}
+	b.call("GET", "/v1/rooms/"+room.ID+"/results", nil, 200, &sheet)
+	if len(sheet.Results) != 2 || sheet.Results[0].Player != aID || sheet.Results[0].Score != 7 ||
+		sheet.Results[0].SubmittedBy != "game" || sheet.Results[1].SubmittedBy != "game" {
+		t.Fatalf("the room's results after the game's: %+v", sheet)
+	}
+	var ended roomJSON
+	b.call("GET", "/v1/rooms/"+room.ID, nil, 200, &ended)
+	if len(ended.Results) != 2 || ended.Results[0].Player != aID || ended.Results[0].Rank != 1 {
+		t.Fatalf("the room reads %+v", ended.Results)
+	}
+	var history historyJSON
+	a.call("GET", "/v1/me/history?limit=1", nil, 200, &history)
+	if len(history.Items) != 1 || history.Items[0].Room != room.ID || history.Items[0].Round != 1 || history.Items[0].Rank != 1 ||
+		history.Items[0].SubmittedBy != "game" || history.Items[0].Score != 7 {
+		t.Fatalf("a's history: %+v", history)
+	}
+	t.Logf("ok   the game's server replaced them: %s first, submitted_by game, in the room, its sheet and the history", aID)
+
+	var invalid errorJSON
+	server.call("POST", "/v1/bridge/results", map[string]any{"room": room.ID, "scores": []map[string]any{
+		{"player": aID, "score": 1, "rank": 0},
+	}}, 422, &invalid)
+	if invalid.Fields["scores.0.rank"] != "must_be_positive" {
+		t.Fatalf("rank 0: %+v", invalid)
+	}
+	t.Logf("ok   a rank of 0 is refused: scores.0.rank must_be_positive")
+	server.call("POST", "/v1/bridge/results", map[string]any{"room": room.ID, "round": 2, "scores": []map[string]any{
+		{"player": aID, "score": 1},
+	}}, 422, &invalid)
+	if invalid.Fields["round"] != "unknown" {
+		t.Fatalf("round 2 of a room that played one: %+v", invalid)
+	}
+	server.call("POST", "/v1/bridge/results", map[string]any{"room": room.ID, "round": 1, "scores": []map[string]any{
+		{"player": aID, "score": 8}, {"player": bID, "score": 2},
+	}}, 200, &posted)
+	if posted.Round != 1 || len(posted.Results) != 2 || posted.Results[0].Score != 8 {
+		t.Fatalf("round 1 named: %+v", posted)
+	}
+	t.Logf("ok   the bridge takes a round: 1 named, 2 refused as unknown")
+
+	// A game whose manifest never asked for results:write.
+	lite := id + ".lite"
+	studio := serveStudio(t, lite, "identity:read")
+	var registered struct {
+		Secret string `json:"client_secret"`
+	}
+	admin.call("POST", "/v1/admin/games", map[string]any{"url": studio + "/"}, 201, &registered)
+	admin.call("PATCH", "/v1/admin/games/"+lite, map[string]any{"tagline": "بلا نتائج", "category": "brain"}, 200, nil)
+	admin.upload("PUT", "/v1/admin/games/"+lite+"/icon", "icon.png", "image/png", tinyPNG(t), 200, nil)
+	admin.call("POST", "/v1/admin/games/"+lite+"/publish", nil, 200, nil)
+	t.Cleanup(func() {
+		admin.call("POST", "/v1/admin/games/"+lite+"/suspend", map[string]any{"reason": "the results sweep is over"}, 200, nil)
+	})
+	var opened struct {
+		URL string `json:"url"`
+	}
+	a.call("POST", "/v1/games/"+lite+"/session", nil, 200, &opened)
+	other := newClient(t)
+	var issued struct {
+		AccessToken string `json:"access_token"`
+		Scope       string `json:"scope"`
+	}
+	other.form("/oauth/token", url.Values{
+		"grant_type": {"authorization_code"}, "code": {codeOf(t, opened.URL)},
+		"client_id": {lite}, "client_secret": {registered.Secret},
+	}, 200, &issued)
+	if strings.Contains(issued.Scope, "results:write") {
+		t.Fatalf("the lite game was granted %q", issued.Scope)
+	}
+	other.bearer = issued.AccessToken
+	var scoped errorJSON
+	other.call("POST", "/v1/bridge/results", map[string]any{"room": room.ID, "scores": []map[string]any{
+		{"player": aID, "score": 1},
+	}}, 403, &scoped)
+	if scoped.Error != "scope_required" || scoped.Scope != "results:write" {
+		t.Fatalf("a token without results:write: %+v", scoped)
+	}
+	t.Logf("ok   a token without results:write is refused: scope_required, scope results:write")
+}
+
 // partnerFixture drives the fixtures' own partner backend: register the xo
-// fixture, publish it, open it, and let /partner/exchange spend the code.
-// The fixtures hold the client secret in their env, so the secret shown at
-// registration here has to be the one they were started with.
+// fixture, publish it, have /partner/verify-ticket check a room ticket, then
+// open it and let /partner/exchange spend the code. The fixtures hold the
+// client secret in their env, so the secret shown at registration here has
+// to be the one they were started with; the ticket needs no secret, so it
+// goes first.
 func partnerFixture(t *testing.T, admin, a *client, pa map[string]any, fixtures string) {
 	t.Helper()
 	const id = "fixture.xo"
@@ -286,6 +414,8 @@ func partnerFixture(t *testing.T, admin, a *client, pa map[string]any, fixtures 
 		}
 		admin.call("POST", "/v1/admin/games/"+id+"/publish", nil, 200, nil)
 	}
+
+	ticketAtFixture(t, a, pa, fixtures, id)
 
 	var opened struct {
 		URL string `json:"url"`
@@ -325,11 +455,87 @@ func partnerFixture(t *testing.T, admin, a *client, pa map[string]any, fixtures 
 	t.Logf("ok   the fixtures' partner backend spent a code and read %s", pa["id"])
 }
 
+// ticketAtFixture makes a room for the fixture's game and has the fixtures'
+// partner backend verify its ticket against the api's public keys, as a
+// studio's server would with no session of ours: valid, with the claims the
+// api put in. The same ticket with a claim changed is refused.
+func ticketAtFixture(t *testing.T, a *client, pa map[string]any, fixtures, game string) {
+	t.Helper()
+	var room roomJSON
+	a.call("POST", "/v1/rooms", map[string]any{"game": game}, 201, &room)
+	var ticket struct {
+		Token string `json:"token"`
+	}
+	a.call("GET", "/v1/rooms/"+room.ID+"/ticket", nil, 200, &ticket)
+
+	var verdict struct {
+		Valid  bool   `json:"valid"`
+		Error  string `json:"error"`
+		Claims struct {
+			Sub   string   `json:"sub"`
+			Room  string   `json:"room"`
+			Role  string   `json:"role"`
+			Seat  *int     `json:"seat"`
+			Round *int     `json:"round"`
+			Aud   []string `json:"aud"`
+			Exp   int64    `json:"exp"`
+		} `json:"claims"`
+	}
+	status := postJSON(t, fixtures+"/partner/verify-ticket", map[string]any{"token": ticket.Token}, &verdict)
+	c := verdict.Claims
+	if status != 200 || !verdict.Valid || c.Sub != pa["id"] || c.Room != room.ID || c.Role != "host" ||
+		c.Seat == nil || *c.Seat != 0 || c.Round == nil || *c.Round != 0 || len(c.Aud) != 1 || c.Aud[0] != game ||
+		c.Exp <= time.Now().Unix() {
+		t.Fatalf("the fixtures verified the ticket as %d %+v", status, verdict)
+	}
+	t.Logf("ok   the fixtures' partner backend verified a ticket for %s against the JWKS: %s, host, seat 0, round 0", room.ID, c.Sub)
+
+	parts := strings.Split(ticket.Token, ".")
+	payload, err := base64.RawURLEncoding.DecodeString(parts[1])
+	if err != nil {
+		t.Fatal(err)
+	}
+	changed := strings.Replace(string(payload), `"role":"host"`, `"role":"player"`, 1)
+	forged := parts[0] + "." + base64.RawURLEncoding.EncodeToString([]byte(changed)) + "." + parts[2]
+	verdict.Valid, verdict.Error = true, ""
+	if status := postJSON(t, fixtures+"/partner/verify-ticket", map[string]any{"token": forged}, &verdict); status != 401 ||
+		verdict.Valid || verdict.Error != "bad_signature" {
+		t.Fatalf("a changed claim: %d %+v", status, verdict)
+	}
+	t.Logf("ok   the same ticket with a claim changed is refused: bad_signature")
+
+	a.call("POST", "/v1/rooms/"+room.ID+"/end", nil, 200, nil)
+}
+
+// postJSON posts a body to somebody other than the api and decodes the
+// answer, whatever its status.
+func postJSON(t *testing.T, addr string, body, out any) int {
+	t.Helper()
+	b, err := json.Marshal(body)
+	if err != nil {
+		t.Fatal(err)
+	}
+	res, err := http.Post(addr, "application/json", bytes.NewReader(b))
+	if err != nil {
+		t.Fatalf("%s: %v", addr, err)
+	}
+	defer res.Body.Close()
+	raw, _ := io.ReadAll(res.Body)
+	if err := json.Unmarshal(raw, out); err != nil {
+		t.Fatalf("%s: %d %s", addr, res.StatusCode, raw)
+	}
+	return res.StatusCode
+}
+
 // serveStudio is the game's server: its manifest, an entry page and the
 // callback a sign-in from its own site comes back to. It answers the address
-// the api is told to fetch from.
-func serveStudio(t *testing.T, id string) string {
+// the api is told to fetch from. The manifest asks for identity:read and
+// results:write unless other scopes are named.
+func serveStudio(t *testing.T, id string, scopes ...string) string {
 	t.Helper()
+	if len(scopes) == 0 {
+		scopes = []string{"identity:read", "results:write"}
+	}
 
 	addr, self := "127.0.0.1:0", os.Getenv("E2E_SELF")
 	if self != "" {
@@ -354,7 +560,7 @@ func serveStudio(t *testing.T, id string) string {
 			"id": id, "name": "لعبة السويب", "version": "1.0.0", "mode": "embedded",
 			"entry": base + "/play/", "orientation": "portrait", "splash": false,
 			"publisher":     map[string]any{"tier": "partner", "name": "السويب"},
-			"scopes":        []string{"identity:read", "results:write"},
+			"scopes":        scopes,
 			"permissions":   []string{},
 			"redirect_uris": []string{base + "/callback"},
 			"room": map[string]any{

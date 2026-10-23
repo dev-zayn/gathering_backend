@@ -83,7 +83,7 @@ jobs:
           context: .
           file: deploy/docker/Dockerfile
           build-args: CMD=${{ matrix.cmd }}
-          push: ${{ github.event_name == 'push' && matrix.cmd == 'api' }}
+          push: ${{ github.event_name == 'push' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha

@@ -107,7 +107,7 @@ func TestARoomTicketOpensNothingHere(t *testing.T) {
 	}
 	// What the game's server reads through the JWKS.
 	claims, err := signer.Parse(raw)
-	if err != nil || !claims.Is(caller.ScopeRoom) || claims.Game() != "gam_x" || claims.Room != "room_1" || claims.Role != "host" || claims.Seat != 2 {
+	if err != nil || !claims.Is(caller.ScopeRoom) || claims.Game() != "gam_x" || claims.Room != "room_1" || claims.Role != "host" || claims.Seat == nil || *claims.Seat != 2 {
 		t.Fatalf("the ticket reads as %+v, %v", claims, err)
 	}
 

@@ -522,7 +522,7 @@ func (h *Handler) registryGame(ctx context.Context) func(*model.Game, error) (*r
 
 func actor(ctx context.Context) string { return caller.FromContext(ctx).Subject }
 
-func registryRoomOf(r model.Room) registryRoomJSON {
+func registryRoomOf(r model.RoomBlock) registryRoomJSON {
 	return registryRoomJSON{
 		Min: r.Players.Min, Max: r.Players.Max, Host: string(r.Host), Pace: string(r.Pace),
 		LAN: r.LAN, State: string(r.State), Rejoin: r.Rejoin, Spectators: r.Spectators,

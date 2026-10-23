@@ -1,6 +1,11 @@
 .env
 .files/
 *.log
+
+# A Firebase service account's key lives outside the repository (README,
+# "Push notifications"). This catches one downloaded into it by mistake, by
+# the name the Firebase console gives it.
+*-firebase-adminsdk-*.json
 .DS_Store
 .claude/settings.local.json
 node_modules/
@@ -21,7 +26,9 @@ web/console/dist/
 /backend/worker
 /backend/fixtures
 
-# Agent tooling on this machine, not part of the product.
-.claude/
+# Agent tooling on this machine, not part of the product. The skills are the
+# exception: they say how this repo is changed, so they are kept with it.
+.claude/*
+!.claude/skills/
 .agents/
 skills-lock.json

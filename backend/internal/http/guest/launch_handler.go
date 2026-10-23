@@ -15,7 +15,7 @@ import (
 // frame should open.
 type openRequest struct {
 	Game string `path:"game" example:"fixture.xo"`
-	Room string `query:"room" maxLength:"24" example:"room_7f3k9d2m8q1x4b6n" doc:"The room the game opens into, when it does. It rides on the code into the game's token."`
+	Room string `query:"room" maxLength:"24" example:"room_7f3k9d2m8q1x4b6n" doc:"The room the game opens into, when it does: one the player is a current member of, still open, and this game's. It rides on the code into the game's token."`
 	Path string `query:"path" maxLength:"512" example:"/board" doc:"Where inside the game to land: a notification's deep_link. A path on the game's own origin; anything else is refused."`
 }
 
@@ -40,7 +40,8 @@ func (h *Handler) registerLaunch(api huma.API) {
 			"The code is the only thing that touches the frame — the tokens are minted on " +
 			"the far side, backend to backend. A path, when given, rides beside the code " +
 			"so a notification lands the player on the right screen; a room, when given, " +
-			"rides on the code into the game's token.",
+			"rides on the code into the game's token — not_member, room_closed, or " +
+			"invalid_fields (room: another_game) when it cannot.",
 		Tags:     []string{"launch"},
 		Metadata: map[string]any{authn.ScopeKey: caller.ScopeSession},
 	}, h.open)

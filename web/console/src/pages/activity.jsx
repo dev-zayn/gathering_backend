@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 
 import { api } from '../api.js'
 
-const areas = ['', 'auth', 'players', 'games', 'rooms', 'admin']
+const areas = ['', 'auth', 'players', 'games', 'rooms', 'tournaments', 'admin']
 
 // The audit log, newest first, one area or all.
 export default function Activity() {

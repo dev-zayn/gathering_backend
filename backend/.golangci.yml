@@ -44,6 +44,15 @@ linters:
             - pkg: github.com/jamaa/gathering/backend/cmd
               desc: "model is the centre; it imports nothing of ours but enum"
 
+        # The WebSocket library is the http layer's. The relay drives a
+        # relay.Socket, so the hub's rules run in tests with no network, and
+        # nothing under biz, data or pkg knows which library carries a frame.
+        websocket-only-in-http:
+          files: ["**/internal/biz/**", "**/internal/data/**", "**/internal/pkg/**"]
+          deny:
+            - pkg: github.com/coder/websocket
+              desc: "the WebSocket library belongs in internal/http; the relay drives relay.Socket"
+
         # pkg is what any layer may use and no layer owns, so anything there that
         # reaches back out is a cycle waiting. pkg may use pkg, and nothing else.
         pkg-imports-only-pkg:

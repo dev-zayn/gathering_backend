@@ -9,6 +9,7 @@ import (
 
 	"github.com/jamaa/gathering/backend/internal/biz/games"
 	"github.com/jamaa/gathering/backend/internal/biz/identity"
+	"github.com/jamaa/gathering/backend/internal/biz/rooms"
 	"github.com/jamaa/gathering/backend/internal/data/model"
 	"github.com/jamaa/gathering/backend/internal/pkg/errors"
 	"github.com/jamaa/gathering/backend/internal/pkg/ids"
@@ -25,8 +26,26 @@ type Launch struct {
 	Minter    identity.Minter
 	Whitelist identity.Whitelist
 
+	// Rooms decides whether a game may open into a room. Nil refuses every
+	// room: there is nobody to ask.
+	Rooms Rooms
+
 	CodeTTL  time.Duration
 	TokenTTL time.Duration
+}
+
+// Rooms is the rooms' side of a launch and of the bridge. *rooms.Service is
+// one.
+type Rooms interface {
+	// CheckLaunch is the rule on opening a game into a room: open, the caller
+	// in it, and the game's own.
+	CheckLaunch(ctx context.Context, roomID, playerID, gameID string) error
+	// Brief is the room a game token names, while its player is still a
+	// current member of it; nil otherwise.
+	Brief(ctx context.Context, roomID, playerID string) (*rooms.Brief, error)
+	// SubmitResults is the game's server writing a round's results, and the
+	// round's results as they then stand.
+	SubmitResults(ctx context.Context, in rooms.Submission) (*rooms.Submitted, error)
 }
 
 // Opened is the answer to the tap: where to load, and how the frame should
@@ -61,13 +80,23 @@ func (l *Launch) Open(ctx context.Context, by Launcher, gameID, roomID, path str
 	if !DeepLink(path) {
 		bad["path"] = "must be a path inside the game, like /room"
 	}
-	// That the room is the player's, and this game's, is the rooms' rule and
-	// arrives with them; until then a room is a name the code carries.
 	if len(roomID) > MaxRoomID {
 		bad["room"] = "too_long"
 	}
 	if len(bad) > 0 {
 		return nil, errors.Invalid(bad)
+	}
+
+	// A room rides on the code into the game's token, so it has to be one the
+	// player is in, still open, and this game's: room_closed, not_member,
+	// room: another_game. Asked before the shelf is touched.
+	if roomID != "" {
+		if l.Rooms == nil {
+			return nil, errors.Forbidden("not_member")
+		}
+		if err := l.Rooms.CheckLaunch(ctx, roomID, by.PlayerID, gameID); err != nil {
+			return nil, err
+		}
 	}
 
 	if _, err := l.Games.Open(ctx, by.PlayerID, gameID); err != nil {

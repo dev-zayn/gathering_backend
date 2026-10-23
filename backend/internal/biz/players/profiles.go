@@ -141,18 +141,6 @@ func (p *Profiles) Edit(ctx context.Context, id string, in Update) (*model.Playe
 	return pl, nil
 }
 
-// Card is what another player sees: a published record, or nothing.
-func (p *Profiles) Card(ctx context.Context, handle string) (*model.Player, error) {
-	pl, err := p.Players.ByHandle(ctx, strings.ToLower(strings.TrimSpace(handle)))
-	if err != nil {
-		return nil, errors.Internal(err)
-	}
-	if pl == nil || pl.Disabled {
-		return nil, errors.NotFound("not_found")
-	}
-	return pl, nil
-}
-
 // Search finds players by the start of their handle. Three characters at
 // least: two would list half the platform.
 func (p *Profiles) Search(ctx context.Context, q string, limit int) ([]model.Player, error) {

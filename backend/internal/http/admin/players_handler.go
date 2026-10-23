@@ -39,8 +39,31 @@ type playersResponse struct {
 	}
 }
 
+// playerDetailJSON is one player's record: the row the list draws, and how
+// far they have got (docs/CONSOLE.md, "The dashboard and the players").
+type playerDetailJSON struct {
+	ID        string          `json:"id"`
+	Nickname  string          `json:"nickname"`
+	Handle    string          `json:"handle"`
+	Phone     string          `json:"phone,omitempty"`
+	Avatar    string          `json:"avatar"`
+	Language  string          `json:"language"`
+	Disabled  bool            `json:"disabled"`
+	Presence  string          `json:"presence" enum:"online,in_room,offline"`
+	CreatedAt *string         `json:"created_at"`
+	LastSeen  *string         `json:"last_seen_at"`
+	Friends   int64           `json:"friends" doc:"Accepted friendships."`
+	Rounds    int64           `json:"rounds" doc:"Rounds played: their rows in results."`
+	Room      *playerRoomJSON `json:"room" doc:"The open room they are in; null when none."`
+}
+
+type playerRoomJSON struct {
+	ID   string `json:"id" example:"room_7f3k9d2m8q1x4b6n"`
+	Code string `json:"code" example:"K7M2QX"`
+}
+
 type playerResponse struct {
-	Body playerRowJSON
+	Body playerDetailJSON
 }
 
 func (h *Handler) registerPlayers(api huma.API) {
@@ -56,7 +79,9 @@ func (h *Handler) registerPlayers(api huma.API) {
 
 	huma.Register(api, huma.Operation{
 		OperationID: "admin-player", Method: http.MethodGet, Path: "/v1/admin/players/{player}",
-		Summary: "One player", Tags: []string{"admin"}, Metadata: admin,
+		Summary:     "One player",
+		Description: "The list's row, with their friends, the rounds they have played and the open room they are in.",
+		Tags:        []string{"admin"}, Metadata: admin,
 	}, h.player)
 
 	huma.Register(api, huma.Operation{
@@ -113,7 +138,20 @@ func (h *Handler) player(ctx context.Context, in *playerPath) (*playerResponse, 
 	if p == nil {
 		return nil, errors.NotFound("not_found")
 	}
-	return &playerResponse{Body: h.row(ctx, p)}, nil
+	tally, err := h.Dashboard.Tally(ctx, p.ID)
+	if err != nil {
+		return nil, err
+	}
+	row := h.row(ctx, p)
+	out := &playerResponse{Body: playerDetailJSON{
+		ID: row.ID, Nickname: row.Nickname, Handle: row.Handle, Phone: row.Phone, Avatar: row.Avatar,
+		Language: row.Language, Disabled: row.Disabled, Presence: row.Presence, CreatedAt: row.CreatedAt,
+		LastSeen: row.LastSeen, Friends: tally.Friends, Rounds: tally.Rounds,
+	}}
+	if tally.Room != nil {
+		out.Body.Room = &playerRoomJSON{ID: tally.Room.ID, Code: tally.Room.Code}
+	}
+	return out, nil
 }
 
 func (h *Handler) disable(ctx context.Context, in *playerPath) (*noContent, error) {

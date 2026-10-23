@@ -32,11 +32,15 @@ type Claims struct {
 	// Phone is set only while signing in, before there is anyone to point at.
 	Phone string `json:"phone,omitempty"`
 
-	// Room, Role and Seat are a room ticket's: which room, what the player is
-	// there (host, player, spectator) and where they sit.
-	Room string `json:"room,omitempty"`
-	Role string `json:"role,omitempty"`
-	Seat int    `json:"seat,omitempty"`
+	// Room, Role, Seat and Round are a room ticket's: which room, what the
+	// player is there (host, player, spectator), where they sit, and the
+	// room's round when it was minted. Seat and Round are pointers so a
+	// ticket always carries them — the host sits in seat 0, a lobby that never
+	// started is round 0 — and no other token carries them at all.
+	Room  string `json:"room,omitempty"`
+	Role  string `json:"role,omitempty"`
+	Seat  *int   `json:"seat,omitempty"`
+	Round *int   `json:"round,omitempty"`
 
 	// Roles are an admin's, as the identity provider gave them at sign-in,
 	// prefix stripped.

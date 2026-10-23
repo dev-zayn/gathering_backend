@@ -100,6 +100,10 @@ func (i *Identities) Of(ctx context.Context, authorization string) (Answer, erro
 		}
 	}
 
+	seat := 0
+	if claims.Seat != nil {
+		seat = *claims.Seat
+	}
 	return Answer{Session: &caller.Session{
 		ID:       claims.ID,
 		Subject:  claims.Subject,
@@ -109,7 +113,7 @@ func (i *Identities) Of(ctx context.Context, authorization string) (Answer, erro
 		Phone:    claims.Phone,
 		Room:     claims.Room,
 		Role:     claims.Role,
-		Seat:     claims.Seat,
+		Seat:     seat,
 		Roles:    claims.Roles,
 		Session:  claims.Session,
 		Live:     claims.Live,

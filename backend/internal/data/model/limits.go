@@ -12,14 +12,21 @@ const (
 	MaxBio      = 120
 	MaxAvatar   = 255 // an avatar key
 	MaxTagline  = 160
-	MaxTitle    = 160 // a notification's
-	MaxKey      = 120 // a notification's idempotency key
 	MaxLink     = 2048
 	// MaxNotice is a console message's text: what a phone shows in full.
 	MaxNotice  = 1000
 	MaxGameID  = 64
 	MaxVersion = 32
 	MaxEmail   = 254
+)
+
+// What a game's server may put in a notification (docs/FRIENDS.md). The
+// columns are text; these are the contract's, refused on the way in as
+// field errors.
+const (
+	MaxTitle = 60
+	MaxBody  = 160
+	MaxKey   = 64 // the idempotency key
 )
 
 // TooLong counts runes, not bytes: an Arabic name is two bytes a letter and

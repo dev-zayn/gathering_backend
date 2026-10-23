@@ -34,9 +34,11 @@ func New(name, version string, log *applog.Logger, origins ...string) (chi.Route
 	r.Use(requestLogger(log))
 	r.Use(recoverer)
 	// The states vocabulary is 150 KB of Arabic and compresses to a fifth of that.
-	// Nothing else we serve is big enough to care either way.
-	r.Use(middleware.Compress(5))
-	r.Use(middleware.Timeout(30 * time.Second))
+	// Nothing else we serve is big enough to care either way. Neither this nor
+	// the deadline touches a room's socket: it has no body to compress, and it
+	// is meant to outlive any request.
+	r.Use(unlessUpgrade(middleware.Compress(5)))
+	r.Use(unlessUpgrade(middleware.Timeout(30 * time.Second)))
 
 	cfg := huma.DefaultConfig("Gathering "+name, version)
 	cfg.DocsPath = "/docs"
@@ -50,6 +52,22 @@ func New(name, version string, log *applog.Logger, origins ...string) (chi.Route
 	api := humachi.New(r, cfg)
 	health(api, name, version)
 	return r, api
+}
+
+// unlessUpgrade keeps a middleware off a WebSocket upgrade. The timeout's
+// 504 written after a socket closed would land on a hijacked connection, and
+// its deadline would cut every socket off after thirty seconds.
+func unlessUpgrade(mw func(http.Handler) http.Handler) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		wrapped := mw(next)
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if strings.EqualFold(r.Header.Get("Upgrade"), "websocket") {
+				next.ServeHTTP(w, r)
+				return
+			}
+			wrapped.ServeHTTP(w, r)
+		})
+	}
 }
 
 // requestLogger attaches the request id to the logger for the whole request and

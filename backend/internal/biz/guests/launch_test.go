@@ -14,6 +14,7 @@ import (
 	"github.com/jamaa/gathering/backend/internal/biz/biztest"
 	"github.com/jamaa/gathering/backend/internal/biz/games"
 	"github.com/jamaa/gathering/backend/internal/biz/identity"
+	"github.com/jamaa/gathering/backend/internal/biz/rooms"
 	"github.com/jamaa/gathering/backend/internal/data/enum"
 	"github.com/jamaa/gathering/backend/internal/data/model"
 	apperr "github.com/jamaa/gathering/backend/internal/pkg/errors"
@@ -54,10 +55,28 @@ func testLaunch(t *testing.T) (*Launch, *fakeMinter, *biztest.Whitelist, *model.
 		Games:     games.NewCatalogue(db, revoker, &biztest.Audit{}),
 		Minter:    minter,
 		Whitelist: wl,
+		Rooms:     roomRules(db),
 		CodeTTL:   time.Minute,
 		TokenTTL:  time.Hour,
 	}
 	return l, minter, wl, player, db
+}
+
+// roomRules is the rooms over the test's database, publishing nowhere.
+func roomRules(db *gorm.DB) *rooms.Service {
+	return rooms.New(db, rooms.Config{
+		Alphabet: "ABCDEFGHJKLMNPQRSTUVWXYZ23456789", MaxMembers: 64, TicketTTL: 10 * time.Minute,
+	})
+}
+
+// roomFor makes a room for the game with the player as its host.
+func roomFor(t *testing.T, l *Launch, playerID, gameID string) *rooms.Room {
+	t.Helper()
+	r, err := l.Rooms.(*rooms.Service).Create(context.Background(), playerID, rooms.CreateRequest{Game: gameID})
+	if err != nil {
+		t.Fatalf("room: %v", err)
+	}
+	return r
 }
 
 // codeIn is the one-time code a launch put on the URL.
@@ -112,7 +131,8 @@ func TestATapMintsACodeTheGamesServerSpends(t *testing.T) {
 	ctx := context.Background()
 	by := Launcher{PlayerID: player.ID, Live: true}
 
-	opened, err := l.Open(ctx, by, xo, "room_7f3k9d2m8q1x4b6n", "/board")
+	room := roomFor(t, l, player.ID, xo)
+	opened, err := l.Open(ctx, by, xo, room.ID, "/board")
 	if err != nil {
 		t.Fatalf("open: %v", err)
 	}
@@ -148,7 +168,7 @@ func TestATapMintsACodeTheGamesServerSpends(t *testing.T) {
 		t.Fatalf("scope = %q", issued.Scope)
 	}
 	claims := minter.minted()
-	if len(claims) != 1 || claims[0].GameID != xo || claims[0].PlayerID != player.ID || claims[0].RoomID != "room_7f3k9d2m8q1x4b6n" || !claims[0].Live {
+	if len(claims) != 1 || claims[0].GameID != xo || claims[0].PlayerID != player.ID || claims[0].RoomID != room.ID || !claims[0].Live {
 		t.Fatalf("minted %+v", claims)
 	}
 	if len(wl.AllowedGames) != 1 {
@@ -209,6 +229,42 @@ func TestTheGateIsAskedAgainAtTheExchange(t *testing.T) {
 	// never existed.
 	if _, err := l.Open(ctx, by, xo, "", ""); codeOf(err) != "not_found" {
 		t.Fatalf("opening a suspended game gave %v", err)
+	}
+}
+
+// A room rides on the code into the game's token, so it has to be the
+// player's, still open, and this game's — and a refusal touches no shelf.
+func TestOpeningIntoARoomIsTheRoomsRule(t *testing.T) {
+	l, _, _, player, db := testLaunch(t)
+	ctx := context.Background()
+	by := Launcher{PlayerID: player.ID, Live: true}
+	stranger := biztest.SeedPlayer(t, db, "+9647700000002", "Sara")
+	tap := xoManifest()
+	tap.Room.Players.Max = 8
+	biztest.SeedGame(t, db, "fixture.tap", tap)
+
+	room := roomFor(t, l, player.ID, xo)
+
+	if _, err := l.Open(ctx, Launcher{PlayerID: stranger.ID, Live: true}, xo, room.ID, ""); codeOf(err) != "not_member" {
+		t.Fatalf("a stranger opening into the room gave %v", err)
+	}
+	if _, err := l.Open(ctx, by, xo, "room_aaaaaaaaaaaaaaaa", ""); codeOf(err) != "not_member" {
+		t.Fatalf("a room that does not exist gave %v", err)
+	}
+	_, err := l.Open(ctx, by, "fixture.tap", room.ID, "")
+	var e *apperr.Error
+	if !as(err, &e) || e.Code != "invalid_fields" || e.Fields["room"] != "another_game" {
+		t.Fatalf("another game's room gave %v", err)
+	}
+	if grant, _ := l.Games.Grant(ctx, player.ID, "fixture.tap"); grant.InLibrary {
+		t.Fatal("a refused open still put the game on the shelf")
+	}
+
+	if _, err := l.Rooms.(*rooms.Service).End(ctx, player.ID, room.ID, nil); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := l.Open(ctx, by, xo, room.ID, ""); codeOf(err) != "room_closed" {
+		t.Fatalf("an ended room gave %v", err)
 	}
 }
 

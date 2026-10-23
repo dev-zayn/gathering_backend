@@ -46,7 +46,7 @@ export function roomFacts(room) {
     ['Pace', room.pace === 'turn' ? 'In turns' : 'Realtime'],
     ['State', room.state === 'none' ? 'None — no shared state' : 'Blob — a versioned shared state'],
     ['On a Wi-Fi with no internet', room.lan ? 'Yes' : 'No'],
-    ['Rejoin after dropping', room.rejoin ? 'Yes' : 'No'],
+    ['Back in during a round', room.rejoin ? 'Yes, for a member who left' : 'No'],
     ['Spectators', room.spectators ? 'Allowed' : 'No'],
   ]
 }

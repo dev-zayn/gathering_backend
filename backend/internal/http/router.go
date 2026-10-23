@@ -9,14 +9,20 @@ import (
 
 	"github.com/jamaa/gathering/backend/internal/biz"
 	"github.com/jamaa/gathering/backend/internal/biz/audit"
+	"github.com/jamaa/gathering/backend/internal/biz/friends"
 	"github.com/jamaa/gathering/backend/internal/biz/games"
 	"github.com/jamaa/gathering/backend/internal/biz/guests"
 	"github.com/jamaa/gathering/backend/internal/biz/identity"
+	"github.com/jamaa/gathering/backend/internal/biz/inbox"
 	"github.com/jamaa/gathering/backend/internal/biz/players"
+	"github.com/jamaa/gathering/backend/internal/biz/relay"
+	"github.com/jamaa/gathering/backend/internal/biz/rooms"
+	"github.com/jamaa/gathering/backend/internal/biz/tournaments"
 	"github.com/jamaa/gathering/backend/internal/http/admin"
 	"github.com/jamaa/gathering/backend/internal/http/authn"
 	"github.com/jamaa/gathering/backend/internal/http/guest"
 	"github.com/jamaa/gathering/backend/internal/http/player"
+	"github.com/jamaa/gathering/backend/internal/http/ws"
 	"github.com/jamaa/gathering/backend/internal/pkg/caller"
 	"github.com/jamaa/gathering/backend/internal/pkg/files"
 	"github.com/jamaa/gathering/backend/internal/pkg/token"
@@ -50,6 +56,23 @@ type Deps struct {
 	Registry *games.Registry
 	Launch   *guests.Launch
 	Bridge   *guests.Bridge
+
+	// Rooms is every rule about rooms; Relay carries their frames to the
+	// sockets, which open at /v1/rooms/{room}/socket.
+	Rooms *rooms.Service
+	Relay *relay.Hub
+
+	// Tournaments is every rule about tournaments: the player's routes, the
+	// console's, and the page behind a tournament's link.
+	Tournaments *tournaments.Service
+
+	// AppLinks is how the phones claim a room's invite link as the app's,
+	// and the stores its page sends a phone without the app to.
+	AppLinks guest.AppLinks
+
+	// Friends is who is whose friend; Inbox every player's notifications.
+	Friends *friends.Service
+	Inbox   *inbox.Inbox
 
 	// Files signs the links to every picture. LocalFiles is a laptop's
 	// stand-in for the bucket, served by this process under /files/; nil
@@ -99,6 +122,11 @@ func Mount(api huma.API, d Deps) {
 		Presence: d.Presence,
 		Games:    d.Games,
 		Files:    d.Files,
+		Rooms:    d.Rooms,
+		Friends:  d.Friends,
+		Inbox:    d.Inbox,
+
+		Tournaments: d.Tournaments,
 	}).Register(api)
 
 	(&admin.Handler{
@@ -111,15 +139,26 @@ func Mount(api huma.API, d Deps) {
 		Audit:     d.Audit,
 		Registry:  d.Registry,
 		Files:     d.Files,
+		Rooms:     d.Rooms,
+		Inbox:     d.Inbox,
+
+		Tournaments: d.Tournaments,
 	}).Register(api)
 
 	(&guest.Handler{
-		Launch:    d.Launch,
-		Bridge:    d.Bridge,
-		Signer:    d.Signer,
-		PublicURL: d.PublicURL,
-		DocsURL:   d.DocsURL,
+		Launch:      d.Launch,
+		Bridge:      d.Bridge,
+		Signer:      d.Signer,
+		Rooms:       d.Rooms,
+		Tournaments: d.Tournaments,
+		AppLinks:    d.AppLinks,
+		PublicURL:   d.PublicURL,
+		DocsURL:     d.DocsURL,
 	}).Register(api)
+
+	// The relay's socket. Straight onto the router like the pictures below:
+	// an upgrade is not an operation, and it answers its own refusals.
+	(&ws.Handler{Resolve: resolve, Rooms: d.Rooms, Hub: d.Relay}).Register(api)
 
 	// A laptop serves its own pictures. Straight onto the router, outside the
 	// API: a picture is not an operation, carries no token, and is not in the

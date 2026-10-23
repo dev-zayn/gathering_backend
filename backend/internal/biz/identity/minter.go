@@ -20,13 +20,15 @@ type GameClaims struct {
 }
 
 // RoomClaims is a room ticket: one player, in one room, for one game's own
-// server to verify through the JWKS. It opens nothing on this API.
+// server to verify through the JWKS. Round is the room's round when it was
+// minted, 0 in a lobby that never started. It opens nothing on this API.
 type RoomClaims struct {
 	GameID   string
 	PlayerID string
 	RoomID   string
 	Role     string
 	Seat     int
+	Round    int
 }
 
 // Minter signs the tokens sign-in hands out. Nothing above this cares that they
@@ -90,15 +92,17 @@ func (m *jwtMinter) MintGame(in GameClaims, ttl time.Duration) (string, string, 
 }
 
 // MintRoom signs a ticket the game's server reads: who, which room, what they
-// are there and where they sit. Scope and kind both say room, so a reader of
-// either sees the same thing.
+// are there, where they sit and which round it is. Scope and kind both say
+// room, so a reader of either sees the same thing.
 func (m *jwtMinter) MintRoom(in RoomClaims, ttl time.Duration) (string, string, error) {
+	seat, round := in.Seat, in.Round
 	c := token.Claims{
 		Scope: caller.ScopeRoom,
 		Kind:  caller.ScopeRoom,
 		Room:  in.RoomID,
 		Role:  in.Role,
-		Seat:  in.Seat,
+		Seat:  &seat,
+		Round: &round,
 	}
 	c.Subject = in.PlayerID
 	c.Audience = []string{in.GameID}

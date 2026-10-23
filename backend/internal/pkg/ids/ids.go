@@ -21,6 +21,9 @@ const (
 	Token        = "tok"
 	Audit        = "aud"
 	RoomEvent    = "rev"
+	Announcement = "ann"
+	Tournament   = "trn"
+	Match        = "trm"
 )
 
 var enc = base32.NewEncoding("abcdefghijklmnopqrstuvwxyz234567").WithPadding(base32.NoPadding)

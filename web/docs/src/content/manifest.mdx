@@ -45,17 +45,19 @@ is read as it is.
 | `mode` | yes | `embedded`. A game runs inside the app; there is no external mode. |
 | `entry` | yes | The https address the frame loads. A one-time `code` is appended on launch. |
 | `orientation` | no | `portrait` (default) or `landscape`. The frame rotates to it. |
-| `splash` | no | `true` when the page needs a moment before it can paint; the app covers it until `gathering:ready`. |
+| `splash` | no | `true` when the page needs a moment before it can paint; the app covers it until [`gathering:ready`](/bridge#frame-messages). |
 | `publisher.tier` | yes | `partner`. `first-party` is reserved. |
-| `scopes` | no | What your server may read: `identity:read`, `friends:read`, `notify:send`, `results:write`. |
+| `publisher.name` | no | Your studio's name, as the store shows it, up to 120 characters; `publisher.company` stands in when it is empty. |
+| `scopes` | no | What your game may do with the player: `identity:read` (their name and picture, to your server), `friends:read` (`friends.list()` in your page), `notify:send` ([notifications](/notifications) from your server), `results:write` (a room's [results](/rooms#results) from your server). |
 | `permissions` | no | Device permissions the app asks the player for: `camera`, `microphone`, `location`, `notification`, `storage`, `contacts`. |
+| `redirect_uris` | no | Where [signing in from your own site](/auth#sign-in-from-your-own-site) may send a player back, matched exactly. Without it, any address on your `entry`'s origin. |
 | `room.players` | yes | `min` and `max`, 1 to 64. The host cannot start under `min`; nobody joins past `max`. |
 | `room.host` | yes | `authoritative`: only the host writes the state. `peer`: any member may. |
 | `room.pace` | yes | `turn` or `realtime`. Informational for players; the relay is the same. |
-| `room.lan` | no | Whether the game may be played on a Wi-Fi relay with no internet. |
+| `room.lan` | no | Whether the game may be played on a Wi-Fi relay with no internet. Every room plays through the cloud relay today. |
 | `room.state` | no | `blob` keeps a versioned shared state; `none` refuses state frames. |
-| `room.rejoin` | no | Whether a member who dropped may come back while the game is playing. |
-| `room.spectators` | no | Whether a room may hold people who watch and do not play. |
+| `room.rejoin` | no | Whether a member who left may come back while a round is playing. Between rounds anybody who left may. |
+| `room.spectators` | no | Whether a room may hold people who watch and do not play. Reserved: no room holds spectators yet. |
 
 ## What is not in it
 

@@ -32,8 +32,8 @@ export function Hero() {
           already relayed. No accounts, no sockets, no lobby to write.
         </p>
         <div className="mt-6 flex flex-wrap gap-3">
-          <Button href="/quickstart" arrow="right">
-            Start in fifteen minutes
+          <Button href="/manifest" arrow="right">
+            Start with the manifest
           </Button>
           <Button href="/bridge" variant="outline" icon={ArrowLeftRightIcon}>
             Explore the bridge
@@ -110,18 +110,31 @@ const MANIFEST = [
   ],
   [
     ['k', '"room"'],
-    ['p', ': { '],
+    ['p', ': {'],
+  ],
+  [
+    ['p', '  '],
     ['k', '"players"'],
     ['p', ': { '],
     ['k', '"min"'],
     ['p', ': 2, '],
     ['k', '"max"'],
-    ['p', ': 8 }, '],
+    ['p', ': 8 },'],
+  ],
+  [
+    ['p', '  '],
+    ['k', '"host"'],
+    ['p', ': '],
+    ['s', '"peer"'],
+    ['p', ','],
+  ],
+  [
+    ['p', '  '],
     ['k', '"pace"'],
     ['p', ': '],
     ['s', '"realtime"'],
-    ['p', ' }'],
   ],
+  [['p', '}']],
   [['p', '}']],
 ]
 

@@ -79,7 +79,7 @@ type Game struct {
 
 	// Room is the manifest's room block, as one column: the bounds a room
 	// for this game is made under.
-	Room Room
+	Room RoomBlock
 
 	// SecretHash is the game's client secret, hashed. Never the secret itself.
 	SecretHash string

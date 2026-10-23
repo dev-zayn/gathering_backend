@@ -10,9 +10,13 @@ import Dashboard from './pages/dashboard.jsx'
 import Games from './pages/games.jsx'
 import Game from './pages/game.jsx'
 import Players from './pages/players.jsx'
+import Rooms from './pages/rooms.jsx'
+import Room from './pages/room.jsx'
+import Tournaments from './pages/tournaments.jsx'
+import Tournament from './pages/tournament.jsx'
+import Notifications from './pages/notifications.jsx'
 import Admins from './pages/admins.jsx'
 import Activity from './pages/activity.jsx'
-import Soon from './pages/soon.jsx'
 
 // Boot: finish a sign-in callback if this is one, then ask who is signed in.
 // A 401 shows the sign-in card, a 403 the card with a note, anything else an
@@ -91,14 +95,27 @@ export default function App() {
             <Route path="games" element={<Games />} />
             <Route path="games/:id" element={<Game />} />
             <Route path="players" element={<Players />} />
-            <Route path="rooms" element={<Soon title="Rooms" milestone="M8" />} />
-            <Route path="notifications" element={<Soon title="Notifications" milestone="M8" />} />
+            <Route path="rooms" element={<Rooms />} />
+            <Route path="rooms/:id" element={<Room />} />
+            <Route path="tournaments" element={<Tournaments />} />
+            <Route path="tournaments/:id" element={<Tournament />} />
+            <Route path="notifications" element={<Notifications />} />
             <Route path="activity" element={<Activity />} />
             <Route path="admins" element={<Admins />} />
-            <Route path="*" element={<Soon title="Not found" milestone="—" />} />
+            <Route path="*" element={<NotFound />} />
           </Route>
         </Routes>
       </BrowserRouter>
     </Me.Provider>
+  )
+}
+
+// An address no section answers.
+function NotFound() {
+  return (
+    <div>
+      <h1 className="text-xl font-extrabold">Not found</h1>
+      <p className="text-ink-2 mt-2 text-sm">No page here. The rail on the side has every section.</p>
+    </div>
   )
 }

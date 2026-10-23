@@ -1,5 +1,5 @@
 // Command api runs Gathering: sign-in, players and friends, the game registry
-// and library, rooms and their relay, and the inbox. The wiring is the graph
+// and library, rooms and their relay, tournaments, and the inbox. The wiring is the graph
 // main builds below.
 package main
 
@@ -14,18 +14,27 @@ import (
 
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/joho/godotenv"
+	"gorm.io/gorm"
 
 	"github.com/jamaa/gathering/backend/internal/biz"
 	"github.com/jamaa/gathering/backend/internal/biz/audit"
+	"github.com/jamaa/gathering/backend/internal/biz/friends"
 	"github.com/jamaa/gathering/backend/internal/biz/games"
 	"github.com/jamaa/gathering/backend/internal/biz/guests"
 	"github.com/jamaa/gathering/backend/internal/biz/identity"
+	"github.com/jamaa/gathering/backend/internal/biz/inbox"
 	"github.com/jamaa/gathering/backend/internal/biz/players"
+	"github.com/jamaa/gathering/backend/internal/biz/push"
+	"github.com/jamaa/gathering/backend/internal/biz/relay"
+	"github.com/jamaa/gathering/backend/internal/biz/rooms"
+	"github.com/jamaa/gathering/backend/internal/biz/tournaments"
 	"github.com/jamaa/gathering/backend/internal/conf"
 	"github.com/jamaa/gathering/backend/internal/data"
 	"github.com/jamaa/gathering/backend/internal/data/migrations"
 	apphttp "github.com/jamaa/gathering/backend/internal/http"
 	"github.com/jamaa/gathering/backend/internal/http/authn"
+	"github.com/jamaa/gathering/backend/internal/http/guest"
+	"github.com/jamaa/gathering/backend/internal/pkg/fcm"
 	"github.com/jamaa/gathering/backend/internal/pkg/files"
 	applog "github.com/jamaa/gathering/backend/internal/pkg/log"
 	"github.com/jamaa/gathering/backend/internal/pkg/otp"
@@ -109,6 +118,8 @@ func main() {
 	authAudit := audit.New(logs, audit.AreaAuth)
 	playersAudit := audit.New(logs, audit.AreaPlayers)
 	gamesAudit := audit.New(logs, audit.AreaGames)
+	roomsAudit := audit.New(logs, audit.AreaRooms)
+	tournamentsAudit := audit.New(logs, audit.AreaTournaments)
 	adminAudit := audit.New(logs, audit.AreaAdmin)
 
 	// Codes reach a phone through a webhook to whatever gateway is wired; on a
@@ -245,6 +256,63 @@ func main() {
 		log.Warn("ALLOW_PRIVATE_HOSTS is on: a manifest may be fetched from a private address")
 	}
 
+	// The inbox, and the friends: a request and an accept raise their
+	// notifications in the same transaction as the answer itself. The
+	// console's announcements go on the record with the players. Every
+	// notification, once committed, goes on to its recipient's phones.
+	pusher, err := openPush(cfg.Push, pg, devices, log)
+	if err != nil {
+		log.Fatal("push", "err", err)
+	}
+	notifications := inbox.New(pg)
+	notifications.Files, notifications.AvatarTTL = bucket, cfg.Files.AvatarTTL
+	notifications.Audit = playersAudit
+	notifications.Pusher = pusher
+	friendRules := friends.New(pg, playerStore, notifications)
+	friendRules.Presence = presence
+	friendRules.Files, friendRules.AvatarTTL = bucket, cfg.Files.AvatarTTL
+
+	// The rooms, and the relay that carries their frames. Each needs the
+	// other: the rules publish through the hub, and the hub asks the rules
+	// who may say what. The hub is the process's one subscriber to Redis.
+	roomRules := rooms.New(pg, rooms.Config{
+		Alphabet:   cfg.Rooms.Alphabet,
+		MaxMembers: cfg.Relay.MaxMembers,
+		LobbyIdle:  cfg.Rooms.LobbyIdle,
+		MaxPlay:    cfg.Rooms.MaxPlay,
+		TicketTTL:  cfg.Token.RoomTTL,
+		LinkURL:    cfg.Links.PublicURL,
+		AvatarTTL:  cfg.Files.AvatarTTL,
+	})
+	roomRules.Presence = presence
+	roomRules.Minter = minter
+	roomRules.Files = bucket
+	roomRules.Friends = friendRules
+	roomRules.Inbox = notifications
+	roomRules.Audit = roomsAudit
+	relayCfg := relay.DefaultConfig()
+	relayCfg.MaxFrame, relayCfg.Rate = cfg.Relay.MaxFrame, cfg.Relay.Rate
+	hub := relay.NewHub(rdb, roomRules, presence, relayCfg, log)
+	roomRules.Publisher = hub
+
+	// The tournaments, whose matches are played in rooms: the rules ask the
+	// tournaments who may sit in a match room and what its rounds decide,
+	// and the tournaments ask the rooms for a match's room and to close it.
+	tournamentRules := tournaments.New(pg, tournaments.Config{
+		Alphabet:    cfg.Rooms.Alphabet,
+		MaxEntrants: cfg.Tournaments.MaxEntrants,
+		MaxMembers:  cfg.Relay.MaxMembers,
+		OpenFor:     cfg.Tournaments.OpenFor,
+		LinkURL:     cfg.Links.PublicURL,
+		AvatarTTL:   cfg.Files.AvatarTTL,
+	})
+	tournamentRules.Rooms = roomRules
+	tournamentRules.Friends = friendRules
+	tournamentRules.Inbox = notifications
+	tournamentRules.Files = bucket
+	tournamentRules.Audit = tournamentsAudit
+	roomRules.Matches = tournamentRules
+
 	launch := &guests.Launch{
 		Codes:     launchCodes,
 		Tokens:    gameTokens,
@@ -252,6 +320,7 @@ func main() {
 		Games:     catalogue,
 		Minter:    minter,
 		Whitelist: whitelist,
+		Rooms:     roomRules,
 		CodeTTL:   cfg.Token.CodeTTL,
 		TokenTTL:  cfg.Token.GameTTL,
 	}
@@ -261,12 +330,16 @@ func main() {
 		Games:     catalogue,
 		Files:     bucket,
 		AvatarTTL: cfg.Files.AvatarTTL,
+		Rooms:     roomRules,
+		Inbox:     notifications,
+		Limiter:   identity.NewLimiter(rdb),
 	}
 
 	maintenance := &biz.Maintenance{
 		Devices:       devices,
 		Codes:         launchCodes,
 		CodeRetention: cfg.CodeRetention,
+		Notifications: notifications,
 	}
 
 	r, humaAPI := apphttp.New("gathering", cfg.Version, log, cfg.CORSOrigins...)
@@ -289,6 +362,21 @@ func main() {
 		Registry: registry,
 		Launch:   launch,
 		Bridge:   bridge,
+
+		Rooms:       roomRules,
+		Relay:       hub,
+		Tournaments: tournamentRules,
+		AppLinks: guest.AppLinks{
+			AndroidPackage: cfg.Links.AndroidPackage,
+			SHA256:         cfg.Links.AppLinksSHA256,
+			AppleTeamID:    cfg.Links.AppleTeamID,
+			IOSBundle:      cfg.Links.IOSBundle,
+			AppStoreURL:    cfg.Links.AppStoreURL,
+			PlayStoreURL:   cfg.Links.PlayStoreURL,
+		},
+
+		Friends: friendRules,
+		Inbox:   notifications,
 
 		Files:      bucket,
 		LocalFiles: localFiles,
@@ -321,7 +409,21 @@ func main() {
 			if err != nil || !s.Any() {
 				return "", err
 			}
-			return fmt.Sprintf("devices=%d codes=%d", s.Devices, s.Codes), nil
+			return fmt.Sprintf("devices=%d codes=%d notifications=%d", s.Devices, s.Codes, s.Notifications), nil
+		}},
+		{Name: "rooms", Run: func(ctx context.Context) (string, error) {
+			s, err := roomRules.Sweep(ctx, time.Now())
+			if !s.Any() {
+				return "", err
+			}
+			return fmt.Sprintf("idle=%d timeout=%d deleted=%d", s.Idle, s.Timeout, s.Deleted), err
+		}},
+		{Name: "tournaments", Run: func(ctx context.Context) (string, error) {
+			s, err := tournamentRules.Sweep(ctx, time.Now())
+			if !s.Any() {
+				return "", err
+			}
+			return fmt.Sprintf("started=%d cancelled=%d", s.Started, s.Cancelled), err
 		}},
 		{Name: "manifests", Run: func(ctx context.Context) (string, error) {
 			read, err := registry.Reread(ctx)
@@ -332,7 +434,22 @@ func main() {
 		}},
 	}, log)
 
-	if err := apphttp.Serve(ctx, cfg.Addr, r, log); err != nil {
+	err = apphttp.Serve(ctx, cfg.Addr, r, log)
+
+	// The server stops answering requests but never tracked the sockets: it
+	// handed them over. They close with 1001, and the app reconnects to
+	// another replica with after.
+	hctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	hub.Close(hctx)
+	cancel()
+
+	// No request is left to raise anything: the pushes queued go out, for a
+	// few seconds at most, and the rest are abandoned. The inbox has them.
+	pctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	pusher.Close(pctx)
+	cancel()
+
+	if err != nil {
 		log.Fatal("serve", "err", err)
 	}
 	log.Info("stopped")
@@ -354,6 +471,32 @@ func openFiles(ctx context.Context, cfg conf.Config) (files.Files, http.Handler,
 		return nil, nil, err
 	}
 	return local, local.Handler(), nil
+}
+
+// openPush is the pool that carries notifications to the phones: through
+// Firebase with the service account's key, or with no key, a "would push"
+// line in this log for each notification.
+func openPush(cfg conf.PushConfig, db *gorm.DB, devices *identity.Devices, log *applog.Logger) (*push.Service, error) {
+	if !cfg.Configured() {
+		log.Warn("no Firebase key configured (FCM_PROJECT_ID, FCM_CREDENTIALS_FILE) — each push is a line in this log, nothing is sent")
+		return push.New(db, nil, devices, log, push.Options{}), nil
+	}
+	key, err := os.ReadFile(cfg.CredentialsFile)
+	if err != nil {
+		return nil, err
+	}
+	client, err := fcm.New(fcm.Config{
+		ProjectID: cfg.ProjectID, Credentials: key, Endpoint: cfg.Endpoint, Timeout: cfg.Timeout,
+	})
+	if err != nil {
+		return nil, err
+	}
+	endpoint := cfg.Endpoint
+	if endpoint == "" {
+		endpoint = fcm.DefaultEndpoint
+	}
+	log.Info("pushing through Firebase", "project", cfg.ProjectID, "endpoint", endpoint)
+	return push.New(db, client, devices, log, push.Options{}), nil
 }
 
 // ssoBridge is the provider as identity sees it: the verifier's answer, with

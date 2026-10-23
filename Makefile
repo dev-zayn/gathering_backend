@@ -3,7 +3,7 @@
 CMDS := api fixtures
 GO   := cd backend &&
 
-.PHONY: run build test check fmt tidy tidy-check lint ui ui-check e2e env keys up down logs migrate brand-check
+.PHONY: run build test check fmt tidy tidy-check lint ui ui-check e2e env keys up down logs migrate brand-check games fixtures
 
 run:            ## go run ./cmd/$(C) (default api)
 	$(GO) go run ./cmd/$(or $(C),api)
@@ -64,3 +64,19 @@ migrate:        ## apply the migrations by hand (the api does it on start)
 
 brand-check:    ## no borrowed brand identifier anywhere in this repo
 	@scripts/brand-check.sh
+
+# The fixtures # The games live outside this repo, one folder each in the workspace's
+# gathering_games/: xo and tap are served as they are, the arcade's seven are
+# projects of their own built into their dist/. The fixtures serve that folder.
+GAMES_DIR := ../gathering_games
+ARCADE := outsider mafia charades most-likely reflex spot-it giant-uno
+
+games:          ## build the arcade's seven games in ../gathering_games, each into its dist/
+	@for g in $(ARCADE); do \
+	  (cd $(GAMES_DIR)/$$g && bun install --frozen-lockfile && bun run build) || exit 1; \
+	  echo "games: $$g → $(GAMES_DIR)/$$g/dist"; \
+	done
+	@scripts/brand-check.sh $(GAMES_DIR)
+
+fixtures:       ## the fixtures on :8091 over ../gathering_games (PUBLIC_URL, API_URL, PARTNER_CLIENT_SECRET from the shell)
+	$(GO) FIXTURES_DIR=$(abspath $(GAMES_DIR)) go run ./cmd/fixtures

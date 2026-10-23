@@ -97,7 +97,7 @@ export function Shell({ page, sections, children }) {
                 {page && <Paging page={page} />}
                 {SECTION === 'developer' && (
                   <Link
-                    to="/quickstart"
+                    to="/manifest"
                     className="skeu-btn skeu-btn-primary hidden h-9 shrink-0 items-center gap-1.5 rounded-md px-3.5 text-[13px] font-semibold md:inline-flex"
                   >
                     Start building

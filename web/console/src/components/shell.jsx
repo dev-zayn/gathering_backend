@@ -1,5 +1,5 @@
 import { NavLink, Outlet } from 'react-router-dom'
-import { Gamepad2, LayoutDashboard, Users, DoorOpen, Bell, ScrollText, ShieldCheck, LogOut } from 'lucide-react'
+import { Gamepad2, LayoutDashboard, Users, DoorOpen, Trophy, Bell, ScrollText, ShieldCheck, LogOut } from 'lucide-react'
 
 import { useMe } from '../lib/me.js'
 import { signOut } from '../sso.js'
@@ -10,6 +10,7 @@ const sections = [
   { to: '/games', label: 'Games', icon: Gamepad2 },
   { to: '/players', label: 'Players', icon: Users },
   { to: '/rooms', label: 'Rooms', icon: DoorOpen },
+  { to: '/tournaments', label: 'Tournaments', icon: Trophy },
   { to: '/notifications', label: 'Notifications', icon: Bell },
   { to: '/activity', label: 'Activity', icon: ScrollText },
   { to: '/admins', label: 'Admins', icon: ShieldCheck },

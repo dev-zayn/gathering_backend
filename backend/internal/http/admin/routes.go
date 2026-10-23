@@ -9,7 +9,10 @@ import (
 	"github.com/jamaa/gathering/backend/internal/biz/audit"
 	"github.com/jamaa/gathering/backend/internal/biz/games"
 	"github.com/jamaa/gathering/backend/internal/biz/identity"
+	"github.com/jamaa/gathering/backend/internal/biz/inbox"
 	"github.com/jamaa/gathering/backend/internal/biz/players"
+	"github.com/jamaa/gathering/backend/internal/biz/rooms"
+	"github.com/jamaa/gathering/backend/internal/biz/tournaments"
 	"github.com/jamaa/gathering/backend/internal/http/authn"
 	"github.com/jamaa/gathering/backend/internal/pkg/files"
 )
@@ -27,6 +30,14 @@ type Handler struct {
 	// their pictures.
 	Registry *games.Registry
 	Files    files.Files
+
+	// Rooms is every room, and the close; Inbox sends the announcements.
+	Rooms *rooms.Service
+	Inbox *inbox.Inbox
+
+	// Tournaments is every tournament, the official ones made here, and the
+	// console's hand in any of them.
+	Tournaments *tournaments.Service
 }
 
 func (h *Handler) Register(api huma.API) {
@@ -36,4 +47,7 @@ func (h *Handler) Register(api huma.API) {
 	h.registerRegistry(api)
 	h.registerDashboard(api)
 	h.registerAudit(api)
+	h.registerRooms(api)
+	h.registerAnnouncements(api)
+	h.registerTournaments(api)
 }

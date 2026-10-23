@@ -250,7 +250,7 @@ A player taps your tile and arrives already signed in. There is no password for 
         Absent, not empty, without the scope. `avatar` is a bundled avatar's id; `avatar_url` a link that expires, when the player uploaded a picture.
       </Property>
       <Property name="room" type="when opened into one">
-        `null` for a game opened outside a room. The room's own fields arrive with [Rooms](/rooms).
+        `null` for a game opened outside a room, and once the player has left it. Its fields are in [Rooms](/rooms#your-server-and-the-room).
       </Property>
       <Property name="scope" type="string[]">
         What this token carries. Read it; do not assume it.

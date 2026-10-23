@@ -15,7 +15,7 @@ import (
 // The audit log, read back: every area in one table, a page at a time. Which
 // area is a filter here because the console is the one reader of them all.
 type auditRequest struct {
-	Area    string `query:"area" enum:"auth,players,games,rooms,admin" doc:"One area of the log. Empty is all of them."`
+	Area    string `query:"area" enum:"auth,players,games,rooms,tournaments,admin" doc:"One area of the log. Empty is all of them."`
 	Actor   string `query:"actor" doc:"Only this admin's lines."`
 	Action  string `query:"action" example:"profile.edited"`
 	Subject string `query:"subject" example:"ply_5pt1kx8vqzr3nayd" doc:"Only what was done to this player, game or room."`
@@ -27,7 +27,7 @@ type auditRequest struct {
 type auditJSON struct {
 	ID      string         `json:"id"`
 	At      string         `json:"at"`
-	Area    string         `json:"area" enum:"auth,players,games,rooms,admin"`
+	Area    string         `json:"area" enum:"auth,players,games,rooms,tournaments,admin"`
 	Actor   string         `json:"actor" doc:"The admin's id. /v1/admin/admins names them."`
 	Action  string         `json:"action"`
 	Subject string         `json:"subject" doc:"What it was done to."`

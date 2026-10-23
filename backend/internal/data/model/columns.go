@@ -49,6 +49,32 @@ func (r Raw) Value() (driver.Value, error) {
 	return string(r), nil
 }
 
+// NullRaw is a document kept whole that may be absent: SQL NULL when empty,
+// where Raw writes {}. A game's shared state is one, and "never written" is
+// not the same as an empty object.
+type NullRaw []byte
+
+func (r *NullRaw) Scan(src any) error {
+	switch v := src.(type) {
+	case nil:
+		*r = nil
+	case []byte:
+		*r = append((*r)[:0], v...)
+	case string:
+		*r = []byte(v)
+	default:
+		return fmt.Errorf("model: cannot read %T as json", src)
+	}
+	return nil
+}
+
+func (r NullRaw) Value() (driver.Value, error) {
+	if len(r) == 0 {
+		return nil, nil
+	}
+	return string(r), nil
+}
+
 func scanJSON(src, dst any) error {
 	switch v := src.(type) {
 	case nil:
