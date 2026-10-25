@@ -1,0 +1,133 @@
+# ga3da.fun on one Hetzner server: Caddy in front (HTTPS on every host, the
+# certificates its own job), the api, the console, the docs and the games,
+# with Postgres and Redis beside them. deploy.sh syncs the source to
+# /opt/ga3da and builds it here; every secret is in /opt/ga3da/secrets
+# (setup.sh writes them), passed as --env-file, never in this folder.
+name: ga3da
+
+x-service: &service
+  restart: unless-stopped
+  logging:
+    driver: json-file
+    options: { max-size: "10m", max-file: "3" }
+
+services:
+  caddy:
+    <<: *service
+    image: caddy:2.10-alpine
+    # This folder, not the one file: a sync replaces the Caddyfile, and a file
+    # mount would go on showing the old one. deploy.sh reloads it.
+    command: ["caddy", "run", "--config", "/etc/caddy/ga3da/Caddyfile", "--adapter", "caddyfile"]
+    ports: ["80:80", "443:443", "443:443/udp"]
+    environment:
+      DOMAIN: ${DOMAIN:?}
+    volumes:
+      - ./:/etc/caddy/ga3da:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on: [api, console, docs, games]
+
+  postgres:
+    <<: *service
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: gathering
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?}
+      POSTGRES_DB: gathering
+    volumes:
+      - pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U gathering -d gathering"]
+      interval: 5s
+      retries: 10
+
+  redis:
+    <<: *service
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      retries: 10
+
+  api:
+    <<: *service
+    build:
+      context: ../..
+      dockerfile: deploy/docker/Dockerfile
+      args: { CMD: api }
+    environment:
+      DATABASE_URL: postgres://gathering:${POSTGRES_PASSWORD:?}@postgres:5432/gathering?sslmode=disable
+      REDIS_URL: redis://redis:6379/0
+      JWT_PRIVATE_KEY: ${JWT_PRIVATE_KEY:?}
+      API_PUBLIC_URL: https://api.${DOMAIN:?}
+      JWT_ISSUER: https://api.${DOMAIN:?}
+      LINK_PUBLIC_URL: https://${DOMAIN:?}
+      DOCS_URL: https://docs.${DOMAIN:?}
+      CORS_ORIGINS: https://console.${DOMAIN:?},https://docs.${DOMAIN:?}
+      # For now, debug mode, for two of its stand-ins: every sign-in code is
+      # OTP_FIXED_CODE (no SMS gateway yet), and pictures live on the files
+      # folder, not a bucket. A gateway and a bucket retire it (README).
+      DEBUG: "true"
+      OTP_FIXED_CODE: ${OTP_FIXED_CODE:?}
+      # The console's one password, as a bcrypt hash: no identity provider yet.
+      CONSOLE_PASSWORD_HASH: ${CONSOLE_PASSWORD_HASH:?}
+      FILES_DIR: /files
+      FCM_PROJECT_ID: ${FCM_PROJECT_ID:-}
+      FCM_CREDENTIALS_FILE: ${FCM_CREDENTIALS_FILE:-}
+      APP_LINKS_SHA256: ${APP_LINKS_SHA256:-}
+      APPLE_TEAM_ID: ${APPLE_TEAM_ID:-}
+      APP_STORE_URL: ${APP_STORE_URL:-}
+      PLAY_STORE_URL: ${PLAY_STORE_URL:-}
+    volumes:
+      - ${DATA_DIR:?}/files:/files
+      - ${SECRETS_DIR:?}/firebase:/run/firebase:ro
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8080/health"]
+      interval: 10s
+      retries: 12
+      start_period: 30s
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+
+  console:
+    <<: *service
+    build:
+      context: ../../web/console
+      args:
+        # Empty: the console calls /v1 on its own host, which Caddy hands to
+        # the api; the api's own host refuses the console's routes.
+        VITE_API_URL: ""
+        VITE_PASSWORD_SIGNIN: "true"
+
+  docs:
+    <<: *service
+    build:
+      context: ../../web/docs
+    environment:
+      DOCS_USER: ${DOCS_USER:?}
+      DOCS_PASSWORD: ${DOCS_PASSWORD:?}
+
+  games:
+    <<: *service
+    build:
+      context: ../..
+      dockerfile: deploy/docker/Dockerfile
+      args: { CMD: fixtures }
+    environment:
+      PUBLIC_URL: https://games.${DOMAIN:?}
+      API_URL: https://api.${DOMAIN:?}
+      PARTNER_CLIENT_SECRET: ${PARTNER_CLIENT_SECRET:-}
+    volumes:
+      # /opt/ga3da/gathering_games, synced by deploy.sh with every arcade
+      # game built into its dist/.
+      - ../../../gathering_games:/app/games:ro
+
+volumes:
+  pg:
+  redis:
+  caddy_data:
+  caddy_config:

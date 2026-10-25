@@ -81,6 +81,50 @@ func TestSearchIsAPrefixOverHandlesAndSkipsTheDisabled(t *testing.T) {
 	}
 }
 
+// The console's list is everybody, the newest first, with nothing typed, and
+// the handles that start with what was typed otherwise. The switched off are
+// in both: the console is where they are switched back on.
+func TestTheConsoleListIsNewestFirstAndKeepsTheSwitchedOff(t *testing.T) {
+	db := biztest.DB(t)
+	store := identity.NewPlayerStore(db)
+	ctx := context.Background()
+	oldest := biztest.SeedPlayer(t, db, "+9647700000001", "Ali")
+	middle := biztest.SeedPlayer(t, db, "+9647700000002", "Bob")
+	newest := biztest.SeedPlayer(t, db, "+9647700000003", "Alix")
+	for i, p := range []*model.Player{oldest, middle, newest} {
+		if err := db.Exec(`UPDATE players SET created_at = now() - make_interval(hours => ?) WHERE id = ?`, 3-i, p.ID).Error; err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := store.SetDisabled(ctx, middle.ID, true); err != nil {
+		t.Fatal(err)
+	}
+
+	all, err := store.List(ctx, "  ", 50)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(all) != 3 || all[0].ID != newest.ID || all[1].ID != middle.ID || all[2].ID != oldest.ID {
+		t.Fatalf("nothing typed listed %v", handles(all))
+	}
+	if !all[1].Disabled {
+		t.Fatal("the switched-off player lost their switch in the list")
+	}
+	if found, _ := store.List(ctx, "@", 50); len(found) != 0 {
+		t.Fatalf("@ listed %v", handles(found))
+	}
+	found, _ := store.List(ctx, "ALI", 50)
+	if len(found) != 2 || found[0].ID != oldest.ID || found[1].ID != newest.ID {
+		t.Fatalf("ali listed %v", handles(found))
+	}
+	if found, _ = store.List(ctx, "bo", 50); len(found) != 1 || found[0].ID != middle.ID {
+		t.Fatalf("a switched-off player is not found by handle: %v", handles(found))
+	}
+	if found, _ = store.List(ctx, "", 2); len(found) != 2 {
+		t.Fatalf("the limit was not kept: %v", handles(found))
+	}
+}
+
 func handles(ps []model.Player) []string {
 	out := make([]string, 0, len(ps))
 	for _, p := range ps {

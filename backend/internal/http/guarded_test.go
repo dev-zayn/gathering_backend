@@ -21,8 +21,9 @@ var publicOperations = map[string]string{
 	"auth-refresh": "the refresh token is the credential, and it is in the body",
 	// The provider's token is the credential, checked by the handler: the authn
 	// middleware only reads tokens of ours. The dev sign-in exists only with DEBUG.
-	"admin-session-open": "trades a provider token for a console session",
-	"admin-session-dev":  "a laptop's sign-in; refused outright unless DEBUG and DEV_ADMIN",
+	"admin-session-open":     "trades a provider token for a console session",
+	"admin-session-dev":      "a laptop's sign-in; refused outright unless DEBUG and DEV_ADMIN",
+	"admin-session-password": "the console's password sign-in; not found unless CONSOLE_PASSWORD_HASH",
 
 	// The game's own server proves who it is with its client secret, in the
 	// form body; there is no token of ours to hold before this answers.

@@ -73,7 +73,7 @@ func (h *Handler) registerPlayers(api huma.API) {
 	huma.Register(api, huma.Operation{
 		OperationID: "admin-players", Method: http.MethodGet, Path: "/v1/admin/players",
 		Summary:     "Players",
-		Description: "By the start of a handle, or the newest without one. Presence is read from Redis as the list is built.",
+		Description: "By the start of a handle, or the newest without one; switched-off players included. Presence is read from Redis as the list is built.",
 		Tags:        []string{"admin"}, Metadata: admin,
 	}, h.players)
 
@@ -118,7 +118,7 @@ func (h *Handler) row(ctx context.Context, p *model.Player) playerRowJSON {
 
 func (h *Handler) players(ctx context.Context, in *playersRequest) (*playersResponse, error) {
 	q := strings.ToLower(strings.TrimSpace(strings.TrimPrefix(in.Q, "@")))
-	rows, err := h.Players.Search(ctx, q, in.Limit)
+	rows, err := h.Players.List(ctx, q, in.Limit)
 	if err != nil {
 		return nil, errors.Internal(err)
 	}

@@ -13,7 +13,7 @@ export function StatusBadge({ status }) {
 
 export function Code({ children, big = false }) {
   return (
-    <span dir="ltr" className={`font-mono font-bold tracking-[0.2em] ${big ? 'text-2xl' : 'text-sm'}`}>
+    <span dir="ltr" className={`font-mono font-bold tracking-[0.2em] ${big ? 'text-accent-text text-3xl' : 'text-sm'}`}>
       {children}
     </span>
   )

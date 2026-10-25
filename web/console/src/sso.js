@@ -8,6 +8,7 @@ const CLIENT_ID = import.meta.env.VITE_SSO_CLIENT_ID ?? ''
 const SCOPE = import.meta.env.VITE_SSO_SCOPE || 'openid profile email'
 
 export const ssoConfigured = Boolean(ISSUER && CLIENT_ID)
+export const passwordSignIn = import.meta.env.VITE_PASSWORD_SIGNIN === 'true'
 export const devAdmin = import.meta.env.VITE_DEV_ADMIN === 'true'
 
 const PENDING = 'ga.console.sso.pending'
@@ -86,6 +87,12 @@ export async function finish() {
     if (!r.ok) throw new Error(r.status === 403 ? 'Your account has no role here.' : 'The API refused the token.')
   })
   return pending.returnTo || '/'
+}
+
+// A console with no provider: its one password, and the name the activity
+// log will show. The API answers with the same cookie session.
+export async function passwordSignInWith(name, password) {
+  await api.post('/v1/admin/session/password', { name, password }, { auth: true, quiet: true })
 }
 
 // A laptop only: the API mints an admin with no provider when DEBUG and

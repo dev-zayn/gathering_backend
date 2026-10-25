@@ -6,9 +6,12 @@ import (
 	"fmt"
 	"net/http"
 	"slices"
+	"strings"
 	"sync"
 	"testing"
 	"time"
+
+	"golang.org/x/crypto/bcrypt"
 
 	"github.com/jamaa/gathering/backend/internal/data/model"
 	"github.com/jamaa/gathering/backend/internal/pkg/caller"
@@ -275,5 +278,65 @@ func TestADevAdminIsRefusedUnlessAllowed(t *testing.T) {
 	answer, err := uc.Of(ctx, "Bearer "+opened.Token)
 	if err != nil || answer.Session == nil || !answer.Session.HasRole("admin") {
 		t.Fatalf("the dev session reads as %+v, %v", answer, err)
+	}
+}
+
+// The console's password: with none set the sign-in is not there at all. Set,
+// the right password and a name are an admin, the same one for the same name
+// however it is typed; the wrong one is a 401 that writes nobody down; every
+// try counts, and past the limit the hash is not even asked.
+func TestThePasswordSignIn(t *testing.T) {
+	c, uc, _, _, log := console(t)
+	ctx := context.Background()
+
+	if opened, err := c.OpenPassword(ctx, "zayn", "open sesame"); opened != nil || status(err) != http.StatusNotFound {
+		t.Fatalf("no password set: got %+v, %v; want 404", opened, err)
+	}
+
+	hash, err := bcrypt.GenerateFromPassword([]byte("open sesame"), bcrypt.MinCost)
+	if err != nil {
+		t.Fatal(err)
+	}
+	limits := &countingLimiter{}
+	c.Password, c.Limiter = hash, limits
+
+	var invalid *apperr.Error
+	_, err = c.OpenPassword(ctx, "  ", "")
+	if !errors.As(err, &invalid) || invalid.Status != http.StatusUnprocessableEntity ||
+		invalid.Fields["name"] != "required" || invalid.Fields["password"] != "required" {
+		t.Fatalf("no name and no password: got %v, want 422 with both fields", err)
+	}
+	if _, err := c.OpenPassword(ctx, strings.Repeat("ز", model.MaxName+1), "open sesame"); status(err) != http.StatusUnprocessableEntity {
+		t.Fatalf("a long name: got %v, want 422", err)
+	}
+	if limits.seen["console:password"] != 0 {
+		t.Fatal("a refused field counted as a try")
+	}
+	if _, err := c.OpenPassword(ctx, "zayn", "open sesame!"); status(err) != http.StatusUnauthorized {
+		t.Fatalf("the wrong password: got %v, want 401", err)
+	}
+	if len(c.Admins.(*fakeAdmins).rows) != 0 || len(log.written) != 0 {
+		t.Fatal("a refused password sign-in was written down")
+	}
+
+	opened, err := c.OpenPassword(ctx, " Zayn ", "open sesame")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if opened.Admin.Subject != "password:zayn" || opened.Admin.Name != "Zayn" || !slices.Equal(opened.Roles, []string{"admin"}) {
+		t.Fatalf("got %+v", opened)
+	}
+	again, err := c.OpenPassword(ctx, "ZAYN", "open sesame")
+	if err != nil || again.Admin.ID != opened.Admin.ID {
+		t.Fatalf("the same name twice is two admins: %+v, %v", again, err)
+	}
+	answer, err := uc.Of(ctx, "Bearer "+opened.Token)
+	if err != nil || answer.Session == nil || !answer.Session.HasRole("admin") {
+		t.Fatalf("the password session reads as %+v, %v", answer, err)
+	}
+
+	limits.seen["console:password"] = passwordTries
+	if _, err := c.OpenPassword(ctx, "zayn", "open sesame"); status(err) != http.StatusTooManyRequests {
+		t.Fatalf("past the limit, the right password: got %v, want 429", err)
 	}
 }

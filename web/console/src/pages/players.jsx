@@ -32,7 +32,7 @@ export default function Players() {
   return (
     <div>
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-xl font-extrabold">Players</h1>
+        <h1 className="text-2xl font-extrabold">Players</h1>
         <input
           className="field max-w-xs"
           placeholder="@handle"
@@ -44,7 +44,7 @@ export default function Players() {
       {flip.isError && <p className="text-bad mt-3 text-sm">{flip.error.message}</p>}
       <div className="card mt-4 overflow-x-auto">
         <table className="w-full min-w-[640px] text-sm">
-          <thead className="text-ink-2 border-line border-b text-left text-xs uppercase">
+          <thead className="text-ink-3 border-line bg-surface-2/60 border-b text-left text-xs">
             <tr>
               <th className="px-4 py-2">Player</th>
               <th className="px-4 py-2">Handle</th>
@@ -152,7 +152,7 @@ function Record({ id, onClose, flip }) {
             <Stat label="Friends" value={r.friends} />
             <Stat label="Rounds played" value={r.rounds} />
             <div className="bg-surface-2 rounded-lg p-3">
-              <div className="text-ink-2 text-xs font-semibold uppercase">In a room</div>
+              <div className="label">In a room</div>
               <div className="mt-1 text-sm">
                 {r.room ? (
                   <Link to={`/rooms/${r.room.id}`} className="hover:underline" onClick={onClose}>
@@ -185,7 +185,7 @@ function Record({ id, onClose, flip }) {
 function Stat({ label, value }) {
   return (
     <div className="bg-surface-2 rounded-lg p-3">
-      <div className="text-ink-2 text-xs font-semibold uppercase">{label}</div>
+      <div className="label">{label}</div>
       <div className="mt-1 text-xl font-light tabular-nums">{value}</div>
     </div>
   )

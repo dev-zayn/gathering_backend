@@ -30,6 +30,7 @@ make e2e            # the in-repo sweep against a running api (E2E_API, E2E_CODE
 make keys           # a new signing key
 make games          # build the arcade's five games in ../gathering_games (each its own bun project, into its dist/)
 make fixtures       # the fixtures on :8091 over ../gathering_games (xo, tap as they are; a built game from its dist/)
+scripts/games-on-wifi.sh [ip]   # after the Mac changes network: the fixtures on :8093 at the new address, every game moved there
 go run ./cmd/roomplayer -code K7M2QX -taps 10 -rounds 2   # (in backend/) a headless member: signs
                     # up with OTP_FIXED_CODE, joins by code, taps the tap race in every round over the
                     # relay, prints its place per round, leaves after -rounds finished rounds
@@ -285,3 +286,35 @@ and `JWT_PRIVATE_KEY` (`make keys`); the sweep then signs in with that code.
   `make games` builds the five and runs `scripts/brand-check.sh
   ../gathering_games` (the script now takes folders); `make fixtures` runs
   the server over it.
+- Hetzner (2026-10-24, the user's domain ga3da.fun; fixed sign-in code and
+  no console provider for now, by the user's choice): `deploy/hetzner/`
+  (`compose.yml` built on the server with Postgres, Redis and Caddy;
+  `Caddyfile`: the api's host refuses `/v1/admin/*`, the console's host
+  proxies `/v1/*`, the bare domain carries the links;
+  `setup.sh` makes the secrets in /opt/ga3da/secrets; `deploy.sh` from the
+  Mac; `games.sh` registers, gives icons and publishes). Caddy's routing
+  checked locally; not yet run on a server. CI's govulncheck action pinned
+  to v1.1.0 (v1.8.0 never existed, so the check job never ran).
+- The console's password sign-in (2026-10-25, the user's ask: one sign-in,
+  not Caddy's dialog and the console's screen): `admin-session-password`
+  (`identity.Console.OpenPassword`, bcrypt against `CONSOLE_PASSWORD_HASH`,
+  20 tries in 15 minutes for everybody, subject `password:<name>`), the
+  console's card showing only the ways in its build has
+  (`VITE_PASSWORD_SIGNIN`), Caddy's basic auth and the server's
+  `DEV_ADMIN` gone (`setup.sh` moves an existing server's password over).
+  The players list is the console's own `PlayerStore.List` (everybody,
+  newest first, the switched off included); it was the players' search,
+  which answers nobody for an empty box (docs/CONSOLE.md). The e2e
+  `TestConsolePasswordSignIn` (with `E2E_CONSOLE_PASSWORD`, else skipped)
+  and the newest-first step in `TestConsole`.
+- The console's design (2026-10-25, the user's ask): the گعدة brand
+  (../gathering_brand) in `web/console/src/index.css`: its palette as the
+  tokens (Amber the main action with Navy ink, `--color-accent-text` for
+  amber words, Indigo second), a dark page (Navy, Slate, Gray) following the
+  system or the rail's switch (`lib/theme.js`, `data-theme` set by
+  `public/boot.js`), IBM Plex Sans Arabic, Cairo for headings and Geist Mono
+  for codes and numbers (`src/fonts`, cut to Latin and Arabic, OFL), `chip`
+  for filter keys (`aria-pressed`), sentence-case `label`s; the rail on Navy
+  with the brand's wordmark (`public/brand/`, never set in a font) and a
+  drawer on a phone; the sign-in beside the brand's pattern and lockup; the
+  dashboard's groups as cards; a game's tile falling back to its letter.

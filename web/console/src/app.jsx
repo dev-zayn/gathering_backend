@@ -3,7 +3,7 @@ import { BrowserRouter, Route, Routes } from 'react-router-dom'
 
 import { api, SIGNED_OUT } from './api.js'
 import { Me } from './lib/me.js'
-import { finish, signIn } from './sso.js'
+import { finish, signIn, ssoConfigured } from './sso.js'
 import Shell from './components/shell.jsx'
 import SignIn from './components/signin.jsx'
 import Dashboard from './pages/dashboard.jsx'
@@ -47,10 +47,13 @@ export default function App() {
 
   useEffect(() => {
     boot()
+    // A session gone mid-use: back to the provider when there is one, which
+    // usually signs straight back in; otherwise the card, saying why.
     const onSignedOut = () => {
       const last = Number(sessionStorage.getItem('ga.console.signed-in-at') || 0)
       if (Date.now() - last < 60_000) setState({ phase: 'out', note: 'The session ended right after signing in. Try again.' })
-      else signIn(location.pathname)
+      else if (ssoConfigured) signIn(location.pathname)
+      else setState({ phase: 'out', note: 'Your session ended. Sign in again.' })
     }
     window.addEventListener(SIGNED_OUT, onSignedOut)
     return () => window.removeEventListener(SIGNED_OUT, onSignedOut)

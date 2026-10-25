@@ -1,48 +1,183 @@
 @import 'tailwindcss';
 
-/* The console's own tokens: a neutral light desk with the product's accent.
- * Nothing here is borrowed from another product. */
+/* The console wears گعدة's identity (../gathering_brand): Amber for the main
+ * action, Indigo second, Navy and Slate for the dark, Cloud for the light
+ * page; IBM Plex Sans Arabic for the interface, Cairo for headings, Geist
+ * Mono for codes and numbers. The fonts are the brand's own files, cut down
+ * to Latin and Arabic (src/fonts, OFL). */
+
+@font-face {
+  font-family: 'Plex Sans Arabic';
+  src: url('./fonts/plex-sans-arabic-regular.woff2') format('woff2');
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Plex Sans Arabic';
+  src: url('./fonts/plex-sans-arabic-medium.woff2') format('woff2');
+  font-weight: 500;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Plex Sans Arabic';
+  src: url('./fonts/plex-sans-arabic-semibold.woff2') format('woff2');
+  font-weight: 600;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Plex Sans Arabic';
+  src: url('./fonts/plex-sans-arabic-bold.woff2') format('woff2');
+  font-weight: 700 900;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Cairo';
+  src: url('./fonts/cairo-variable.woff2') format('woff2');
+  font-weight: 200 1000;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Geist Mono';
+  src: url('./fonts/geist-mono-variable.woff2') format('woff2');
+  font-weight: 100 900;
+  font-display: swap;
+}
+
+/* The light page. Text tones are the brand's darkened just enough to read on
+ * white (AA); the dark page below keeps the brand's own values. */
 @theme {
-  --font-sans: system-ui, -apple-system, 'Segoe UI', sans-serif;
-  --font-mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  --font-sans: 'Plex Sans Arabic', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-display: 'Cairo', 'Plex Sans Arabic', system-ui, sans-serif;
+  --font-mono: 'Geist Mono', ui-monospace, 'SF Mono', Menlo, monospace;
 
-  --color-ink: #15172b;
-  --color-ink-2: #5b5f7a;
-  --color-ink-3: #8c91ae;
+  --color-ink: #0f172a;
+  --color-ink-2: #475569;
+  --color-ink-3: #64748b;
 
-  --color-ground: #f6f6fa;
+  --color-ground: #f1f5f9;
   --color-surface: #ffffff;
-  --color-surface-2: #ecedf5;
+  --color-surface-2: #f1f5f9;
 
-  --color-line: #e2e4ee;
-  --color-line-2: #c9ccdc;
+  --color-line: #e2e8f0;
+  --color-line-2: #cbd5e1;
 
-  --color-accent: #ffb300;
-  --color-accent-2: #e5a000;
-  --color-accent-ink: #1a1300;
-  --color-second: #7c4dff;
+  --color-accent: #f59e0b;
+  --color-accent-2: #d97706;
+  --color-accent-ink: #0f172a;
+  --color-accent-text: #92400e;
+  --color-second: #6366f1;
+  --color-second-ink: #ffffff;
 
-  --color-good: #1f9d6a;
-  --color-warn: #b7791f;
-  --color-bad: #d6455a;
-  --color-info: #2a86c7;
+  --color-good: #047857;
+  --color-warn: #b45309;
+  --color-bad: #dc2626;
+  --color-info: #4f46e5;
+
+  /* The rail is Navy on both pages: amber on Navy is the brand's own pair. */
+  --color-rail: #0f172a;
+  --color-rail-ink: #e2e8f0;
+  --color-rail-ink-2: #94a3b8;
+  --color-rail-line: #1e293b;
+
+  --color-scrim: rgb(15 23 42 / 0.6);
 
   --radius-sm: 8px;
   --radius-md: 10px;
-  --radius-lg: 14px;
+  --radius-lg: 16px;
   --radius-xl: 20px;
+
+  --shadow-card: 0 1px 2px rgb(15 23 42 / 0.04), 0 1px 3px rgb(15 23 42 / 0.04);
+  --shadow-pop: 0 24px 48px -12px rgb(15 23 42 / 0.28);
 }
 
-html,
-body {
-  background: var(--color-ground);
-  color: var(--color-ink);
+/* The dark page: Navy ground, Slate cards, Gray lines, Light text. It follows
+ * the system unless the rail's switch picked one (data-theme, set by boot.js
+ * before the first paint). */
+@layer base {
+  :root[data-theme='dark'] {
+    --color-ink: #e2e8f0;
+    --color-ink-2: #94a3b8;
+    --color-ink-3: #8090a7;
+    --color-ground: #0f172a;
+    --color-surface: #1e293b;
+    --color-surface-2: #273449;
+    --color-line: #334155;
+    --color-line-2: #475569;
+    --color-good: #34d399;
+    --color-warn: #fbbf24;
+    --color-bad: #f87171;
+    --color-info: #a5b4fc;
+    --color-accent-text: #fbbf24;
+    --color-rail: #0b1222;
+    --color-rail-line: #1e293b;
+    --shadow-card: none;
+    --shadow-pop: 0 24px 48px -12px rgb(0 0 0 / 0.6);
+    color-scheme: dark;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme='light']) {
+      --color-ink: #e2e8f0;
+      --color-ink-2: #94a3b8;
+      --color-ink-3: #8090a7;
+      --color-ground: #0f172a;
+      --color-surface: #1e293b;
+      --color-surface-2: #273449;
+      --color-line: #334155;
+      --color-line-2: #475569;
+      --color-good: #34d399;
+      --color-warn: #fbbf24;
+      --color-bad: #f87171;
+      --color-info: #a5b4fc;
+      --color-accent-text: #fbbf24;
+      --color-rail: #0b1222;
+      --color-rail-line: #1e293b;
+      --shadow-card: none;
+      --shadow-pop: 0 24px 48px -12px rgb(0 0 0 / 0.6);
+      color-scheme: dark;
+    }
+  }
+
+  html,
+  body {
+    background: var(--color-ground);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+  h1,
+  h2 {
+    font-family: var(--font-display);
+    letter-spacing: -0.01em;
+  }
+  ::selection {
+    background: color-mix(in srgb, var(--color-accent) 35%, transparent);
+  }
+  input[type='checkbox'],
+  input[type='radio'] {
+    accent-color: var(--color-accent);
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+
+  /* Every table here is a list of rows to pick from. */
+  tbody tr {
+    transition: background-color 120ms ease;
+  }
+  tbody tr:hover {
+    background: color-mix(in srgb, var(--color-surface-2) 70%, transparent);
+  }
+  thead th {
+    font-weight: 600;
+  }
 }
 
 @utility card {
   background: var(--color-surface);
   border: 1px solid var(--color-line);
   border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
 }
 
 @utility btn {
@@ -55,13 +190,19 @@ body {
   border-radius: var(--radius-md);
   font-weight: 600;
   font-size: 0.875rem;
+  white-space: nowrap;
   border: 1px solid transparent;
   cursor: pointer;
-  transition: transform 120ms ease, background-color 120ms ease;
+  transition:
+    transform 120ms ease,
+    background-color 120ms ease,
+    border-color 120ms ease,
+    color 120ms ease;
 }
+/* The main action: Amber with Navy ink, the brand's own pairing. */
 @utility btn-primary {
-  background: var(--color-ink);
-  color: #fff;
+  background: var(--color-accent);
+  color: var(--color-accent-ink);
 }
 @utility btn-secondary {
   background: var(--color-surface);
@@ -69,35 +210,92 @@ body {
   color: var(--color-ink);
 }
 @utility btn-accent {
-  background: var(--color-accent);
-  color: var(--color-accent-ink);
+  background: var(--color-second);
+  color: var(--color-second-ink);
 }
-.btn:active {
+.btn-primary:hover:not(:disabled) {
+  background: var(--color-accent-2);
+}
+.btn-secondary:hover:not(:disabled) {
+  background: var(--color-surface-2);
+}
+.btn-accent:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--color-second) 88%, black);
+}
+.btn:active:not(:disabled) {
   transform: translateY(1px);
 }
 .btn:disabled {
-  opacity: 0.5;
+  opacity: 0.45;
   cursor: default;
 }
 
-@utility navkey {
-  display: flex;
+/* A filter key: one of a few, the pressed one in ink. */
+@utility chip {
+  display: inline-flex;
   align-items: center;
-  gap: 0.625rem;
-  height: 2.25rem;
-  padding-inline: 0.625rem;
-  border-radius: var(--radius-md);
+  height: 2rem;
+  padding-inline: 0.875rem;
+  border-radius: 999px;
+  border: 1px solid var(--color-line);
+  background: var(--color-surface);
+  color: var(--color-ink-2);
   font-size: 0.8125rem;
   font-weight: 600;
-  color: var(--color-ink-2);
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color 120ms ease,
+    color 120ms ease,
+    border-color 120ms ease;
+}
+.chip:hover {
+  color: var(--color-ink);
+  border-color: var(--color-line-2);
+}
+.chip[aria-pressed='true'] {
+  background: var(--color-ink);
+  border-color: var(--color-ink);
+  color: var(--color-surface);
+}
+
+@utility navkey {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  height: 2.5rem;
+  padding-inline: 0.75rem;
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-rail-ink-2);
+  transition:
+    background-color 120ms ease,
+    color 120ms ease;
 }
 .navkey:hover {
-  background: var(--color-surface-2);
-  color: var(--color-ink);
+  background: rgb(255 255 255 / 0.05);
+  color: var(--color-rail-ink);
 }
 .navkey[aria-current='page'] {
-  background: var(--color-ink);
-  color: #fff;
+  background: color-mix(in srgb, var(--color-accent) 14%, transparent);
+  color: var(--color-rail-ink);
+  font-weight: 600;
+}
+.navkey[aria-current='page'] svg {
+  color: var(--color-accent);
+}
+.navkey[aria-current='page']::before {
+  content: '';
+  position: absolute;
+  inset-inline-start: -0.75rem;
+  top: 0.5rem;
+  bottom: 0.5rem;
+  width: 3px;
+  border-start-end-radius: 3px;
+  border-end-end-radius: 3px;
+  background: var(--color-accent);
 }
 
 @utility field {
@@ -107,9 +305,33 @@ body {
   border-radius: var(--radius-md);
   border: 1px solid var(--color-line-2);
   background: var(--color-surface);
+  color: var(--color-ink);
   font-size: 0.875rem;
+  transition:
+    border-color 120ms ease,
+    box-shadow 120ms ease;
+}
+.field::placeholder {
+  color: var(--color-ink-3);
 }
 .field:focus {
-  outline: 2px solid var(--color-accent);
-  outline-offset: 1px;
+  outline: none;
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 25%, transparent);
+}
+
+/* A label over a value or a field: sentence case, quiet. */
+@utility label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--color-ink-3);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0ms !important;
+    animation-duration: 0ms !important;
+  }
 }

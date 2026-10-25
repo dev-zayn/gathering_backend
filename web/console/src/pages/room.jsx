@@ -130,7 +130,7 @@ export default function Room() {
                     </span>
                   </span>
                   <span className="text-ink-2 hidden text-xs sm:block">joined {when(m.joined_at)}</span>
-                  <Tag tone={m.role === 'host' ? 'bg-accent/20 text-accent-ink' : undefined}>
+                  <Tag tone={m.role === 'host' ? 'bg-accent/15 text-accent-text' : undefined}>
                     {roleLabel[m.role] ?? m.role} · seat {m.seat}
                   </Tag>
                 </li>

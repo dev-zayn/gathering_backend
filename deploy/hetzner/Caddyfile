@@ -1,0 +1,41 @@
+# Every host of the domain. Caddy gets and renews each certificate itself
+# once the host's DNS points here, and passes the relay's websockets through.
+
+# The invite links and the phones' two documents (docs/JOINING.md): proxied
+# to the api, never redirected, or the phones refuse them.
+{$DOMAIN} {
+	@links path /r/* /t/* /.well-known/*
+	handle @links {
+		reverse_proxy api:8080
+	}
+	handle {
+		respond 404
+	}
+}
+
+# The console's routes are not answered here: only the console's host reaches
+# them, where its own sign-in screen asks for the password.
+api.{$DOMAIN} {
+	@console path /v1/admin/*
+	respond @console 404
+	reverse_proxy api:8080
+}
+
+console.{$DOMAIN} {
+	handle /v1/* {
+		reverse_proxy api:8080
+	}
+	handle {
+		reverse_proxy console:80
+	}
+}
+
+docs.{$DOMAIN} {
+	encode zstd gzip
+	reverse_proxy docs:80
+}
+
+games.{$DOMAIN} {
+	encode zstd gzip
+	reverse_proxy games:8091
+}

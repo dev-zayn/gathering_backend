@@ -35,7 +35,7 @@ export default function Games() {
     <div>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl font-extrabold">Games</h1>
+          <h1 className="text-2xl font-extrabold">Games</h1>
           <p className="text-ink-2 mt-1 text-sm">Every game in the registry, and whether players can see it.</p>
         </div>
         <Register />
@@ -46,7 +46,8 @@ export default function Games() {
           <button
             key={l}
             type="button"
-            className={`btn h-8 px-3 text-xs ${l === listing ? 'btn-primary' : 'btn-secondary'}`}
+            className="chip"
+            aria-pressed={l === listing}
             onClick={() => setParams(l === 'all' ? {} : { listing: l })}
           >
             {l}
@@ -63,7 +64,7 @@ export default function Games() {
 
       <div className="card mt-4 overflow-hidden">
         <table className="w-full text-sm">
-          <thead className="text-ink-2 border-line border-b text-left text-xs uppercase">
+          <thead className="text-ink-3 border-line bg-surface-2/60 border-b text-left text-xs">
             <tr>
               <th className="px-4 py-2">Game</th>
               <th className="px-4 py-2">Publisher</th>
@@ -116,7 +117,7 @@ export default function Games() {
                   <td className="px-4 py-2">
                     <span className="flex items-center gap-1.5">
                       <ListingBadge listing={g.listing} />
-                      {g.featured && <Tag tone="bg-accent/20 text-accent-ink">Featured</Tag>}
+                      {g.featured && <Tag tone="bg-accent/15 text-accent-text">Featured</Tag>}
                       {g.held && <Tag tone="bg-warn/10 text-warn">Held</Tag>}
                     </span>
                   </td>

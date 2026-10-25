@@ -61,13 +61,13 @@ export default function Game() {
           <div className="flex items-center gap-4">
             <Tile src={g.icon} name={g.name} size="size-16" />
             <div>
-              <h1 className="text-xl font-extrabold">{g.name}</h1>
+              <h1 className="text-2xl font-extrabold">{g.name}</h1>
               <div className="text-ink-2 mt-0.5 flex flex-wrap items-center gap-2 text-sm">
                 <span className="font-mono text-xs" dir="ltr">
                   {g.id} · {g.version}
                 </span>
                 <ListingBadge listing={g.listing} />
-                {g.featured && <Tag tone="bg-accent/20 text-accent-ink">Featured</Tag>}
+                {g.featured && <Tag tone="bg-accent/15 text-accent-text">Featured</Tag>}
                 {shelves && <span className="text-xs">on {shelves.players} shelves</span>}
               </div>
             </div>
@@ -440,7 +440,7 @@ function Pictures({ game: g, onChanged }) {
         </label>
       </div>
       <div>
-        <div className="text-ink-3 text-xs font-semibold uppercase">Screenshots</div>
+        <div className="label">Screenshots</div>
         <div className="mt-2 flex flex-wrap gap-2">
           {shots.map((s) => (
             <div key={s.id} className="relative">

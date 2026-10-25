@@ -110,6 +110,27 @@ func (s *PlayerStore) Search(ctx context.Context, handlePrefix string, limit int
 	return out, nil
 }
 
+// List is the console's: the newest first with nothing typed, the handles
+// that start with what was typed otherwise, and the switched off with the
+// rest, since the console is where they are switched back on.
+func (s *PlayerStore) List(ctx context.Context, handlePrefix string, limit int) ([]model.Player, error) {
+	if limit <= 0 {
+		limit = 50
+	}
+	q := data.Conn(ctx, s.db).Limit(limit)
+	if prefix := strings.ToLower(strings.TrimSpace(handlePrefix)); prefix != "" {
+		q = q.Where("handle LIKE ?", likePrefix(prefix)).Order("handle")
+	} else {
+		q = q.Order("created_at DESC").Order("id DESC")
+	}
+
+	var out []model.Player
+	if err := q.Find(&out).Error; err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // likePrefix is the LIKE pattern for a prefix, with the term's own wildcards
 // escaped: a handle holds underscores, and "ali_" must not match "alix".
 func likePrefix(term string) string {

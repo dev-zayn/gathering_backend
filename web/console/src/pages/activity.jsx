@@ -16,13 +16,14 @@ export default function Activity() {
   return (
     <div>
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-xl font-extrabold">Activity</h1>
+        <h1 className="text-2xl font-extrabold">Activity</h1>
         <div className="flex gap-1">
           {areas.map((a) => (
             <button
               key={a || 'all'}
               type="button"
-              className={`btn h-8 px-3 text-xs ${area === a ? 'btn-primary' : 'btn-secondary'}`}
+              className="chip"
+              aria-pressed={area === a}
               onClick={() => {
                 setArea(a)
                 setPage(1)
@@ -35,7 +36,7 @@ export default function Activity() {
       </div>
       <div className="card mt-4 overflow-hidden">
         <table className="w-full text-sm">
-          <thead className="text-ink-2 border-line border-b text-left text-xs uppercase">
+          <thead className="text-ink-3 border-line bg-surface-2/60 border-b text-left text-xs">
             <tr>
               <th className="px-4 py-2">When</th>
               <th className="px-4 py-2">Area</th>

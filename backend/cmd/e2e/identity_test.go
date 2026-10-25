@@ -94,6 +94,18 @@ func TestConsole(t *testing.T) {
 	var list struct {
 		Players []map[string]any `json:"players"`
 	}
+	// With nothing typed the list is everybody, the newest first
+	// (docs/CONSOLE.md, "The dashboard and the players").
+	c.call("GET", "/v1/admin/players?limit=20", nil, 200, &list)
+	if len(list.Players) < 2 {
+		t.Fatalf("nothing typed listed %d players", len(list.Players))
+	}
+	for i := 1; i < len(list.Players); i++ {
+		if list.Players[i-1]["created_at"].(string) < list.Players[i]["created_at"].(string) {
+			t.Fatalf("not newest first at %d: %v then %v", i, list.Players[i-1]["created_at"], list.Players[i]["created_at"])
+		}
+	}
+	t.Logf("ok   the players list with nothing typed: %d, newest first", len(list.Players))
 	c.call("GET", "/v1/admin/players?q=mariam", nil, 200, &list)
 	if len(list.Players) == 0 {
 		t.Fatalf("players list empty")

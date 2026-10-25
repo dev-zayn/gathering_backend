@@ -227,6 +227,8 @@ func main() {
 		TTL:        cfg.Token.AdminTTL,
 		Idle:       cfg.Token.AdminIdle,
 		DevAllowed: cfg.Debug && cfg.SSO.DevAdmin,
+		Password:   []byte(cfg.SSO.PasswordHash),
+		Limiter:    identity.NewLimiter(rdb),
 	}
 	if console.DevAllowed {
 		log.Warn("DEV_ADMIN is on: anybody who reaches the console may sign in as an admin")

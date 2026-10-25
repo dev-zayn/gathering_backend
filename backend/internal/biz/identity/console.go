@@ -7,6 +7,8 @@ import (
 	"strings"
 	"time"
 
+	"golang.org/x/crypto/bcrypt"
+
 	"github.com/jamaa/gathering/backend/internal/biz/audit"
 	"github.com/jamaa/gathering/backend/internal/data/enum"
 	"github.com/jamaa/gathering/backend/internal/data/model"
@@ -33,7 +35,23 @@ type Console struct {
 	// DevAllowed lets OpenDev mint an admin with no provider at all. A laptop
 	// setting behind DEBUG; main never sets it anywhere else.
 	DevAllowed bool
+
+	// Password is the bcrypt hash of the console's one password
+	// (CONSOLE_PASSWORD_HASH), for a team with no identity provider: whoever
+	// knows it signs in as an admin under the name they type. Empty, there is
+	// no such sign-in. Limiter counts the tries, every one of them, before the
+	// hash is asked: a guess costs the server a second of bcrypt.
+	Password []byte
+	Limiter  Limiter
 }
+
+// The tries at the password, all of them together: nothing tells one guesser
+// from another here, so a flood locks everybody out for the window rather
+// than letting it through.
+const (
+	passwordTries  = 20
+	passwordWindow = 15 * time.Minute
+)
 
 // Person is who the provider says somebody is, and which of our roles they
 // hold, bare: "admin", not "<service>.admin". The provider package keeps only
@@ -125,6 +143,47 @@ func (c *Console) OpenDev(ctx context.Context, name string) (*Opened, error) {
 		return nil, errors.Invalid(map[string]string{"name": "too_long"})
 	}
 	return c.open(ctx, "dev:"+name, name, "", []string{string(enum.AdminRoleAdmin)})
+}
+
+// OpenPassword is the sign-in for a console with no provider: the console's
+// password and a name, which is who the activity log says did each thing.
+// The same name is the same admin every time. With no password set it does
+// not exist.
+func (c *Console) OpenPassword(ctx context.Context, name, password string) (*Opened, error) {
+	if len(c.Password) == 0 {
+		return nil, errors.NotFound("not_found")
+	}
+	name = strings.TrimSpace(name)
+	fields := map[string]string{}
+	switch {
+	case name == "":
+		fields["name"] = "required"
+	case model.TooLong(name, model.MaxName):
+		fields["name"] = "too_long"
+	}
+	if password == "" {
+		fields["password"] = "required"
+	}
+	if len(fields) > 0 {
+		return nil, errors.Invalid(fields)
+	}
+	// bcrypt reads 72 bytes and refuses more: no such password is the one.
+	if len(password) > 72 {
+		return nil, errors.Unauthorized("wrong_password")
+	}
+
+	ok, retry, err := c.Limiter.Allow(ctx, "console:password", passwordTries, passwordWindow)
+	if err != nil {
+		return nil, errors.Internal(err)
+	}
+	if !ok {
+		return nil, errors.TooManyRequests(retry)
+	}
+	if bcrypt.CompareHashAndPassword(c.Password, []byte(password)) != nil {
+		applog.From(ctx).Info("console password refused", "name", clip(name, model.MaxName))
+		return nil, errors.Unauthorized("wrong_password")
+	}
+	return c.open(ctx, "password:"+strings.ToLower(name), name, "", []string{string(enum.AdminRoleAdmin)})
 }
 
 // open is the session itself, once somebody has said who the person is.

@@ -17,7 +17,7 @@ export default function Admins() {
 
   return (
     <div>
-      <h1 className="text-xl font-extrabold">Admins</h1>
+      <h1 className="text-2xl font-extrabold">Admins</h1>
       <p className="text-ink-2 mt-1 text-sm">Roles live at the identity provider; this lists who has been here.</p>
       <div className="card mt-4 divide-y divide-line">
         {list.isLoading && <div className="text-ink-3 p-4 text-sm">Loading…</div>}

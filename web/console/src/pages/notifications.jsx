@@ -86,9 +86,9 @@ export default function Notifications() {
   return (
     <div className="grid gap-5">
       <div>
-        <h1 className="text-xl font-extrabold">Notifications</h1>
+        <h1 className="text-2xl font-extrabold">Notifications</h1>
         <p className="text-ink-2 mt-1 text-sm">
-          An announcement puts one line in the inbox of every player it reaches. Nothing is pushed to phones yet.
+          An announcement puts one line in the inbox of every player it reaches, and pushes it to their phones.
         </p>
       </div>
 
@@ -122,7 +122,7 @@ export default function Notifications() {
                 <button
                   key={k}
                   type="button"
-                  className={`btn h-8 px-3 text-xs ${kind === k ? 'btn-primary' : 'btn-secondary'}`}
+                  className="chip"
                   aria-pressed={kind === k}
                   onClick={() => setKind(k)}
                 >

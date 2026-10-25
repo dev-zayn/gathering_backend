@@ -1,6 +1,7 @@
 // One sentence for every answer the API gives, so a screen never shows a code.
 const sentences = {
   unauthorized: 'Sign in again.',
+  wrong_password: 'That is not the console’s password.',
   forbidden: 'Your account cannot do that.',
   no_role: 'Your account has no role here. Ask for one.',
   admin_only: 'Only an admin can do that. Your account reads the console but cannot change it.',

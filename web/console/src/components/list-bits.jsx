@@ -4,8 +4,8 @@
 export function Count({ label, value, hint }) {
   return (
     <div className="card p-4">
-      <div className="text-ink-2 text-xs font-semibold uppercase">{label}</div>
-      <div className="mt-1 text-2xl font-light tabular-nums">{value ?? '—'}</div>
+      <div className="text-ink-2 text-sm font-medium">{label}</div>
+      <div className="mt-1.5 font-mono text-[26px] leading-none font-semibold tracking-tight tabular-nums">{value ?? '—'}</div>
       {hint && <div className="text-ink-3 mt-0.5 text-xs">{hint}</div>}
     </div>
   )

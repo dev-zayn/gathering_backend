@@ -52,7 +52,7 @@ export default function Tournaments() {
     <div>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-xl font-extrabold">Tournaments</h1>
+          <h1 className="text-2xl font-extrabold">Tournaments</h1>
           <p className="text-ink-2 mt-1 text-sm">Knockouts and leagues: the players' own, and the official ones made here.</p>
         </div>
         <button
@@ -71,7 +71,8 @@ export default function Tournaments() {
           <button
             key={s}
             type="button"
-            className={`btn h-8 px-3 text-xs ${s === status ? 'btn-primary' : 'btn-secondary'}`}
+            className="chip"
+            aria-pressed={s === status}
             onClick={() => filter({ status: s })}
           >
             {statusFilterLabel[s]}
@@ -93,7 +94,7 @@ export default function Tournaments() {
       </div>
 
       <div className="card mt-4 overflow-hidden">
-        <div className="text-ink-2 border-line hidden grid-cols-[2fr_1fr_1.2fr_1.2fr_0.8fr_1fr_16px] gap-3 border-b px-4 py-2 text-xs font-semibold uppercase md:grid">
+        <div className="text-ink-3 border-line bg-surface-2/60 hidden grid-cols-[2fr_1fr_1.2fr_1.2fr_0.8fr_1fr_16px] gap-3 border-b px-4 py-2 text-xs font-semibold md:grid">
           <span>Tournament</span>
           <span>Status</span>
           <span>Format</span>
@@ -138,7 +139,7 @@ export default function Tournaments() {
             </span>
             <span className="min-w-0 truncate text-xs">
               {t.official ? (
-                <Tag tone="bg-accent/20 text-accent-ink">Official</Tag>
+                <Tag tone="bg-accent/15 text-accent-text">Official</Tag>
               ) : (
                 <>
                   <span className="font-semibold">{t.organizer?.nickname}</span>{' '}
@@ -259,7 +260,7 @@ function NewTournament({ open, onClose, games }) {
               <button
                 key={f}
                 type="button"
-                className={`btn h-8 px-3 text-xs ${format === f ? 'btn-primary' : 'btn-secondary'}`}
+                className="chip"
                 aria-pressed={format === f}
                 disabled={f === 'knockout' && !duels}
                 title={f === 'knockout' && !duels ? 'This game needs more than two at a table' : undefined}

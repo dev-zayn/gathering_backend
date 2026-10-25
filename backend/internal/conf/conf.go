@@ -81,6 +81,10 @@ type SSOConfig struct {
 	// DevAdmin lets POST /v1/admin/session/dev mint an admin with no provider
 	// at all. Honoured only with Debug.
 	DevAdmin bool
+	// PasswordHash is the bcrypt hash of the console's password
+	// (CONSOLE_PASSWORD_HASH): POST /v1/admin/session/password, for a team
+	// with no provider. A sign-in of its own, so it needs no Debug.
+	PasswordHash string
 }
 
 // Configured says whether there is a provider to verify admins against.
@@ -288,6 +292,8 @@ func Load() (Config, error) {
 			Service:    opt("SSO_SERVICE", "gathering"),
 			Dial:       os.Getenv("SSO_DIAL"),
 			DevAdmin:   opt("DEV_ADMIN", "") == "true",
+
+			PasswordHash: strings.TrimSpace(os.Getenv("CONSOLE_PASSWORD_HASH")),
 		},
 		AllowPrivateHosts: opt("ALLOW_PRIVATE_HOSTS", "") == "true",
 
@@ -369,8 +375,12 @@ func Load() (Config, error) {
 	if !c.OTP.Configured() && !c.Debug {
 		missing = append(missing, "OTP_WEBHOOK_URL")
 	}
-	if !c.SSO.Configured() && (!c.Debug || !c.SSO.DevAdmin) {
-		missing = append(missing, "SSO_ISSUER, SSO_CLIENT_ID, SSO_AUDIENCE (or DEBUG=true with DEV_ADMIN=true)")
+	if !c.SSO.Configured() && c.SSO.PasswordHash == "" && (!c.Debug || !c.SSO.DevAdmin) {
+		missing = append(missing, "SSO_ISSUER, SSO_CLIENT_ID, SSO_AUDIENCE (or CONSOLE_PASSWORD_HASH, or DEBUG=true with DEV_ADMIN=true)")
+	}
+	// A hash that is not one would refuse every password: nobody could sign in.
+	if c.SSO.PasswordHash != "" && !strings.HasPrefix(c.SSO.PasswordHash, "$2") {
+		return Config{}, fmt.Errorf("config: CONSOLE_PASSWORD_HASH is not a bcrypt hash ($2a$…)")
 	}
 	if !c.Files.Configured() {
 		missing = append(missing, "S3_BUCKET (or FILES_DIR)")

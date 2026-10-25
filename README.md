@@ -22,8 +22,10 @@ Three things run: the **api** (8080), which also runs its own clock to tidy
 its tables, finish rounds that run too long and end rooms nobody is in, and
 two static sites, the **console** (8085) and the **docs** (8092). They need
 Postgres, Redis and somewhere to put pictures (S3, or a directory on a
-laptop). Admins sign in through any OIDC provider; on a laptop `DEBUG=true` +
-`DEV_ADMIN=true` opens the console without one. The **fixtures** (8091) serve
+laptop). Admins sign in through any OIDC provider, or with the console's
+one password (`CONSOLE_PASSWORD_HASH`, a bcrypt hash; the console built with
+`VITE_PASSWORD_SIGNIN=true`); on a laptop `DEBUG=true` + `DEV_ADMIN=true`
+opens the console without either. The **fixtures** (8091) serve
 two real games and a tiny partner backend, for a laptop only.
 
 ## Running it on a laptop, in Docker
@@ -206,6 +208,11 @@ Every variable is in `backend/.env.example` with its default in
 | `FCM_TIMEOUT` | `10s` | one send, and one token exchange |
 
 ## Running it on a server
+
+One Hetzner server, built from source with its own Postgres, Redis and
+Caddy, for ga3da.fun while there is no SMS gateway or sign-in provider:
+`deploy/hetzner/README.md` (`deploy/hetzner/deploy.sh root@<ip>`). What
+follows is the managed setup.
 
 `deploy/compose.prod.yml` runs the images CI published (tagged
 `sha-<commit>`, never `latest`) and nothing else; see `deploy/.env.example`

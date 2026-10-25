@@ -3,6 +3,7 @@
 package e2e
 
 import (
+	"os"
 	"strconv"
 	"strings"
 	"testing"
@@ -302,4 +303,43 @@ type playerRecordJSON struct {
 		ID   string `json:"id"`
 		Code string `json:"code"`
 	} `json:"room"`
+}
+
+// The console's password (docs/CONSOLE.md, "Signing in with the console's
+// password"), when the api has one: E2E_CONSOLE_PASSWORD is it. Another
+// origin is refused before anything; both fields missing are one 422 naming
+// both, and count no try; the wrong password is 401; the right one is a
+// session that reads /v1/admin/me under the name given, and signs out. Two
+// tries of the twenty a quarter-hour allows.
+func TestConsolePasswordSignIn(t *testing.T) {
+	password := os.Getenv("E2E_CONSOLE_PASSWORD")
+	if password == "" {
+		t.Skip("E2E_CONSOLE_PASSWORD is not set: the api's password sign-in is not swept")
+	}
+	elsewhere := newClient(t)
+	elsewhere.origin = "https://elsewhere.example"
+	elsewhere.call("POST", "/v1/admin/session/password", map[string]any{"name": "sweep", "password": password}, 403, nil)
+
+	c := newClient(t)
+	c.origin = console
+	var refused struct {
+		Fields map[string]string `json:"fields"`
+	}
+	c.call("POST", "/v1/admin/session/password", map[string]any{}, 422, &refused)
+	if refused.Fields["name"] != "required" || refused.Fields["password"] != "required" {
+		t.Fatalf("both fields missing: %v", refused.Fields)
+	}
+	c.call("POST", "/v1/admin/session/password", map[string]any{"name": "sweep", "password": password + "!"}, 401, nil)
+	c.call("POST", "/v1/admin/session/password", map[string]any{"name": "Sweep password", "password": password}, 200, nil)
+	var me struct {
+		Name  string   `json:"name"`
+		Roles []string `json:"roles"`
+	}
+	c.call("GET", "/v1/admin/me", nil, 200, &me)
+	if me.Name != "Sweep password" || len(me.Roles) != 1 || me.Roles[0] != "admin" {
+		t.Fatalf("signed in as %+v", me)
+	}
+	t.Logf("ok   the console's password: bad origin 403, no fields 422, wrong 401, right is an admin")
+	c.call("DELETE", "/v1/admin/session", nil, 204, nil)
+	c.call("GET", "/v1/admin/me", nil, 401, nil)
 }

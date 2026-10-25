@@ -148,6 +148,31 @@ name}, created_at}`, `audience` as it was sent.
 - A player in the console (`GET /v1/admin/players/{player}`) gains
   `friends` (accepted friendships), `rounds` (results rows: rounds
   played) and `room` (the open room they are in, `{id, code}`, or null).
+- The list (`GET /v1/admin/players?q=&limit=`) is the console's own, not
+  the players' search: with nothing typed it is everybody, the newest
+  first; with a handle's start, those handles in order. Switched-off
+  players are in both, since the console is where they are switched back
+  on (2026-10-25; it was the players' search, which answers nobody for an
+  empty box and hides the switched off).
+
+## Signing in with the console's password
+
+For a team with no identity provider (2026-10-25):
+`admin-session-password`, `POST /v1/admin/session/password`, body
+`{name, password}`. `CONSOLE_PASSWORD_HASH` is the bcrypt hash of the one
+password; without it the route is 404. The right password is an admin
+session (role `admin`) in the same cookie a provider sign-in sets, for the
+admin whose subject is `password:` + the name lowercased, so the same name
+is the same admin and the activity log shows who did what. Refused, in
+this order: no Origin or another one 403 `bad_origin`; no password set 404
+`not_found`; 422 `invalid_fields` with every problem at once, `name:
+required / too_long` (120 characters) and `password: required`, which
+counts no try; more than 20 tries in 15 minutes, everybody's counted
+together and right ones too, 429 `too_many_requests` before the hash is
+asked; the wrong password 401 `wrong_password`, written nowhere but a log
+line. The console
+shows the form when built with `VITE_PASSWORD_SIGNIN=true`, and only the
+ways in a build has.
 
 ## The console's pages
 

@@ -108,11 +108,11 @@ export default function Tournament() {
             <Tile src={t.game.icon} name={t.game.name} size="size-14" />
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-3">
-                <h1 className="text-xl font-extrabold" dir="auto">
+                <h1 className="text-2xl font-extrabold" dir="auto">
                   {t.name}
                 </h1>
                 <TournamentStatus status={t.status} />
-                {t.official && <Tag tone="bg-accent/20 text-accent-ink">Official</Tag>}
+                {t.official && <Tag tone="bg-accent/15 text-accent-text">Official</Tag>}
               </div>
               <div className="text-ink-2 mt-1 flex flex-wrap items-center gap-2 text-sm">
                 <Code>{t.code}</Code> ·{' '}
@@ -198,7 +198,8 @@ export default function Tournament() {
                   <button
                     key={s}
                     type="button"
-                    className={`btn h-8 px-3 text-xs ${s === shownStage ? 'btn-primary' : 'btn-secondary'}`}
+                    className="chip"
+                    aria-pressed={s === shownStage}
                     onClick={() => setStage(s)}
                   >
                     {stageLabel(s, t.stages)}
@@ -286,7 +287,7 @@ export default function Tournament() {
                       @{e.handle}
                     </span>
                   </span>
-                  {e.place && <Tag tone={e.place === 1 ? 'bg-accent/20 text-accent-ink' : undefined}>Place {e.place}</Tag>}
+                  {e.place && <Tag tone={e.place === 1 ? 'bg-accent/15 text-accent-text' : undefined}>Place {e.place}</Tag>}
                   <Tag tone={e.status === 'in' ? 'bg-good/10 text-good' : undefined}>{entrantStatusLabel[e.status] ?? e.status}</Tag>
                 </li>
               ))}

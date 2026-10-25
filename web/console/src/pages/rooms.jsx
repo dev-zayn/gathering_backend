@@ -42,7 +42,7 @@ export default function Rooms() {
   const rows = list.data?.items ?? []
   return (
     <div>
-      <h1 className="text-xl font-extrabold">Rooms</h1>
+      <h1 className="text-2xl font-extrabold">Rooms</h1>
       <p className="text-ink-2 mt-1 text-sm">Every room players made, who is in it, and how it ended.</p>
 
       <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
@@ -56,7 +56,8 @@ export default function Rooms() {
           <button
             key={s}
             type="button"
-            className={`btn h-8 px-3 text-xs ${s === status ? 'btn-primary' : 'btn-secondary'}`}
+            className="chip"
+            aria-pressed={s === status}
             onClick={() => filter({ status: s })}
           >
             {statusFilterLabel[s]}
@@ -78,7 +79,7 @@ export default function Rooms() {
       </div>
 
       <div className="card mt-4 overflow-hidden">
-        <div className="text-ink-2 border-line hidden grid-cols-[2fr_1fr_1.2fr_1.2fr_0.8fr_1fr_16px] gap-3 border-b px-4 py-2 text-xs font-semibold uppercase md:grid">
+        <div className="text-ink-3 border-line bg-surface-2/60 hidden grid-cols-[2fr_1fr_1.2fr_1.2fr_0.8fr_1fr_16px] gap-3 border-b px-4 py-2 text-xs font-semibold md:grid">
           <span>Room</span>
           <span>Status</span>
           <span>Round</span>

@@ -37,6 +37,14 @@ type devSessionRequest struct {
 	}
 }
 
+type passwordSessionRequest struct {
+	Origin string `header:"Origin"`
+	Body   struct {
+		Name     string `json:"name,omitempty" doc:"Who is signing in: the name the activity log gives them, up to 120 characters (name: required / too_long)."`
+		Password string `json:"password,omitempty" doc:"The console's password (password: required; 401 wrong_password; 429 after 20 tries in 15 minutes, everybody's together)."`
+	}
+}
+
 type closeSessionResponse struct {
 	SetCookie http.Cookie `header:"Set-Cookie"`
 }
@@ -68,6 +76,19 @@ func (h *Handler) registerSession(api huma.API) {
 			"runs with DEBUG and DEV_ADMIN; anywhere else it is not found.",
 		Tags: []string{"admin"},
 	}, h.openDev)
+
+	huma.Register(api, huma.Operation{
+		OperationID: "admin-session-password",
+		Method:      http.MethodPost,
+		Path:        "/v1/admin/session/password",
+		Summary:     "Sign in with the console's password",
+		Description: "For a console with no identity provider: the one password set in " +
+			"CONSOLE_PASSWORD_HASH, and a name to be known by, give an admin session in the " +
+			"same cookie a provider sign-in does. Refused, in this order: another origin 403 " +
+			"bad_origin; no password set 404 not_found; 422 invalid_fields (name, password); " +
+			"429 too_many_requests after 20 tries in 15 minutes; 401 wrong_password.",
+		Tags: []string{"admin"},
+	}, h.openPassword)
 
 	huma.Register(api, huma.Operation{
 		OperationID:   "admin-session-close",
@@ -116,6 +137,17 @@ func (h *Handler) openDev(ctx context.Context, in *devSessionRequest) (*openSess
 		return nil, errors.Forbidden("bad_origin")
 	}
 	opened, err := h.Console.OpenDev(ctx, in.Body.Name)
+	if err != nil {
+		return nil, err
+	}
+	return h.opened(opened), nil
+}
+
+func (h *Handler) openPassword(ctx context.Context, in *passwordSessionRequest) (*openSessionResponse, error) {
+	if in.Origin == "" || !h.Cookie.From(in.Origin, http.MethodPost) {
+		return nil, errors.Forbidden("bad_origin")
+	}
+	opened, err := h.Console.OpenPassword(ctx, in.Body.Name, in.Body.Password)
 	if err != nil {
 		return nil, err
 	}

@@ -6,10 +6,23 @@ import { listingTone } from '../lib/games.js'
 // The small pieces the two games pages share: a tile, a listing badge, a
 // secret shown once, a labelled fact.
 
+// A game's picture, or its first letter when it has none or the picture does
+// not load (a studio's host gone, a file deleted).
 export function Tile({ src, name, size = 'size-10' }) {
-  if (src) return <img src={src} alt="" className={`${size} shrink-0 rounded-lg object-cover`} />
+  const [broken, setBroken] = useState(null)
+  if (src && broken !== src)
+    return (
+      <img
+        src={src}
+        alt=""
+        className={`${size} border-line shrink-0 rounded-xl border object-cover`}
+        onError={() => setBroken(src)}
+      />
+    )
   return (
-    <span className={`bg-surface-2 text-ink-2 inline-flex ${size} shrink-0 items-center justify-center rounded-lg text-sm font-bold`}>
+    <span
+      className={`bg-accent/15 text-accent-text font-display inline-flex ${size} shrink-0 items-center justify-center rounded-xl text-base font-extrabold`}
+    >
       {(name || '?').slice(0, 1)}
     </span>
   )
@@ -31,7 +44,7 @@ export function Tag({ children, tone = 'bg-surface-2 text-ink-2' }) {
 export function Fact({ label, children, mono = false }) {
   return (
     <div className="min-w-0">
-      <div className="text-ink-3 text-xs font-semibold uppercase">{label}</div>
+      <div className="label">{label}</div>
       <div className={`mt-0.5 text-sm [overflow-wrap:anywhere] ${mono ? 'font-mono text-xs' : ''}`}>
         {children || <span className="text-ink-3">—</span>}
       </div>
