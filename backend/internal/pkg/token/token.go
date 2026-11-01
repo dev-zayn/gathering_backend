@@ -32,6 +32,11 @@ type Claims struct {
 	// Phone is set only while signing in, before there is anyone to point at.
 	Phone string `json:"phone,omitempty"`
 
+	// Provider and ProviderSubject are a signup token's instead of the phone
+	// when Google or Apple vouched for the person: who, and their id there.
+	Provider        string `json:"idp,omitempty"`
+	ProviderSubject string `json:"idp_sub,omitempty"`
+
 	// Room, Role, Seat and Round are a room ticket's: which room, what the
 	// player is there (host, player, spectator), where they sit, and the
 	// room's round when it was minted. Seat and Round are pointers so a

@@ -41,9 +41,13 @@ type Deps struct {
 	// Signing in, and everything that follows from holding a token.
 	SignIn  *identity.SignIn
 	Verify  *identity.Verify
+	SSO     *identity.ProviderSignIn
 	Refresh *identity.Refresh
 	Signup  *biz.Signup
-	Devices *identity.Devices
+
+	// Deletion is a player deleting their own account (docs/ACCOUNTS.md).
+	Deletion *biz.Deletion
+	Devices  *identity.Devices
 
 	// The player's own record, and who is here.
 	Profiles *players.Profiles
@@ -115,8 +119,10 @@ func Mount(api huma.API, d Deps) {
 	(&player.Handler{
 		SignIn:   d.SignIn,
 		Verify:   d.Verify,
+		SSO:      d.SSO,
 		Refresh:  d.Refresh,
 		Signup:   d.Signup,
+		Deletion: d.Deletion,
 		Devices:  d.Devices,
 		Profiles: d.Profiles,
 		Presence: d.Presence,

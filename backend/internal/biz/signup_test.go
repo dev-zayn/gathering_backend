@@ -147,6 +147,56 @@ func TestAPhoneSignsUpOnce(t *testing.T) {
 	}
 }
 
+// A Google or Apple account signs up with no phone: the player, its account in
+// identities, and the provider on the record. A second signup with the same
+// account is told so (docs/SSO.md).
+func TestAProviderAccountSignsUpWithNoPhone(t *testing.T) {
+	s, db, log := signup(t)
+	ctx := context.Background()
+	in := SignupRequest{Provider: enum.ProviderGoogle, ProviderSubject: "g-1", Nickname: "Sara"}
+
+	v, err := s.Do(ctx, in)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if v.Scope != caller.ScopeSession || v.Player == nil || v.Player.Phone != nil {
+		t.Fatalf("got %+v", v)
+	}
+	found, err := s.Players.ByIdentity(ctx, enum.ProviderGoogle, "g-1")
+	if err != nil || found == nil || found.ID != v.Player.ID {
+		t.Fatalf("the account opens %+v, %v", found, err)
+	}
+	w := log.Written()
+	if len(w) != 1 || w[0].Action != model.ActionSignedUp || w[0].Detail["provider"] != enum.ProviderGoogle {
+		t.Fatalf("the log holds %+v", w)
+	}
+
+	_, err = s.Do(ctx, in)
+	if e, ok := err.(*errors.Error); !ok || e.Status != http.StatusConflict || e.Code != "identity_taken" {
+		t.Fatalf("got %v, want 409 identity_taken", err)
+	}
+	var players int64
+	db.Table("players").Count(&players)
+	if players != 1 {
+		t.Fatalf("%d players for one account", players)
+	}
+}
+
+// A token with neither a phone nor an account is not one we mint: nothing is
+// written for it.
+func TestASignupNeedsAPhoneOrAnAccount(t *testing.T) {
+	s, db, _ := signup(t)
+	_, err := s.Do(context.Background(), SignupRequest{Provider: "github", ProviderSubject: "x", Nickname: "Sara"})
+	if e, ok := err.(*errors.Error); !ok || e.Status != http.StatusInternalServerError {
+		t.Fatalf("got %v, want 500", err)
+	}
+	var players int64
+	db.Table("players").Count(&players)
+	if players != 0 {
+		t.Fatal("a player was written")
+	}
+}
+
 // The profile is checked before anything is written, every problem at once.
 func TestTheProfileIsChecked(t *testing.T) {
 	s, db, _ := signup(t)

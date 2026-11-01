@@ -53,6 +53,21 @@ func (h *Handler) registerMe(api huma.API) {
 			"connection outranks it.",
 		Tags: []string{"me"}, Metadata: session, DefaultStatus: http.StatusNoContent,
 	}, h.presence)
+
+	huma.Register(api, huma.Operation{
+		OperationID: "me-delete", Method: http.MethodDelete, Path: "/v1/me",
+		Summary: "Delete my account",
+		Description: "Everything that is the player's goes: how they sign in, their friends, " +
+			"their inbox, their phones and their library; every session ends. The games " +
+			"already played keep a seat for them, emptied (docs/ACCOUNTS.md). Refuses " +
+			"409 in_room (leave the room first) and 409 in_tournament (an open or running " +
+			"one they organize or are still in).",
+		Tags: []string{"me"}, Metadata: session, DefaultStatus: http.StatusNoContent,
+	}, h.deleteMe)
+}
+
+func (h *Handler) deleteMe(ctx context.Context, _ *struct{}) (*noContent, error) {
+	return nil, h.Deletion.Do(ctx, caller.FromContext(ctx).Subject)
 }
 
 func (h *Handler) me(ctx context.Context, _ *struct{}) (*meResponse, error) {

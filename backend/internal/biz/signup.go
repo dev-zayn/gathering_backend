@@ -21,8 +21,13 @@ import (
 
 // SignupRequest is one call carrying the whole profile. The phone comes from the
 // signup token, so nobody registers a number they did not just prove they hold.
+// A token from Google or Apple carries the provider's account instead, and the
+// player is made with no phone (docs/SSO.md).
 type SignupRequest struct {
-	Phone    string
+	Phone           string
+	Provider        enum.Provider
+	ProviderSubject string
+
 	Nickname string
 	// Avatar is a bundled avatar's id, or the key the handler stored an upload
 	// under. Empty is the default picture.
@@ -64,20 +69,38 @@ func (s *Signup) Do(ctx context.Context, in SignupRequest) (*identity.Verified, 
 		return nil, errors.Invalid(bad)
 	}
 
-	// The number was checked at verify, but a second registration could have
-	// started in between. The unique index below is what actually decides.
-	existing, err := s.Players.ByPhone(ctx, in.Phone)
-	if err != nil {
-		return nil, errors.Internal(err)
-	}
-	if existing != nil {
-		return nil, identity.ErrPhoneTaken
+	player := &model.Player{
+		ID: ids.New(ids.Player), Nickname: nickname, AvatarKey: in.Avatar, Language: language,
 	}
 
-	phone := in.Phone
-	player := &model.Player{
-		ID: ids.New(ids.Player), Phone: &phone, Nickname: nickname,
-		AvatarKey: in.Avatar, Language: language,
+	// The number or the account was checked a moment ago, but a second
+	// registration could have started in between. The unique index and the
+	// identities' key below are what actually decide.
+	var account *model.Identity
+	switch {
+	case in.Phone != "":
+		existing, err := s.Players.ByPhone(ctx, in.Phone)
+		if err != nil {
+			return nil, errors.Internal(err)
+		}
+		if existing != nil {
+			return nil, identity.ErrPhoneTaken
+		}
+		phone := in.Phone
+		player.Phone = &phone
+	case in.Provider.Valid() && in.ProviderSubject != "":
+		existing, err := s.Players.ByIdentity(ctx, in.Provider, in.ProviderSubject)
+		if err != nil {
+			return nil, errors.Internal(err)
+		}
+		if existing != nil {
+			return nil, identity.ErrIdentityTaken
+		}
+		account = &model.Identity{Provider: in.Provider, Subject: in.ProviderSubject}
+	default:
+		// Only a signup token reaches here, and every one we mint carries one
+		// of the two.
+		return nil, errors.Internal(fmt.Errorf("signup: a token with neither a phone nor a provider"))
 	}
 
 	// Four digits are ten thousand Alis, so a clash is rare and a retry is
@@ -94,16 +117,24 @@ func (s *Signup) Do(ctx context.Context, in SignupRequest) (*identity.Verified, 
 			if err := s.Players.Create(ctx, player); err != nil {
 				return err
 			}
+			if account != nil {
+				account.PlayerID = player.ID
+				if err := s.Players.AddIdentity(ctx, account); err != nil {
+					return err
+				}
+			}
 			v, err := s.Issuer.Open(ctx, player, "")
 			out = v
 			return err
 		})
 		switch {
 		case err == nil:
-			s.record(ctx, player)
+			s.record(ctx, player, in.Provider)
 			return out, nil
 		case identity.IsPhoneConflict(err):
 			return nil, identity.ErrPhoneTaken
+		case identity.IsIdentityConflict(err):
+			return nil, identity.ErrIdentityTaken
 		case identity.IsHandleConflict(err):
 			continue
 		}
@@ -147,12 +178,16 @@ var digits = func() string {
 }
 
 // record logs a failed write rather than failing the sign-up it describes.
-func (s *Signup) record(ctx context.Context, p *model.Player) {
+func (s *Signup) record(ctx context.Context, p *model.Player, provider enum.Provider) {
 	if s.Audit == nil {
 		return
 	}
+	detail := map[string]any{"handle": p.Handle}
+	if p.Phone == nil {
+		detail["provider"] = provider
+	}
 	if err := s.Audit.Write(ctx, model.Entry{
-		Actor: p.ID, Action: model.ActionSignedUp, Subject: p.ID, Detail: map[string]any{"handle": p.Handle},
+		Actor: p.ID, Action: model.ActionSignedUp, Subject: p.ID, Detail: detail,
 	}); err != nil {
 		applog.From(ctx).Error("audit not written", "action", model.ActionSignedUp, "err", err)
 	}

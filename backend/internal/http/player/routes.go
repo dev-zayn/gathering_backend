@@ -21,8 +21,10 @@ import (
 type Handler struct {
 	SignIn   *identity.SignIn
 	Verify   *identity.Verify
+	SSO      *identity.ProviderSignIn
 	Refresh  *identity.Refresh
 	Signup   *biz.Signup
+	Deletion *biz.Deletion
 	Devices  *identity.Devices
 	Profiles *players.Profiles
 	Presence *players.Presence

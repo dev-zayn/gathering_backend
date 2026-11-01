@@ -1,6 +1,6 @@
 # Sign-in and sessions
 
-A phone, a code, a session. Refreshing it, ending it, and who is signed in. {{ className: 'lead' }}
+A phone and a code, or Google or Apple, then a session. Refreshing it, ending it, and who is signed in. {{ className: 'lead' }}
 
 Every route under `/v1/` takes `Authorization: Bearer <token>`. There are three tokens on the
 way in and one on the way out; the `scope` in every answer says which you hold.
@@ -21,13 +21,30 @@ way in and one on the way out; the `scope` in every answer says which you hold.
 5. `POST /v1/auth/logout` → `204`. The record on the server dies; dropping the token alone
    would leave us willing to refresh it.
 
-`POST /v1/auth/sso/{google|apple}` exists and answers `501 not_supported` until a provider ships.
+## Google and Apple
+
+`POST /v1/auth/sso/{google|apple}` `{ "token": "<the provider's id token>" }` stands in for steps
+1 and 2: Google Sign-In's id token, or Sign in with Apple's identity token. It answers what
+`otp/verify` does: a session and the `player` for an account somebody signed up with, or a
+signup token for a new one, then step 3 as above. A player made this way has no phone.
+
+| Status | Code | When |
+| --- | --- | --- |
+| 501 | `not_supported` | that provider is not set up on this deployment |
+| 502 | `provider_unavailable` | the provider's keys could not be fetched; try again |
+| 401 | `invalid_provider_token` | not a good token from that provider for this app |
+| 403 | `player_disabled` | the account's player is switched off |
+| 409 | `identity_taken` | at signup: somebody signed up with this account first |
+
+The app offers Google on Android and iOS, and Apple on iOS. An account is not matched to a
+player who signed up with a phone.
 
 ## Me
 
 | Call | What |
 | --- | --- |
-| `GET /v1/me` | `{ id, nickname, handle, avatar, phone, bio, language, created_at }` |
+| `GET /v1/me` | `{ id, nickname, handle, avatar, phone, bio, language, created_at }`; no `phone` for a Google or Apple player |
+| `DELETE /v1/me` | the player deletes their account: `204`, every session ends; `409 in_room` or `409 in_tournament` (an open or running one) until they leave. The games played keep a seat named «لاعب محذوف» |
 | `PATCH /v1/me` | any of `nickname`, `handle`, `bio`, `avatar`, `language`; `422 invalid_fields`, `409 handle_taken`, `409 handle_cooldown` (a week) |
 | `PUT /v1/me/presence` | the foreground heartbeat, every 45 s; friends see online for a minute after the last |
 | `PUT /v1/me/device` `{ platform, token }` · `DELETE /v1/me/device` | the phone's Firebase token, so an invite can ring it |

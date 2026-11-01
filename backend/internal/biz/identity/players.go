@@ -31,6 +31,20 @@ func (s *PlayerStore) ByID(ctx context.Context, id string) (*model.Player, error
 	return s.one(ctx, "id = ?", id)
 }
 
+// ByIdentity is the player a provider's account opens, or nil, nil when
+// nobody has signed up with it.
+func (s *PlayerStore) ByIdentity(ctx context.Context, provider enum.Provider, subject string) (*model.Player, error) {
+	return s.one(ctx, "id = (SELECT player_id FROM identities WHERE provider = ? AND subject = ?)",
+		string(provider), subject)
+}
+
+// AddIdentity ties a provider's account to a player. The pair is the primary
+// key: a second player for one account fails here (IsIdentityConflict).
+func (s *PlayerStore) AddIdentity(ctx context.Context, in *model.Identity) error {
+	in.CreatedAt = data.Now()
+	return data.Conn(ctx, s.db).Create(in).Error
+}
+
 // ByHandle is case-blind: the column is lowercase, and what a person typed
 // need not be.
 func (s *PlayerStore) ByHandle(ctx context.Context, handle string) (*model.Player, error) {
@@ -151,7 +165,13 @@ var (
 	ErrPhoneTaken = errors.Conflict("phone_taken")
 	// ErrHandleTaken is a handle somebody else already holds.
 	ErrHandleTaken = errors.Conflict("handle_taken")
+	// ErrIdentityTaken is a provider's account that already opens a player:
+	// two signups racing on one account.
+	ErrIdentityTaken = errors.Conflict("identity_taken")
 )
+
+// IsIdentityConflict reads the identities' primary key the same way.
+func IsIdentityConflict(err error) bool { return isConflict(err, "identities_pkey") }
 
 // IsPhoneConflict reads the unique index on players.phone. Two people
 // registering the same number at the same moment is the case it exists for.

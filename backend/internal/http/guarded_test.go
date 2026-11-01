@@ -17,7 +17,7 @@ var publicOperations = map[string]string{
 
 	// Getting a token cannot require a token.
 	"auth-signin":  "asks for the OTP; this is where a session starts",
-	"auth-sso":     "a provider's token would be the credential; today it answers not_supported",
+	"auth-sso":     "Google's or Apple's id token is the credential, and it is in the body",
 	"auth-refresh": "the refresh token is the credential, and it is in the body",
 	// The provider's token is the credential, checked by the handler: the authn
 	// middleware only reads tokens of ours. The dev sign-in exists only with DEBUG.

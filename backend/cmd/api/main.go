@@ -30,12 +30,14 @@ import (
 	"github.com/jamaa/gathering/backend/internal/biz/tournaments"
 	"github.com/jamaa/gathering/backend/internal/conf"
 	"github.com/jamaa/gathering/backend/internal/data"
+	"github.com/jamaa/gathering/backend/internal/data/enum"
 	"github.com/jamaa/gathering/backend/internal/data/migrations"
 	apphttp "github.com/jamaa/gathering/backend/internal/http"
 	"github.com/jamaa/gathering/backend/internal/http/authn"
 	"github.com/jamaa/gathering/backend/internal/http/guest"
 	"github.com/jamaa/gathering/backend/internal/pkg/fcm"
 	"github.com/jamaa/gathering/backend/internal/pkg/files"
+	"github.com/jamaa/gathering/backend/internal/pkg/idtoken"
 	applog "github.com/jamaa/gathering/backend/internal/pkg/log"
 	"github.com/jamaa/gathering/backend/internal/pkg/otp"
 	"github.com/jamaa/gathering/backend/internal/pkg/sso"
@@ -188,6 +190,35 @@ func main() {
 		Audit:   authAudit,
 	}
 
+	// Google and Apple for players (docs/SSO.md): a provider with no client
+	// ids here answers not_supported. Their keys are fetched on the first token.
+	providers := map[enum.Provider]identity.IDToken{}
+	for _, p := range []struct {
+		name    enum.Provider
+		issuer  string
+		clients []string
+	}{
+		{enum.ProviderGoogle, idtoken.GoogleIssuer, cfg.Players.GoogleClientIDs},
+		{enum.ProviderApple, idtoken.AppleIssuer, cfg.Players.AppleClientIDs},
+	} {
+		if len(p.clients) == 0 {
+			continue
+		}
+		v, err := idtoken.New(p.issuer, p.clients)
+		if err != nil {
+			log.Fatal("player sso", "provider", p.name, "err", err)
+		}
+		providers[p.name] = idTokenBridge{v: v}
+	}
+	providerSignIn := &identity.ProviderSignIn{
+		Providers: providers,
+		Players:   playerStore,
+		Minter:    minter,
+		Issuer:    issuer,
+		Audit:     authAudit,
+		SignupTTL: cfg.Token.SignupTTL,
+	}
+
 	refresh := &identity.Refresh{
 		Tokens:    refreshTokens,
 		Sessions:  sessions,
@@ -244,6 +275,16 @@ func main() {
 		Players:        playerStore,
 		Audit:          playersAudit,
 		HandleCooldown: HandleCooldown,
+	}
+
+	// A player deleting their own account (docs/ACCOUNTS.md).
+	deletion := &biz.Deletion{
+		DB:        pg,
+		Sessions:  sessions,
+		Whitelist: whitelist,
+		Presence:  presence,
+		Files:     bucket,
+		Audit:     playersAudit,
 	}
 
 	// The games. Both the catalogue and the registry revoke: a player
@@ -350,11 +391,13 @@ func main() {
 		// The console's session, in a cookie only its own origins may send.
 		AdminCookie: authn.NewCookie(!cfg.Token.InsecureCookie, cfg.CORSOrigins),
 
-		SignIn:  signIn,
-		Verify:  verify,
-		Refresh: refresh,
-		Signup:  signup,
-		Devices: devices,
+		SignIn:   signIn,
+		Verify:   verify,
+		SSO:      providerSignIn,
+		Refresh:  refresh,
+		Signup:   signup,
+		Deletion: deletion,
+		Devices:  devices,
 
 		Profiles: profiles,
 		Presence: presence,
@@ -514,6 +557,21 @@ func (b ssoBridge) Verify(ctx context.Context, raw string) (*identity.Person, er
 		return nil, fmt.Errorf("%w: %v", identity.ErrSSOInvalid, err)
 	}
 	return &identity.Person{Subject: id.Subject, Name: id.Name, Email: id.Email, Roles: id.Roles}, nil
+}
+
+// idTokenBridge is a Google or Apple verifier as biz/identity's IDToken, its
+// errors wrapped in that package's sentinels.
+type idTokenBridge struct{ v *idtoken.Verifier }
+
+func (b idTokenBridge) Subject(ctx context.Context, raw string) (string, error) {
+	sub, err := b.v.Subject(ctx, raw)
+	if err != nil {
+		if _, unavailable := idtoken.Classify(err); unavailable {
+			return "", fmt.Errorf("%w: %v", identity.ErrSSOUnavailable, err)
+		}
+		return "", fmt.Errorf("%w: %v", identity.ErrSSOInvalid, err)
+	}
+	return sub, nil
 }
 
 // unavailableSSO is a deployment with no provider: every sign-in through one

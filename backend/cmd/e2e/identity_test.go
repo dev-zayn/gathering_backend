@@ -3,6 +3,8 @@
 package e2e
 
 import (
+	"os"
+	"slices"
 	"strings"
 	"testing"
 )
@@ -71,8 +73,26 @@ func TestIdentity(t *testing.T) {
 	b.call("POST", "/v1/auth/logout", nil, 204, nil)
 	b.call("GET", "/v1/me", nil, 401, nil)
 
-	// The SSO seam answers, and says it is not there yet.
-	newClient(t).call("POST", "/v1/auth/sso/google", map[string]any{"token": "x"}, 501, nil)
+	// Google and Apple (docs/SSO.md): a provider with client ids on this api
+	// (E2E_SSO, comma-separated) refuses a token it does not stand behind; one
+	// without says it is not here. A real token needs a phone, so the sweep
+	// stops at the refusal.
+	on := strings.Split(os.Getenv("E2E_SSO"), ",")
+	for _, provider := range []string{"google", "apple"} {
+		var refused map[string]any
+		if slices.Contains(on, provider) {
+			newClient(t).call("POST", "/v1/auth/sso/"+provider, map[string]any{"token": "x"}, 401, &refused)
+			if refused["error"] != "invalid_provider_token" {
+				t.Errorf("sso %s: %v", provider, refused)
+			}
+		} else {
+			newClient(t).call("POST", "/v1/auth/sso/"+provider, map[string]any{"token": "x"}, 501, &refused)
+			if refused["error"] != "not_supported" {
+				t.Errorf("sso %s: %v", provider, refused)
+			}
+		}
+	}
+	t.Logf("ok   sso: a junk token refused by each provider configured (%v), not_supported by the rest", on)
 }
 
 func TestConsole(t *testing.T) {
@@ -117,4 +137,20 @@ func TestConsole(t *testing.T) {
 	c.call("GET", "/v1/admin/admins", nil, 200, nil)
 	c.call("DELETE", "/v1/admin/session", nil, 204, nil)
 	c.call("GET", "/v1/admin/me", nil, 401, nil)
+}
+
+// A player deletes their account (docs/ACCOUNTS.md): every session ends at
+// once, the refresh token with it, and the old @name finds nobody.
+func TestDeletingAnAccount(t *testing.T) {
+	c, p := player(t, "Leaving")
+	handle, _ := p["handle"].(string)
+	refresh, _ := p["refresh_token"].(string)
+
+	c.call("DELETE", "/v1/me", nil, 204, nil)
+	c.call("GET", "/v1/me", nil, 401, nil)
+	newClient(t).call("POST", "/v1/auth/refresh", map[string]any{"refresh_token": refresh}, 401, nil)
+
+	other, _ := player(t, "Looker")
+	other.call("GET", "/v1/players/"+handle, nil, 404, nil)
+	t.Logf("ok   delete: 204, the token and the refresh token dead, @%s finds nobody", handle)
 }

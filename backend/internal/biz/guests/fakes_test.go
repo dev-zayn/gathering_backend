@@ -16,6 +16,9 @@ type fakeMinter struct {
 
 func (f *fakeMinter) MintOTP(string, time.Duration) (string, error)    { return "otp", nil }
 func (f *fakeMinter) MintSignup(string, time.Duration) (string, error) { return "signup", nil }
+func (f *fakeMinter) MintProviderSignup(string, string, time.Duration) (string, error) {
+	return "signup", nil
+}
 func (f *fakeMinter) MintSession(string, string, bool, time.Duration) (string, string, error) {
 	return "session", "jti", nil
 }

@@ -74,11 +74,19 @@ services:
       OTP_FIXED_CODE: ${OTP_FIXED_CODE:?}
       # The console's one password, as a bcrypt hash: no identity provider yet.
       CONSOLE_PASSWORD_HASH: ${CONSOLE_PASSWORD_HASH:?}
+      # Players signing in with Google or Apple (docs/SSO.md): the client ids
+      # their tokens may name. Not secrets; Google's come from the Firebase
+      # project's OAuth clients, Apple's is the app's bundle id.
+      GOOGLE_CLIENT_IDS: ${GOOGLE_CLIENT_IDS:-928600185877-k5e9bhkvnnoip4230enu58bqaca79tg1.apps.googleusercontent.com,928600185877-gn0m0r0k4do63lupn13ombt1ihm3egg5.apps.googleusercontent.com}
+      APPLE_CLIENT_IDS: ${APPLE_CLIENT_IDS:-app.gathering.jamaa}
       FILES_DIR: /files
       FCM_PROJECT_ID: ${FCM_PROJECT_ID:-}
       FCM_CREDENTIALS_FILE: ${FCM_CREDENTIALS_FILE:-}
-      APP_LINKS_SHA256: ${APP_LINKS_SHA256:-}
-      APPLE_TEAM_ID: ${APPLE_TEAM_ID:-}
+      # The phones trust the invite links through these two (docs/JOINING.md):
+      # the certificates that sign the Android app (Play's signing keys and
+      # the upload key), and the Apple team that signs the iOS one. Not secrets.
+      APP_LINKS_SHA256: "${APP_LINKS_SHA256:-AE:7E:78:F8:36:90:D8:96:3A:56:DA:FF:92:FA:A9:2A:B4:B4:26:15:3F:ED:98:4F:29:31:18:4A:16:A7:04:44,57:55:56:97:72:F7:15:30:BD:7D:5E:8D:D6:F1:49:FA:AF:0E:D3:52:DC:54:1E:D2:99:4A:6A:EF:15:D2:88:FB,FB:9F:1C:66:89:A6:1F:DE:E2:1B:A1:29:0A:A7:9D:B8:6A:F1:CB:C0:89:9A:33:81:76:B2:72:E4:BB:3C:64:D2}"
+      APPLE_TEAM_ID: ${APPLE_TEAM_ID:-97YS86UB59}
       APP_STORE_URL: ${APP_STORE_URL:-}
       PLAY_STORE_URL: ${PLAY_STORE_URL:-}
     volumes:

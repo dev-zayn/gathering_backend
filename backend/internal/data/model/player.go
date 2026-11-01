@@ -30,21 +30,29 @@ type Player struct {
 	Disabled   bool
 	Language   enum.Language
 	LastSeenAt *time.Time
-	CreatedAt  time.Time
-	UpdatedAt  time.Time
+
+	// DeletedAt is when the player deleted their account: the row stays,
+	// emptied and switched off (docs/ACCOUNTS.md).
+	DeletedAt *time.Time
+
+	CreatedAt time.Time
+	UpdatedAt time.Time
 }
 
 func (Player) TableName() string { return "players" }
+
+// DeletedNickname is the name a deleted player keeps in the games they played.
+const DeletedNickname = "لاعب محذوف"
 
 // CanSignIn is false for someone an admin has switched off. They keep their
 // record, their history and their phone; they just cannot get a session.
 func (p *Player) CanSignIn() bool { return !p.Disabled }
 
-// Identity is a sign-in through a provider: the seam SSO lands in. Empty until
-// a provider ships.
+// Identity is a sign-in through a provider (docs/SSO.md): the provider's own
+// id for the person, and the player it opens.
 type Identity struct {
-	Provider  string `gorm:"primaryKey"`
-	Subject   string `gorm:"primaryKey"`
+	Provider  enum.Provider `gorm:"primaryKey"`
+	Subject   string        `gorm:"primaryKey"`
 	PlayerID  string
 	CreatedAt time.Time
 }

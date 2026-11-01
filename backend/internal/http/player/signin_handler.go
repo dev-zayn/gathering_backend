@@ -7,9 +7,10 @@ import (
 	"github.com/danielgtaylor/huma/v2"
 
 	"github.com/jamaa/gathering/backend/internal/biz"
+	"github.com/jamaa/gathering/backend/internal/biz/identity"
+	"github.com/jamaa/gathering/backend/internal/data/enum"
 	"github.com/jamaa/gathering/backend/internal/http/authn"
 	"github.com/jamaa/gathering/backend/internal/pkg/caller"
-	"github.com/jamaa/gathering/backend/internal/pkg/errors"
 )
 
 type phoneRequest struct {
@@ -42,9 +43,12 @@ func (h *Handler) registerSignin(api huma.API) {
 		OperationID: "auth-sso",
 		Method:      http.MethodPost,
 		Path:        "/v1/auth/sso/{provider}",
-		Summary:     "Sign in with a provider",
-		Description: "The seam for Google and Apple sign-in. The route exists so the app can " +
-			"wire the buttons; until a provider ships it answers not_supported.",
+		Summary:     "Sign in with Google or Apple",
+		Description: "The provider's id token for a session, or for a signup token when nobody " +
+			"has signed up with that account: the same answer as checking a code, and a " +
+			"player made this way has no phone. Refuses 501 not_supported (no client ids for " +
+			"the provider here), 502 provider_unavailable, 401 invalid_provider_token, " +
+			"403 player_disabled.",
 		Tags: []string{"auth"},
 	}, h.sso)
 }
@@ -65,12 +69,16 @@ func (h *Handler) signin(ctx context.Context, in *phoneRequest) (*ticketResponse
 type ssoRequest struct {
 	Provider string `path:"provider" enum:"google,apple"`
 	Body     struct {
-		Token string `json:"token" required:"true" doc:"The provider's id token."`
+		Token string `json:"token" required:"true" minLength:"1" maxLength:"8192" doc:"The provider's id token: Google Sign-In's id token, or Sign in with Apple's identity token."`
 	}
 }
 
-func (h *Handler) sso(_ context.Context, _ *ssoRequest) (*ticketResponse, error) {
-	return nil, errors.New(http.StatusNotImplemented, "not_supported")
+func (h *Handler) sso(ctx context.Context, in *ssoRequest) (*verifyResponse, error) {
+	v, err := h.SSO.Do(ctx, enum.Provider(in.Provider), in.Body.Token)
+	if err != nil {
+		return nil, err
+	}
+	return verified(v), nil
 }
 
 type codeRequest struct {
@@ -120,7 +128,12 @@ func (h *Handler) verify(ctx context.Context, in *codeRequest) (*verifyResponse,
 	if err != nil {
 		return nil, err
 	}
+	return verified(v), nil
+}
 
+// verified is a code's answer and a provider's alike: a session and the
+// player, or a signup token alone.
+func verified(v *identity.Verified) *verifyResponse {
 	out := &verifyResponse{}
 	out.Body.Scope = v.Scope
 	out.Body.AccessToken = v.AccessToken
@@ -130,7 +143,7 @@ func (h *Handler) verify(ctx context.Context, in *codeRequest) (*verifyResponse,
 		m := me(v.Player)
 		out.Body.Player = &m
 	}
-	return out, nil
+	return out
 }
 
 func (h *Handler) resend(ctx context.Context, _ *struct{}) (*ticketResponse, error) {
@@ -172,9 +185,10 @@ func (h *Handler) registerSignup(api huma.API) {
 		Method:      http.MethodPost,
 		Path:        "/v1/auth/signup",
 		Summary:     "Become a player, in one call",
-		Description: "A nickname and an avatar: that is the whole sign-up. The phone comes from " +
-			"the token, never the body, and the @name is made from the nickname. Answers " +
-			"with a session, so the next screen is the app.",
+		Description: "A nickname and an avatar: that is the whole sign-up. The phone, or the " +
+			"Google or Apple account, comes from the token, never the body, and the @name is " +
+			"made from the nickname. Answers with a session, so the next screen is the app. " +
+			"Refuses 409 phone_taken or identity_taken when somebody signed up with it first.",
 		Tags:          []string{"auth"},
 		DefaultStatus: http.StatusCreated,
 		Metadata:      map[string]any{authn.ScopeKey: caller.ScopeSignup},
@@ -185,10 +199,12 @@ func (h *Handler) signup(ctx context.Context, in *signupRequest) (*signupRespons
 	claims := caller.FromContext(ctx)
 
 	v, err := h.Signup.Do(ctx, biz.SignupRequest{
-		Phone:    claims.Phone,
-		Nickname: in.Body.Nickname,
-		Avatar:   in.Body.Avatar,
-		Language: in.Body.Language,
+		Phone:           claims.Phone,
+		Provider:        enum.Provider(claims.Provider),
+		ProviderSubject: claims.ProviderSubject,
+		Nickname:        in.Body.Nickname,
+		Avatar:          in.Body.Avatar,
+		Language:        in.Body.Language,
 	})
 	if err != nil {
 		return nil, err

@@ -105,17 +105,19 @@ func (i *Identities) Of(ctx context.Context, authorization string) (Answer, erro
 		seat = *claims.Seat
 	}
 	return Answer{Session: &caller.Session{
-		ID:       claims.ID,
-		Subject:  claims.Subject,
-		Scope:    claims.Scope,
-		Kind:     claims.Kind,
-		Audience: caller.Audience(claims.Audience),
-		Phone:    claims.Phone,
-		Room:     claims.Room,
-		Role:     claims.Role,
-		Seat:     seat,
-		Roles:    claims.Roles,
-		Session:  claims.Session,
-		Live:     claims.Live,
+		ID:              claims.ID,
+		Subject:         claims.Subject,
+		Scope:           claims.Scope,
+		Kind:            claims.Kind,
+		Audience:        caller.Audience(claims.Audience),
+		Phone:           claims.Phone,
+		Provider:        claims.Provider,
+		ProviderSubject: claims.ProviderSubject,
+		Room:            claims.Room,
+		Role:            claims.Role,
+		Seat:            seat,
+		Roles:           claims.Roles,
+		Session:         claims.Session,
+		Live:            claims.Live,
 	}}, nil
 }

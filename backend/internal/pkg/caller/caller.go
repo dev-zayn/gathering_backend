@@ -29,6 +29,11 @@ type Session struct {
 	// Phone is set only while signing in, before there is anyone to point at.
 	Phone string `json:"phone,omitempty"`
 
+	// Provider and ProviderSubject stand in for the phone on a signup token
+	// when Google or Apple vouched for the person.
+	Provider        string `json:"idp,omitempty"`
+	ProviderSubject string `json:"idp_sub,omitempty"`
+
 	// Room, Role and Seat are a room ticket's: which room, what the player is
 	// there (host, player, spectator) and where they sit.
 	Room string `json:"room,omitempty"`

@@ -58,6 +58,7 @@ type Config struct {
 	Links LinksConfig
 
 	SSO         SSOConfig
+	Players     PlayerSSOConfig
 	Token       TokenConfig
 	OTP         OTPConfig
 	Push        PushConfig
@@ -90,6 +91,14 @@ type SSOConfig struct {
 // Configured says whether there is a provider to verify admins against.
 func (s SSOConfig) Configured() bool {
 	return s.Issuer != "" && s.ClientID != "" && s.Audience != ""
+}
+
+// PlayerSSOConfig is Google and Apple for players (docs/SSO.md): the client
+// ids each provider's tokens may name in aud. A provider with none answers
+// not_supported. Neither list is a secret.
+type PlayerSSOConfig struct {
+	GoogleClientIDs []string // GOOGLE_CLIENT_IDS: the web, Android and iOS clients
+	AppleClientIDs  []string // APPLE_CLIENT_IDS: the bundle id
 }
 
 // PushConfig is Firebase Cloud Messaging (docs/PUSH.md). Without a key a
@@ -294,6 +303,10 @@ func Load() (Config, error) {
 			DevAdmin:   opt("DEV_ADMIN", "") == "true",
 
 			PasswordHash: strings.TrimSpace(os.Getenv("CONSOLE_PASSWORD_HASH")),
+		},
+		Players: PlayerSSOConfig{
+			GoogleClientIDs: list("GOOGLE_CLIENT_IDS"),
+			AppleClientIDs:  list("APPLE_CLIENT_IDS"),
 		},
 		AllowPrivateHosts: opt("ALLOW_PRIVATE_HOSTS", "") == "true",
 

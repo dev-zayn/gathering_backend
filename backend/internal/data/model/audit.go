@@ -57,6 +57,9 @@ const (
 	ActionPlayerDisabled = "player.disabled"
 	ActionPlayerEnabled  = "player.enabled"
 
+	// A player deleting their own account (docs/ACCOUNTS.md).
+	ActionPlayerDeleted = "player.deleted"
+
 	// Who may open the console is the identity provider's to say, and it keeps
 	// that record. Ours notes the first time somebody did, so a new name in the
 	// log has a beginning.

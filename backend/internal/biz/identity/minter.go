@@ -36,6 +36,7 @@ type RoomClaims struct {
 type Minter interface {
 	MintOTP(phone string, ttl time.Duration) (string, error)
 	MintSignup(phone string, ttl time.Duration) (string, error)
+	MintProviderSignup(provider, subject string, ttl time.Duration) (string, error)
 	MintSession(playerID, sessionID string, live bool, ttl time.Duration) (token, jti string, err error)
 
 	// MintGame is the credential a game's backend holds: one game's audience,
@@ -66,6 +67,15 @@ func (m *jwtMinter) MintOTP(phone string, ttl time.Duration) (string, error) {
 // the only thing that lets a stranger create a player.
 func (m *jwtMinter) MintSignup(phone string, ttl time.Duration) (string, error) {
 	t, _, err := m.s.Mint(token.Claims{Scope: caller.ScopeSignup, Phone: phone}, ttl)
+	return t, err
+}
+
+// MintProviderSignup is the same for a person Google or Apple vouched for:
+// the pair stands where the phone would.
+func (m *jwtMinter) MintProviderSignup(provider, subject string, ttl time.Duration) (string, error) {
+	t, _, err := m.s.Mint(token.Claims{
+		Scope: caller.ScopeSignup, Provider: provider, ProviderSubject: subject,
+	}, ttl)
 	return t, err
 }
 

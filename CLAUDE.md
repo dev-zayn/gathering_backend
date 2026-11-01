@@ -8,7 +8,7 @@ Guidance for Claude Code in this repository.
 phone sign-in, a player profile, friends and presence, the game registry and
 library, rooms with a realtime relay, results and the inbox. Go, in
 `backend/`; a React admin console in `web/console`; developer docs in
-`web/docs`. Modelled on `../super-gini` (read-only reference) but a separate
+`web/docs`. Modelled on `../../super_gini-space/super-gini` (read-only reference) but a separate
 product with its own brand: `scripts/brand-check.sh` fails on any identifier
 borrowed from the reference's.
 
@@ -30,7 +30,8 @@ make e2e            # the in-repo sweep against a running api (E2E_API, E2E_CODE
 make keys           # a new signing key
 make games          # build the arcade's five games in ../gathering_games (each its own bun project, into its dist/)
 make fixtures       # the fixtures on :8091 over ../gathering_games (xo, tap as they are; a built game from its dist/)
-scripts/games-on-wifi.sh [ip]   # after the Mac changes network: the fixtures on :8093 at the new address, every game moved there
+scripts/games-local.sh [wifi|ip]   # the fixtures on :8091 at http://localhost (adb reverse for every emulator), every
+                    # game in the registry moved there; `wifi` (or an ip) for a phone on the network instead
 go run ./cmd/roomplayer -code K7M2QX -taps 10 -rounds 2   # (in backend/) a headless member: signs
                     # up with OTP_FIXED_CODE, joins by code, taps the tap race in every round over the
                     # relay, prints its place per round, leaves after -rounds finished rounds
@@ -318,3 +319,32 @@ and `JWT_PRIVATE_KEY` (`make keys`); the sweep then signs in with that code.
   with the brand's wordmark (`public/brand/`, never set in a font) and a
   drawer on a phone; the sign-in beside the brand's pattern and lockup; the
   dashboard's groups as cards; a game's tile falling back to its letter.
+- Google and Apple sign-in (platform side) done 2026-10-31, to
+  `docs/SSO.md` (written first; the user's ask: no phone for such a player,
+  not linked to a phone account): `enum.Provider`, `model.Identity`'s
+  provider typed, `pkg/idtoken` (one provider's id tokens: discovery on the
+  first token, the keys through go-oidc, any of several client ids in
+  `aud`; tested on `ssotest`'s fake), `identity.ProviderSignIn` (`auth-sso`:
+  a session for a known (provider, sub), a signup token carrying the pair
+  (`idp`, `idp_sub` claims) for a new one, nothing written; `not_supported`,
+  `provider_unavailable`, `invalid_provider_token`, `player_disabled` in
+  that order), `biz.Signup` making a player with no phone and its
+  identities row in one transaction (`identity_taken`),
+  `PlayerStore.ByIdentity`/`AddIdentity`, `GOOGLE_CLIENT_IDS` and
+  `APPLE_CLIENT_IDS` (empty: 501; Hetzner's compose defaults Google to the
+  Firebase project's web client and Apple to the bundle id), the docs' Sign-in page, the e2e step (`E2E_SSO` names the
+  configured providers; a junk token is refused). The privacy page names
+  Google and Apple. No migration: 00001 had the identities table.
+- Deleting an account (platform side) done 2026-10-31, to
+  `docs/ACCOUNTS.md` (written first): migration 00014
+  (`players.deleted_at`), `biz.Deletion` (`me-delete`, `DELETE /v1/me`: in
+  one transaction under the player's row lock, `in_room` then
+  `in_tournament`, then the identities, devices, friendships, blocks,
+  notifications either way, library, game tokens and codes deleted, every
+  session revoked, the row emptied to `model.DeletedNickname` and
+  `deleted_<id tail>`, switched off; after the commit the whitelist, the
+  presence, an uploaded picture and `player.deleted`), the docs' Sign-in
+  page, the e2e `TestDeletingAnAccount` (run against an api on the new code
+  beside the shared one). Hetzner's compose now defaults `APPLE_TEAM_ID` to
+  97YS86UB59 and `APP_LINKS_SHA256` to Play's two signing keys and the
+  upload key.
