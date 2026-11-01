@@ -48,5 +48,6 @@ export function roomFacts(room) {
     ['On a Wi-Fi with no internet', room.lan ? 'Yes' : 'No'],
     ['Back in during a round', room.rejoin ? 'Yes, for a member who left' : 'No'],
     ['Spectators', room.spectators ? 'Allowed' : 'No'],
+    ['Chat', room.chat === false ? 'Off' : 'On'],
   ]
 }

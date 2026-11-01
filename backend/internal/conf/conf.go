@@ -230,6 +230,7 @@ type LinksConfig struct {
 type RelayConfig struct {
 	MaxFrame   int
 	Rate       int
+	ChatRate   int
 	MaxMembers int
 	Presence   time.Duration
 }
@@ -357,6 +358,7 @@ func Load() (Config, error) {
 		Relay: RelayConfig{
 			MaxFrame:   optInt("RELAY_MAX_FRAME", 16<<10),
 			Rate:       optInt("RELAY_RATE", 30),
+			ChatRate:   optInt("RELAY_CHAT_RATE", 1),
 			MaxMembers: optInt("RELAY_MAX_MEMBERS", 64),
 			Presence:   optDur("PRESENCE_TTL", time.Minute),
 		},

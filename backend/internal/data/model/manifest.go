@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/url"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/jamaa/gathering/backend/internal/data/enum"
@@ -82,6 +83,26 @@ type RoomBlock struct {
 	Rejoin     bool           `json:"rejoin"`
 	Spectators bool           `json:"spectators"`
 	State      enum.StateMode `json:"state"`
+	// ChatOff is the document's chat: false, a game too fast for the app's
+	// chat and emotes. A block that does not say has them.
+	ChatOff ChatOff `json:"chat,omitempty"`
+}
+
+// ChatOn is whether the room has the app's chat and emotes.
+func (r RoomBlock) ChatOn() bool { return !bool(r.ChatOff) }
+
+// ChatOff reads and writes the block's chat field. It is a plain value because
+// two blocks are compared with == to tell whether a game changed: saying true
+// and saying nothing are one block.
+type ChatOff bool
+
+// MarshalJSON writes only what omitempty leaves: a chat turned off.
+func (c ChatOff) MarshalJSON() ([]byte, error) { return []byte(strconv.FormatBool(!bool(c))), nil }
+
+// UnmarshalJSON takes false as off, and anything else as on.
+func (c *ChatOff) UnmarshalJSON(b []byte) error {
+	*c = ChatOff(string(b) == "false")
+	return nil
 }
 
 func (r *RoomBlock) Scan(src any) error { return scanJSON(src, r) }

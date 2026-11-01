@@ -712,3 +712,81 @@ func TestClosingTheHubClosesItsSockets(t *testing.T) {
 		t.Fatalf("a socket after the close got %d", code)
 	}
 }
+
+// The chat reaches every member, the sender included, cleaned; a game's
+// traffic does not push it out of what a new connection is told; and its own
+// limit is tighter than the socket's.
+func TestTheChat(t *testing.T) {
+	cfg := DefaultConfig()
+	cfg.History, cfg.ChatBurst, cfg.ChatHistory = 3, 3, 2
+	h, dir, _, _ := hub(t, cfg)
+	room, a, b := newRoom(), newPlayer(), newPlayer()
+	dir.add(room, a, enum.HostPeer, enum.StateBlob, b)
+	ca, cb := dial(t, h, room, a, 0), dial(t, h, room, b, 0)
+	ca.expect("hello")
+	cb.expect("hello")
+
+	ca.send(map[string]any{"t": "chat", "text": "  هلا  ", "ref": "r1"})
+	for _, c := range []*client{ca, cb} {
+		f := c.expect("chat")
+		if f.From != a || f.Text != "هلا" || f.Ref != "r1" || f.At == "" || f.Seq == 0 {
+			t.Fatalf("chat = %+v", f)
+		}
+	}
+	cb.send(map[string]any{"t": "chat", "emote": "laughing"})
+	if f := ca.expect("chat"); f.From != b || f.Emote != "laughing" || f.Text != "" {
+		t.Fatalf("emote = %+v", f)
+	}
+
+	// Nothing to say, an emote the app did not ship, and both at once.
+	for _, bad := range []map[string]any{
+		{"t": "chat", "ref": "x"},
+		{"t": "chat", "emote": "nope", "ref": "x"},
+		{"t": "chat", "text": "a", "emote": "wave", "ref": "x"},
+	} {
+		ca.send(bad)
+		if e := ca.expect("error"); e.Code != "bad_frame" || e.Ref != "x" {
+			t.Fatalf("bad chat: %+v", e)
+		}
+	}
+
+	// A's second of three; the third; and the fourth at once is over the burst.
+	ca.send(map[string]any{"t": "chat", "emote": "wave"})
+	ca.expect("chat")
+	ca.send(map[string]any{"t": "chat", "emote": "cheer"})
+	ca.expect("chat")
+	ca.send(map[string]any{"t": "chat", "emote": "crown", "ref": "over"})
+	if e := ca.expect("error"); e.Code != "rate_limited" || e.Ref != "over" {
+		t.Fatalf("over the chat's burst: %+v", e)
+	}
+	// Messages are not spent from the chat's bucket.
+	ca.send(map[string]any{"t": "msg", "data": 1})
+	ca.expect("msg")
+
+	// The log (3) has moved on with the game; the chat (2) has its last two.
+	for i := range 4 {
+		cb.send(map[string]any{"t": "msg", "data": i})
+	}
+	late := dial(t, h, room, newPlayerIn(dir, room), 0)
+	hello := late.expect("hello")
+	if len(hello.Chat) != 2 ||
+		!strings.Contains(string(hello.Chat[0]), `"wave"`) || !strings.Contains(string(hello.Chat[1]), `"cheer"`) {
+		t.Fatalf("hello's chat = %s", hello.Chat)
+	}
+}
+
+// A game that says no chat has none: hello brings none and the frame is refused.
+func TestAGameMaySayNoChat(t *testing.T) {
+	h, dir, _, _ := hub(t, DefaultConfig())
+	room, a := newRoom(), newPlayer()
+	dir.add(room, a, enum.HostPeer, enum.StateBlob)
+	dir.rooms[room].config.ChatOff = true
+	ca := dial(t, h, room, a, 0)
+	if hello := ca.expect("hello"); hello.Chat != nil {
+		t.Fatalf("hello's chat = %s", hello.Chat)
+	}
+	ca.send(map[string]any{"t": "chat", "text": "هلا", "ref": "r"})
+	if e := ca.expect("error"); e.Code != "chat_off" || e.Ref != "r" {
+		t.Fatalf("refusal = %+v", e)
+	}
+}

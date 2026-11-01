@@ -40,6 +40,10 @@ type Config struct {
 	MaxFrame int
 	// Rate is RELAY_RATE: frames a second per socket, a token bucket.
 	Rate int
+	// ChatRate is RELAY_CHAT_RATE: chat frames a second per socket, on top
+	// of Rate; ChatBurst is how many may come at once.
+	ChatRate  int
+	ChatBurst int
 	// Queue is how many frames a socket may fall behind by before it is
 	// closed as a slow consumer.
 	Queue int
@@ -48,6 +52,8 @@ type Config struct {
 	Idle time.Duration
 	// History is how many frames a room's log keeps for a reconnect.
 	History int
+	// ChatHistory is how many chat frames a room keeps for hello.
+	ChatHistory int
 	// KeyTTL is how long a room's keys outlive the last thing said in it.
 	KeyTTL time.Duration
 	// TouchEvery is how often, at most, a ping moves the room's active_at.
@@ -62,6 +68,7 @@ type Config struct {
 func DefaultConfig() Config {
 	return Config{
 		MaxFrame: 16 << 10, Rate: 30, Queue: 256, Idle: 45 * time.Second,
+		ChatRate: 1, ChatBurst: 5, ChatHistory: 50,
 		History: 200, KeyTTL: 2 * time.Hour, TouchEvery: time.Minute,
 		WriteTimeout: 10 * time.Second, Subscribe: 5 * time.Second,
 	}
@@ -126,6 +133,15 @@ func NewHub(rdb *data.Redis, dir Directory, presence Presence, cfg Config, log *
 	}
 	if cfg.History <= 0 {
 		cfg.History = def.History
+	}
+	if cfg.ChatRate <= 0 {
+		cfg.ChatRate = def.ChatRate
+	}
+	if cfg.ChatBurst <= 0 {
+		cfg.ChatBurst = def.ChatBurst
+	}
+	if cfg.ChatHistory <= 0 {
+		cfg.ChatHistory = def.ChatHistory
 	}
 	if cfg.KeyTTL <= 0 {
 		cfg.KeyTTL = def.KeyTTL
@@ -414,6 +430,16 @@ func (h *Hub) Publish(ctx context.Context, roomID string, frames ...any) error {
 	return nil
 }
 
+// publishChat is Publish for a chat frame: the chat's own list keeps it too.
+func (h *Hub) publishChat(ctx context.Context, roomID string, chat rooms.Chat) error {
+	head, tail, err := split(chat)
+	if err != nil {
+		return err
+	}
+	return chatScript.Run(ctx, h.rdb, keys(roomID),
+		channel(roomID), head, tail, h.ttl(), h.cfg.History, h.cfg.ChatHistory).Err()
+}
+
 // Start resets the room's shared state to version 0 with no data and
 // publishes the started frame, in one script: every round begins afresh,
 // and a write based on the last round's state can only be refused. It is
@@ -433,7 +459,7 @@ func (h *Hub) End(ctx context.Context, roomID string, ended rooms.Ended) error {
 	if err := h.Publish(ctx, roomID, ended); err != nil {
 		return err
 	}
-	return h.rdb.Del(ctx, seqKey(roomID), logKey(roomID), verKey(roomID), dataKey(roomID), touchKey(roomID)).Err()
+	return h.rdb.Del(ctx, seqKey(roomID), logKey(roomID), verKey(roomID), dataKey(roomID), chatKey(roomID), touchKey(roomID)).Err()
 }
 
 // State is the room's live shared state: version 0 and no data until the
@@ -513,6 +539,19 @@ func (h *Hub) seq(ctx context.Context, roomID string) (int64, error) {
 // history is the room's log.
 func (h *Hub) history(ctx context.Context, roomID string) ([]string, error) {
 	return h.rdb.LRange(ctx, logKey(roomID), 0, -1).Result()
+}
+
+// chatHistory is the room's chat, oldest first.
+func (h *Hub) chatHistory(ctx context.Context, roomID string) ([]json.RawMessage, error) {
+	said, err := h.rdb.LRange(ctx, chatKey(roomID), 0, -1).Result()
+	if err != nil {
+		return nil, err
+	}
+	out := make([]json.RawMessage, len(said))
+	for i, f := range said {
+		out[i] = json.RawMessage(f)
+	}
+	return out, nil
 }
 
 // touch says the room is in use: its active_at moves, at most once per

@@ -16,12 +16,14 @@ import (
 //	room:{room_…}:log    the last History frames
 //	room:{room_…}:ver    the shared state's version
 //	room:{room_…}:data   the shared state's data
+//	room:{room_…}:chat   the last ChatHistory chat frames
 //	room:{room_…}:touch  the active_at throttle
 //	room:{room_…}        the channel the live frames go out on
 func seqKey(room string) string   { return "room:{" + room + "}:seq" }
 func logKey(room string) string   { return "room:{" + room + "}:log" }
 func verKey(room string) string   { return "room:{" + room + "}:ver" }
 func dataKey(room string) string  { return "room:{" + room + "}:data" }
+func chatKey(room string) string  { return "room:{" + room + "}:chat" }
 func touchKey(room string) string { return "room:{" + room + "}:touch" }
 func channel(room string) string  { return "room:{" + room + "}" }
 
@@ -30,13 +32,13 @@ func roomOf(ch string) string {
 	return strings.TrimSuffix(strings.TrimPrefix(ch, "room:{"), "}")
 }
 
-// keys is the four a script touches, in the order the scripts name them.
+// keys is the five a script touches, in the order the scripts name them.
 func keys(room string) []string {
-	return []string{seqKey(room), logKey(room), verKey(room), dataKey(room)}
+	return []string{seqKey(room), logKey(room), verKey(room), dataKey(room), chatKey(room)}
 }
 
 // publishLua appends one frame to the room's history. KEYS: seq, log, ver,
-// data. ARGV: the channel, the frame up to and including its type, the rest
+// data, chat. ARGV: the channel, the frame up to and including its type, the rest
 // of the frame, the keys' TTL in seconds, the history's length. The seq is
 // spliced in after the type, so the frame reads {"t":…,"seq":N,…}; every key
 // of the room is kept alive while anything is said in it.
@@ -63,8 +65,23 @@ redis.call('SET', KEYS[3], '0')
 redis.call('DEL', KEYS[4])
 ` + publishLua)
 
+// chatScript is publishLua for a chat frame, which the chat's own list keeps
+// too: a game's traffic moves the log on, and a chat should outlast that. KEYS
+// are publishLua's. ARGV are publishLua's, then the chat's length.
+var chatScript = redis.NewScript(`
+local seq = redis.call('INCR', KEYS[1])
+local frame = ARGV[2] .. ',"seq":' .. seq .. ARGV[3]
+redis.call('RPUSH', KEYS[2], frame)
+redis.call('LTRIM', KEYS[2], -tonumber(ARGV[5]), -1)
+redis.call('RPUSH', KEYS[5], frame)
+redis.call('LTRIM', KEYS[5], -tonumber(ARGV[6]), -1)
+for i = 1, #KEYS do redis.call('EXPIRE', KEYS[i], ARGV[4]) end
+redis.call('PUBLISH', ARGV[1], frame)
+return seq
+`)
+
 // stateScript is a compare-and-set on the shared state, and the publish of
-// the result, in one step. KEYS: seq, log, ver, data. ARGV: the channel, the
+// the result, in one step. KEYS: seq, log, ver, data, chat. ARGV: the channel, the
 // version the write was based on, the data, the frame up to its type, the
 // rest of the frame after the version, the TTL, the history's length.
 // Answers {1, version, seq} when the write landed, {0, current} when it was

@@ -1,0 +1,48 @@
+# The words a room's chat masks, one a line, compared whole (biz/rooms/chat.go).
+# A word here matches its other spellings: أ/إ/ا, ة/ه, ق/گ/ك, repeated letters.
+# Add to it freely; a new word applies from the next deploy.
+
+# Arabic
+كس
+كسمك
+كسختك
+كسامك
+عير
+زب
+زبر
+قحبه
+قحاب
+شرموطه
+شرموط
+شراميط
+منيوك
+منيوج
+نيك
+انيك
+ينيك
+نايك
+طيز
+خنيث
+كواد
+ديوث
+فرخ
+لوطي
+عاهره
+عرص
+
+# English
+fuck
+fucking
+fucker
+motherfucker
+shit
+bitch
+asshole
+dick
+pussy
+cunt
+whore
+slut
+nigger
+nigga
+faggot

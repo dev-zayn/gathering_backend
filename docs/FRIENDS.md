@@ -95,6 +95,7 @@ deleted by the housekeeping job.
 | `friend-accept` | `POST /v1/friends/requests/{player}/accept` | | 200 `{friendship: friends}` | 404 `request_not_found` |
 | `friend-decline` | `POST /v1/friends/requests/{player}/decline` | | 204 | 404 `request_not_found` |
 | `friend-remove` | `DELETE /v1/friends/{player}` | | 204 | 404 `not_friends` |
+| `friends-blocked` | `GET /v1/friends/blocked` | | 200 `{blocked: [id]}`: who the caller has blocked; a room's chat hides what they say | |
 | `player-block` / `player-unblock` | `POST` / `DELETE /v1/players/{player}/block` | | 204 | 404 `not_found`, 422 `player: is_you` |
 | `player` (M1, extended) | `GET /v1/players/{ref}` | | 200 Card | 404 `not_found` (also when they blocked the caller and the caller has not blocked them) |
 | `game-leaderboard` | `GET /v1/games/{game}/leaderboard?scope=friends` | | 200 `{game, entries: [Entry]}` | 404 `not_found`, 422 `scope: friends_only` |

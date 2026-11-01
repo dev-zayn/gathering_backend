@@ -21,6 +21,12 @@ type friendsResponse struct {
 	}
 }
 
+type blockedResponse struct {
+	Body struct {
+		Blocked []string `json:"blocked" doc:"The ids of the players the caller has blocked."`
+	}
+}
+
 type friendRequestsResponse struct {
 	Body *friends.Requests
 }
@@ -110,6 +116,13 @@ func (h *Handler) registerFriends(api huma.API) {
 	}, h.removeFriend)
 
 	huma.Register(api, huma.Operation{
+		OperationID: "friends-blocked", Method: http.MethodGet, Path: "/v1/friends/blocked",
+		Summary:     "Who the player has blocked",
+		Description: "The app hides what they say in a room's chat.",
+		Tags:        []string{"friends"}, Metadata: session,
+	}, h.blocked)
+
+	huma.Register(api, huma.Operation{
 		OperationID: "player-block", Method: http.MethodPost, Path: "/v1/players/{player}/block",
 		Summary: "Block a player",
 		Description: "Ends any friendship or request between the two, and keeps them from asking again, " +
@@ -194,6 +207,16 @@ func (h *Handler) declineRequest(ctx context.Context, in *playerPath) (*noConten
 
 func (h *Handler) removeFriend(ctx context.Context, in *playerPath) (*noContent, error) {
 	return nil, h.Friends.Remove(ctx, caller.FromContext(ctx).Subject, in.Player)
+}
+
+func (h *Handler) blocked(ctx context.Context, _ *struct{}) (*blockedResponse, error) {
+	list, err := h.Friends.Blocked(ctx, caller.FromContext(ctx).Subject)
+	if err != nil {
+		return nil, err
+	}
+	out := &blockedResponse{}
+	out.Body.Blocked = list
+	return out, nil
 }
 
 func (h *Handler) block(ctx context.Context, in *playerPath) (*noContent, error) {

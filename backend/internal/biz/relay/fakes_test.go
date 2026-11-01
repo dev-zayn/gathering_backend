@@ -169,7 +169,7 @@ func (d *fakeDirectory) View(_ context.Context, roomID, playerID string) (*rooms
 	r := d.rooms[roomID]
 	out := &rooms.Room{
 		ID: roomID, Code: "K7M2QX", Status: string(r.status), Host: r.host, Members: d.list(r),
-		Config: rooms.RoomConfig{Host: string(r.config.Host), State: string(r.config.State)},
+		Config: rooms.RoomConfig{Host: string(r.config.Host), State: string(r.config.State), Chat: r.config.ChatOn()},
 	}
 	if seat, ok := r.seats[playerID]; ok {
 		role := "player"
@@ -265,6 +265,9 @@ type frame struct {
 	Room    *rooms.Room       `json:"room"`
 	State   json.RawMessage   `json:"state"`
 	At      string            `json:"at"`
+	Text    string            `json:"text"`
+	Emote   string            `json:"emote"`
+	Chat    []json.RawMessage `json:"chat"`
 }
 
 // client is one member's socket being served by the hub.

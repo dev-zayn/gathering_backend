@@ -32,6 +32,7 @@ type registryRoomJSON struct {
 	State      string `json:"state" enum:"blob,none"`
 	Rejoin     bool   `json:"rejoin"`
 	Spectators bool   `json:"spectators"`
+	Chat       bool   `json:"chat"`
 }
 
 type registryGameJSON struct {
@@ -525,7 +526,7 @@ func actor(ctx context.Context) string { return caller.FromContext(ctx).Subject 
 func registryRoomOf(r model.RoomBlock) registryRoomJSON {
 	return registryRoomJSON{
 		Min: r.Players.Min, Max: r.Players.Max, Host: string(r.Host), Pace: string(r.Pace),
-		LAN: r.LAN, State: string(r.State), Rejoin: r.Rejoin, Spectators: r.Spectators,
+		LAN: r.LAN, State: string(r.State), Rejoin: r.Rejoin, Spectators: r.Spectators, Chat: r.ChatOn(),
 	}
 }
 

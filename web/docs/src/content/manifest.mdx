@@ -30,7 +30,8 @@ is read as it is.
     "lan": true,
     "state": "blob",
     "rejoin": true,
-    "spectators": false
+    "spectators": false,
+    "chat": true
   }
 }
 ```
@@ -58,6 +59,7 @@ is read as it is.
 | `room.state` | no | `blob` keeps a versioned shared state; `none` refuses state frames. |
 | `room.rejoin` | no | Whether a member who left may come back while a round is playing. Between rounds anybody who left may. |
 | `room.spectators` | no | Whether a room may hold people who watch and do not play. Reserved: no room holds spectators yet. |
+| `room.chat` | no | Whether the app offers its chat and emotes over your game's rooms: `true` when left out. Say `false` for a game so fast that a player cannot look away. Your page never sees the chat, and needs no code for it. |
 
 ## What is not in it
 

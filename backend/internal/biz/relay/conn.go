@@ -98,6 +98,8 @@ type conn struct {
 	announced bool
 
 	bucket bucket
+	// chats is RELAY_CHAT_RATE: a chat frame has spent from both.
+	chats bucket
 }
 
 // Serve runs one socket from its first frame to its last: it registers with
@@ -122,7 +124,8 @@ func (h *Hub) Serve(ctx context.Context, sock Socket, roomID, playerID string, a
 		hub: h, sock: sock, id: ids.New("conn"), room: roomID, player: playerID,
 		out:    make(chan item, h.cfg.Queue),
 		kills:  make(chan closing, 1),
-		bucket: bucket{rate: float64(h.cfg.Rate), tokens: float64(h.cfg.Rate), last: time.Now()},
+		bucket: bucket{rate: float64(h.cfg.Rate), burst: float64(h.cfg.Rate), tokens: float64(h.cfg.Rate), last: time.Now()},
+		chats:  bucket{rate: float64(h.cfg.ChatRate), burst: float64(h.cfg.ChatBurst), tokens: float64(h.cfg.ChatBurst), last: time.Now()},
 	}
 
 	ctx, cancel := context.WithCancel(ctx)
@@ -193,6 +196,13 @@ func (c *conn) open(ctx context.Context, after int64) *closing {
 			return c.fail("state not read", err)
 		}
 		hello.State = &st
+	}
+	if view.Config.Chat {
+		said, err := h.chatHistory(ctx, c.room)
+		if err != nil {
+			return c.fail("chat not read", err)
+		}
+		hello.Chat = said
 	}
 
 	first := []any{hello}
@@ -482,9 +492,11 @@ type inbound struct {
 	To      *string         `json:"to"`
 	Version json.RawMessage `json:"version"`
 	Ref     string          `json:"ref"`
+	Text    string          `json:"text"`
+	Emote   string          `json:"emote"`
 }
 
-// handle is one client frame: ping, msg or state.
+// handle is one client frame: ping, msg, chat or state.
 func (c *conn) handle(ctx context.Context, frame []byte) {
 	var in inbound
 	if err := json.Unmarshal(frame, &in); err != nil || len(in.Ref) > maxRef {
@@ -496,6 +508,8 @@ func (c *conn) handle(ctx context.Context, frame []byte) {
 		c.ping(ctx)
 	case rooms.FrameMsg:
 		c.msg(ctx, in)
+	case rooms.FrameChat:
+		c.chat(ctx, in)
 	case rooms.FrameState:
 		c.state(ctx, in)
 	default:
@@ -537,6 +551,53 @@ func (c *conn) msg(ctx context.Context, in inbound) {
 	}
 	if err := c.hub.Publish(ctx, c.room, out); err != nil {
 		c.hub.log.Warn("msg not published", "room", c.room, "err", err)
+	}
+}
+
+// chat relays one thing said in the room's chat to every member, the sender
+// included: the words cleaned and any bad ones masked, or one of the emotes.
+// A game that said no chat refuses it.
+func (c *conn) chat(ctx context.Context, in inbound) {
+	out := rooms.Chat{T: rooms.FrameChat, From: c.player, At: rooms.Stamp(time.Now()), Ref: in.Ref}
+	switch {
+	case in.Text != "" && in.Emote != "":
+		c.refuse(rooms.ErrBadFrame, in.Ref, nil)
+		return
+	case in.Emote != "":
+		if !rooms.ChatEmote(in.Emote) {
+			c.refuse(rooms.ErrBadFrame, in.Ref, nil)
+			return
+		}
+		out.Emote = in.Emote
+	default:
+		text, ok := rooms.ChatText(in.Text)
+		if !ok {
+			c.refuse(rooms.ErrBadFrame, in.Ref, nil)
+			return
+		}
+		out.Text = text
+	}
+	if !c.chats.take(time.Now()) {
+		c.refuse(rooms.ErrRateLimited, in.Ref, nil)
+		return
+	}
+	st, err := c.hub.dir.Standing(ctx, c.room, c.player)
+	if err != nil {
+		c.hub.log.Warn("standing not read", "room", c.room, "err", err)
+		return
+	}
+	switch {
+	case !st.Open:
+		return // ended: the socket is about to close with 4004
+	case !st.Current:
+		c.refuse(rooms.ErrNotMember, in.Ref, nil)
+		return
+	case !st.Config.ChatOn():
+		c.refuse(rooms.ErrChatOff, in.Ref, nil)
+		return
+	}
+	if err := c.hub.publishChat(ctx, c.room, out); err != nil {
+		c.hub.log.Warn("chat not published", "room", c.room, "err", err)
 	}
 }
 
@@ -655,18 +716,19 @@ func wholeNumber(raw json.RawMessage) (int, bool) {
 	return n, err == nil && n >= 0
 }
 
-// bucket is RELAY_RATE as a token bucket: a burst of Rate frames, refilled
-// at Rate a second.
+// bucket is a token bucket: a burst of burst frames, refilled at rate a
+// second. RELAY_RATE is one with a burst of its rate.
 type bucket struct {
 	rate   float64
+	burst  float64
 	tokens float64
 	last   time.Time
 }
 
 func (b *bucket) take(now time.Time) bool {
 	b.tokens += now.Sub(b.last).Seconds() * b.rate
-	if b.tokens > b.rate {
-		b.tokens = b.rate
+	if b.tokens > b.burst {
+		b.tokens = b.burst
 	}
 	b.last = now
 	if b.tokens < 1 {

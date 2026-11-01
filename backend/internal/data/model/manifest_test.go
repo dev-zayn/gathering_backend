@@ -1,6 +1,8 @@
 package model
 
 import (
+	"encoding/json"
+	"strings"
 	"testing"
 
 	"github.com/jamaa/gathering/backend/internal/data/enum"
@@ -220,5 +222,35 @@ func TestRedirectAllowed(t *testing.T) {
 	}
 	if g.RedirectAllowed("https://games.yourstudio.example/callback") {
 		t.Fatal("with a list, the entry's origin no longer counts")
+	}
+}
+
+// Saying true and saying nothing are one block, which is what the registry's
+// == needs to tell a game that changed from one that did not.
+func TestARoomBlocksChat(t *testing.T) {
+	read := func(doc string) RoomBlock {
+		t.Helper()
+		var b RoomBlock
+		if err := json.Unmarshal([]byte(doc), &b); err != nil {
+			t.Fatal(err)
+		}
+		return b
+	}
+	silent, on, off := read(`{}`), read(`{"chat": true}`), read(`{"chat": false}`)
+	if !silent.ChatOn() || !on.ChatOn() || off.ChatOn() {
+		t.Fatalf("chat on: %v %v %v", silent.ChatOn(), on.ChatOn(), off.ChatOn())
+	}
+	if silent != on || silent == off || off != read(`{"chat": false}`) {
+		t.Fatal("blocks saying the same thing must compare equal")
+	}
+	b, err := json.Marshal(off)
+	if err != nil || !strings.Contains(string(b), `"chat":false`) {
+		t.Fatalf("off marshals to %s, %v", b, err)
+	}
+	if read(string(b)) != off {
+		t.Fatal("a block off does not read back")
+	}
+	if b, _ := json.Marshal(on); strings.Contains(string(b), "chat") {
+		t.Fatalf("on marshals to %s: an old block would read as changed", b)
 	}
 }

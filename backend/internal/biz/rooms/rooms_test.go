@@ -150,7 +150,7 @@ func TestARoomIsMadeForAPublishedGame(t *testing.T) {
 	if r.Status != "lobby" || r.Visibility != "private" || !r.LAN || r.Host != host.ID {
 		t.Fatalf("room = %+v", r)
 	}
-	want := RoomConfig{Min: 2, Max: 2, Host: "authoritative", Pace: "turn", State: "blob", Rejoin: true, LAN: true}
+	want := RoomConfig{Min: 2, Max: 2, Host: "authoritative", Pace: "turn", State: "blob", Rejoin: true, LAN: true, Chat: true}
 	if r.Config != want {
 		t.Fatalf("config = %+v, want %+v", r.Config, want)
 	}

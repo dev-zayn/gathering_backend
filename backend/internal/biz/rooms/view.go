@@ -52,6 +52,7 @@ type RoomConfig struct {
 	Rejoin     bool   `json:"rejoin"`
 	Spectators bool   `json:"spectators"`
 	LAN        bool   `json:"lan"`
+	Chat       bool   `json:"chat" doc:"The room has the app's chat and emotes."`
 }
 
 // You is the caller's place in the room.
@@ -77,7 +78,7 @@ func configOf(b model.RoomBlock) RoomConfig {
 	return RoomConfig{
 		Min: b.Players.Min, Max: b.Players.Max,
 		Host: string(b.Host), Pace: string(b.Pace), State: string(b.State),
-		Rejoin: b.Rejoin, Spectators: b.Spectators, LAN: b.LAN,
+		Rejoin: b.Rejoin, Spectators: b.Spectators, LAN: b.LAN, Chat: b.ChatOn(),
 	}
 }
 

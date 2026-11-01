@@ -16,7 +16,7 @@ What is deliberately left for later is listed last.
   (`lobby` → `playing` → back to `lobby` after every round → … → `ended`
   when the room closes), a **round** number, and a shape copied from the
   game's manifest `room` block when the room is made (min/max players, host
-  mode, pace, state mode, rejoin, spectators, lan).
+  mode, pace, state mode, rejoin, spectators, lan, chat).
 - **Round**: one game played in a room, from the host's start to its
   finish. Rounds are numbered from 1. A finished round puts the room back
   in its lobby with the same code, members and sockets, and the host starts
@@ -211,7 +211,8 @@ on the socket like everyone else.
   "lan": false,
   "host": "ply_7f3k9d2m8q1x4b6n",
   "config": { "min": 2, "max": 2, "host": "authoritative", "pace": "turn",
-              "state": "blob", "rejoin": true, "spectators": false, "lan": true },
+              "state": "blob", "rejoin": true, "spectators": false, "lan": true,
+              "chat": true },
   "members": [Member],
   "you": { "role": "host", "seat": 0 },
   "state_version": 0,
@@ -295,12 +296,13 @@ Frames with a `seq` are the room's history; `hello`, `replay`, `pong` and
 
 | `t` | Fields | When |
 |---|---|---|
-| `hello` | `seq` (the room's current seq), `room` (Room, `you` filled), `state` (`{version, data}`; `data` null until written; the whole field null when `config.state` is `none`) | first, on every connect |
+| `hello` | `seq` (the room's current seq), `room` (Room, `you` filled), `state` (`{version, data}`; `data` null until written; the whole field null when `config.state` is `none`), `chat?` (the room's last chat frames, oldest first; none when there are none or `config.chat` is false) | first, on every connect |
 | `replay` | `frames` (the history frames after `after`, in order) | right after `hello`, when `after` was given and the history still holds them |
 | `joined` | `seq`, `player` (Member) | someone joined |
 | `left` | `seq`, `player` (id), `reason` (`left` / `kicked`) | someone left or was kicked |
 | `members` | `seq`, `list` ([Member]) | after any join, leave, kick, host change, connect or disconnect |
 | `msg` | `seq`, `from`, `data`, `to?` | a member's message |
+| `chat` | `seq`, `from`, `at`, `text` or `emote`, `ref?` | something said in the room's chat (*The chat*) |
 | `state` | `seq`, `version`, `data`, `by`, `ref?` | the state changed |
 | `started` | `seq`, `at`, `by`, `round` | the host started a round; the state was reset with it |
 | `finished` | `seq`, `at`, `by` (null for the sweeper), `round`, `reason` (`host` / `timeout`), `results` ([`{player, score, rank}`]) | a round is over and the room is back in its lobby; no socket closes |
@@ -316,7 +318,8 @@ Frames with a `seq` are the room's history; `hello`, `replay`, `pong` and
 member), `state_stale` (with the current `version`), `host_only` (a state
 write by a player in an `authoritative` room), `no_state` (`config.state`
 is `none`), `gap` (the history no longer holds `after`), `slow_consumer`
-(just before the 4008 close). Every refusal carries the refused frame's
+(just before the 4008 close), `chat_off` (a chat frame in a room whose
+`config.chat` is false). Every refusal carries the refused frame's
 `ref` when it had one, `rate_limited` included; `too_large` never does (the
 frame was not read).
 
@@ -338,6 +341,7 @@ itself), or because the server is shutting down.
 | `t` | Fields | Rule |
 |---|---|---|
 | `msg` | `data`, `to?` | no `to`: delivered to every connected member, the sender included (games tell their own echo by `from`); `to`: delivered to that member only, not echoed |
+| `chat` | `text` or `emote`, `ref?` | *The chat*; delivered to every connected member, the sender included |
 | `state` | `version`, `data`, `ref?` | compare-and-set, below |
 | `ping` | | every 20 s; refreshes presence; answered with `pong` |
 
@@ -381,7 +385,7 @@ echoed on the `state` frame it produced (every member's copy) and on an
 
 - Kept in Redis as `room:{id}:ver` (integer) and `room:{id}:data` (the raw
   JSON), 2 h TTL refreshed on every write — every history frame refreshes all
-  four keys of the room, and so does the once-a-minute touch on a ping, so a
+  five keys of the room (`seq`, `log`, `ver`, `data` and `chat`), and so does the once-a-minute touch on a ping, so a
   quiet room with members connected keeps them — and copied to Postgres when
   the room ends. `version` is a whole number, 0 or more; `data` any JSON
   value, `null` included.
@@ -404,6 +408,8 @@ echoed on the `state` frame it produced (every member's copy) and on an
 - `RELAY_RATE` (30) frames a second per socket, a token bucket in memory
   with a burst of the same size, every frame counted, pings included:
   `error{code: "rate_limited"}`, frame dropped.
+- `RELAY_CHAT_RATE` (1) chat frames a second per socket with a burst of 5, on
+  top of that: `error{code: "rate_limited"}`, frame dropped.
 - No frame from the client for 45 s closes the socket (1001); the app pings
   every 20 s.
 - A socket whose outbound queue (256 frames) is full is closed with 4008
@@ -955,6 +961,41 @@ the Join sheet) on their first screen. The fixtures serve them.
   2. The guest opens إكس أو from the store, taps "انضم لغرفة" inside the
      game, types the code in the Join sheet and is in.
   3. The host starts, and both play the round to its results.
+
+## The chat (2026-11-01)
+
+A room's players can talk: the app draws it, over the lobby, the game and the
+results. It is the app's and not the game's. `chat` frames are never handed to
+a page, a page has no way to send one, and a game needs no change to have it.
+
+- **A game may say no.** The manifest's `room.chat`, copied to `config.chat`
+  like the rest of the block: absent or `true` is a chat, `false` is none. A
+  game too fast to look away from says `false`; every room of it refuses the
+  frame with `chat_off`, and the app shows no chat. An old room's block, from
+  before the field, reads as `true`. The Room always says `chat` itself, so an
+  app that reads no `chat` is on an older platform and offers none.
+- **What is said** is `text` or `emote`, exactly one; both, neither or anything
+  else is `bad_frame`. `text` is cleaned by the relay: on one line, without
+  control and format characters (all but the two joiners), at most 200
+  characters after that. Words on the list (`biz/rooms/chat_words.txt`, compared
+  whole, across the spellings a filter is dodged with) become `***`. An `emote`
+  is one of `wave laughing cheer crown thinking surprised angry shades wink
+  running`: a name the app draws from its own pictures, so no picture crosses
+  the relay. A newer name is dropped by an older app.
+- **History.** A chat frame is a history frame, in the log and on the seq like
+  any other. Since a game's traffic moves the log on, the room's last 50 are
+  also kept in `room:{id}:chat` and come in every `hello`, so a late joiner
+  reads what was said and a reconnect loses nothing. A client tells them apart
+  by `seq`, whichever way each came. Nothing is written to Postgres: the chat
+  goes with the room's other keys, when the room ends or 2 h after it goes
+  quiet. A report carries its own copy of the words (the `note`,
+  docs/REPORTS.md).
+- **Who hears what.** Everyone connected hears everything; `to` does not apply.
+  A block (docs/FRIENDS.md) is kept on the blocker's phone, which reads
+  `friends-blocked` and hides what those players say: the relay never tells
+  anyone they were blocked.
+- **Who may speak.** Any current member, in `lobby` and `playing`; a chat frame
+  as the room ends is dropped without an answer, like a state write.
 
 ## Match rooms (tournaments, 2026-10-22)
 

@@ -338,7 +338,7 @@ func main() {
 	roomRules.Inbox = notifications
 	roomRules.Audit = roomsAudit
 	relayCfg := relay.DefaultConfig()
-	relayCfg.MaxFrame, relayCfg.Rate = cfg.Relay.MaxFrame, cfg.Relay.Rate
+	relayCfg.MaxFrame, relayCfg.Rate, relayCfg.ChatRate = cfg.Relay.MaxFrame, cfg.Relay.Rate, cfg.Relay.ChatRate
 	hub := relay.NewHub(rdb, roomRules, presence, relayCfg, log)
 	roomRules.Publisher = hub
 

@@ -21,6 +21,7 @@ const (
 	FrameLeft     = "left"
 	FrameMembers  = "members"
 	FrameMsg      = "msg"
+	FrameChat     = "chat"
 	FrameState    = "state"
 	FrameStarted  = "started"
 	FrameFinished = "finished"
@@ -31,7 +32,7 @@ const (
 	FrameError    = "error"
 )
 
-// Frame types, client to server. msg and state share their names with the
+// Frame types, client to server. msg, chat and state share their names with the
 // frames they produce.
 const FramePing = "ping"
 
@@ -55,6 +56,7 @@ const (
 	ErrNoState      = "no_state"
 	ErrGap          = "gap"
 	ErrSlowConsumer = "slow_consumer"
+	ErrChatOff      = "chat_off"
 )
 
 // Reasons a member is no longer in a room, on a left frame and as the
@@ -71,6 +73,9 @@ type Hello struct {
 	Seq   int64      `json:"seq"`
 	Room  *Room      `json:"room"`
 	State *StateView `json:"state"`
+	// Chat is the room's last chat frames, oldest first, whatever has been
+	// said since the room's log moved on. Each is told apart by its seq.
+	Chat []json.RawMessage `json:"chat,omitempty"`
 }
 
 // StateView is the shared state: a version, and the game's data. Data is null
@@ -129,6 +134,19 @@ type Msg struct {
 	From string          `json:"from"`
 	Data json.RawMessage `json:"data"`
 	To   string          `json:"to,omitempty"`
+}
+
+// Chat is one thing said in the room's chat: Text or Emote, never both. The
+// app draws it; the game's page never hears it. Ref is the sender's own
+// correlation string.
+type Chat struct {
+	T     string `json:"t"`
+	Seq   int64  `json:"seq,omitempty"`
+	From  string `json:"from"`
+	At    string `json:"at"`
+	Text  string `json:"text,omitempty"`
+	Emote string `json:"emote,omitempty"`
+	Ref   string `json:"ref,omitempty"`
 }
 
 // State is the shared state after a write. Ref is the writer's own

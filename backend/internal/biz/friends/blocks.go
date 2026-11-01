@@ -42,6 +42,17 @@ func (s *Service) Block(ctx context.Context, callerID, targetID string) error {
 	return errorOrNil(err)
 }
 
+// Blocked is who the caller has blocked: the app hides their words in a room.
+func (s *Service) Blocked(ctx context.Context, callerID string) ([]string, error) {
+	out := []string{}
+	err := data.Conn(ctx, s.db).Model(&model.Block{}).Where("blocker_id = ?", callerID).
+		Pluck("blocked_id", &out).Error
+	if err != nil {
+		return nil, errorOrNil(err)
+	}
+	return out, nil
+}
+
 // Unblock lifts the caller's block, if there was one. It restores nothing:
 // a friendship the block ended stays ended.
 func (s *Service) Unblock(ctx context.Context, callerID, targetID string) error {
