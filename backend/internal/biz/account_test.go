@@ -120,6 +120,10 @@ func TestDeletingAnAccount(t *testing.T) {
 	exec(t, f.db, `INSERT INTO results (room_id, player_id, game_id, code, seat, score, rank, players, finished_at, submitted_by)
 	               VALUES ('room_1', ?, 'studio.xo', 'K7M2QX', 0, 3, 1, 2, ?, 'host')`, sara.ID, now)
 
+	exec(t, f.db, `INSERT INTO reports (id, reporter_id, player_id, reason, created_at)
+	               VALUES ('rpt_1', ?, ?, 'name', ?), ('rpt_2', ?, ?, 'photo', ?)`,
+		sara.ID, ali.ID, now, ali.ID, sara.ID, now)
+
 	if err := f.Do(ctx, sara.ID); err != nil {
 		t.Fatal(err)
 	}
@@ -141,6 +145,7 @@ func TestDeletingAnAccount(t *testing.T) {
 		"notifications": "player_id = @p OR actor_id = @p",
 		"library":       "player_id = ?",
 		"game_tokens":   "player_id = ?",
+		"reports":       "reporter_id = @p OR player_id = @p",
 	} {
 		arg := any(sara.ID)
 		if where != "player_id = ?" {

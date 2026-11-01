@@ -126,6 +126,16 @@ func (h *Handler) registerFriends(api huma.API) {
 	}, h.unblock)
 
 	huma.Register(api, huma.Operation{
+		OperationID: "player-report", Method: http.MethodPost, Path: "/v1/players/{player}/report",
+		Summary: "Report a player",
+		Description: "Goes to the console's admins; the player is never told, and nothing happens to " +
+			"them by itself. Reporting again replaces the open report (docs/REPORTS.md). " +
+			"invalid_fields (reason: required or unknown, note: too_long, player: is_you), " +
+			"not_found, too_many_requests.",
+		Tags: []string{"friends"}, Metadata: session, DefaultStatus: http.StatusNoContent,
+	}, h.report)
+
+	huma.Register(api, huma.Operation{
 		OperationID: "game-leaderboard", Method: http.MethodGet, Path: "/v1/games/{game}/leaderboard",
 		Summary: "A game's leaderboard among friends",
 		Description: "The caller and their friends who have results in the game: wins, then the best " +
@@ -188,6 +198,18 @@ func (h *Handler) removeFriend(ctx context.Context, in *playerPath) (*noContent,
 
 func (h *Handler) block(ctx context.Context, in *playerPath) (*noContent, error) {
 	return nil, h.Friends.Block(ctx, caller.FromContext(ctx).Subject, in.Player)
+}
+
+type reportRequest struct {
+	Player string `path:"player" maxLength:"24" example:"ply_7f3k9d2m8q1x4b6n"`
+	Body   struct {
+		Reason string `json:"reason,omitempty" example:"harassment" doc:"name, photo, harassment, cheating or other (reason: required, unknown)."`
+		Note   string `json:"note,omitempty" doc:"What happened, up to 300 characters (note: too_long)."`
+	}
+}
+
+func (h *Handler) report(ctx context.Context, in *reportRequest) (*noContent, error) {
+	return nil, h.Reports.File(ctx, caller.FromContext(ctx).Subject, in.Player, in.Body.Reason, in.Body.Note)
 }
 
 func (h *Handler) unblock(ctx context.Context, in *playerPath) (*noContent, error) {

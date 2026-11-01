@@ -154,3 +154,46 @@ func TestDeletingAnAccount(t *testing.T) {
 	other.call("GET", "/v1/players/"+handle, nil, 404, nil)
 	t.Logf("ok   delete: 204, the token and the refresh token dead, @%s finds nobody", handle)
 }
+
+// A player reports another, and an admin reads it and marks it dealt with
+// (docs/REPORTS.md). The sweep touches only the report it made.
+func TestReportingAPlayer(t *testing.T) {
+	a, _ := player(t, "Reporter")
+	_, b := player(t, "Reported")
+	id, _ := b["id"].(string)
+
+	a.call("POST", "/v1/players/"+id+"/report", map[string]any{"reason": "spam"}, 422, nil)
+	a.call("POST", "/v1/players/ply_aaaaaaaaaaaaaaaa/report", map[string]any{"reason": "name"}, 404, nil)
+	a.call("POST", "/v1/players/"+id+"/report", map[string]any{"reason": "name", "note": "e2e"}, 204, nil)
+	a.call("POST", "/v1/players/"+id+"/report", map[string]any{"reason": "harassment", "note": "e2e"}, 204, nil)
+
+	c := newClient(t)
+	c.origin = console
+	var opened map[string]any
+	c.call("POST", "/v1/admin/session/dev", map[string]any{"name": "sweep"}, 200, &opened)
+	var page struct {
+		Items []struct {
+			ID     string `json:"id"`
+			Reason string `json:"reason"`
+			Player struct {
+				ID string `json:"id"`
+			} `json:"player"`
+		} `json:"items"`
+	}
+	c.call("GET", "/v1/admin/reports?status=open&limit=100", nil, 200, &page)
+	report := ""
+	for _, r := range page.Items {
+		if r.Player.ID == id {
+			if report != "" || r.Reason != "harassment" {
+				t.Fatalf("reporting twice did not replace: %+v", page.Items)
+			}
+			report = r.ID
+		}
+	}
+	if report == "" {
+		t.Fatalf("the report is not in the list: %+v", page.Items)
+	}
+	c.call("POST", "/v1/admin/reports/"+report+"/resolve", nil, 204, nil)
+	c.call("POST", "/v1/admin/reports/"+report+"/resolve", nil, 409, nil)
+	t.Logf("ok   report: filed, replaced, read in the console, resolved once")
+}

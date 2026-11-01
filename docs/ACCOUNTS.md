@@ -29,7 +29,8 @@ All of it in one transaction, under the player's row lock:
 
 - **Deleted:** the player's identities (Google, Apple), devices, friendships
   and blocks (either side), notifications to them and from them, their
-  library, their games' refresh tokens and one-time codes.
+  library, their games' refresh tokens and one-time codes, and the reports
+  they filed or that name them (docs/REPORTS.md).
 - **Ended:** every session (`revoked_at`), and after the commit every token
   of every session and of every game, through the whitelist; presence cleared.
 - **Emptied, kept:** the `players` row: `phone` null, `nickname` «لاعب محذوف»,

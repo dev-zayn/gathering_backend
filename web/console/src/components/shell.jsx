@@ -3,6 +3,7 @@ import { NavLink, Outlet } from 'react-router-dom'
 import {
   Bell,
   DoorOpen,
+  Flag,
   Gamepad2,
   LayoutDashboard,
   LogOut,
@@ -29,6 +30,7 @@ const groups = [
     { to: '/', label: 'Dashboard', icon: LayoutDashboard, end: true },
     { to: '/games', label: 'Games', icon: Gamepad2 },
     { to: '/players', label: 'Players', icon: Users },
+    { to: '/reports', label: 'Reports', icon: Flag },
     { to: '/rooms', label: 'Rooms', icon: DoorOpen },
     { to: '/tournaments', label: 'Tournaments', icon: Trophy },
     { to: '/notifications', label: 'Notifications', icon: Bell },

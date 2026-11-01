@@ -348,3 +348,12 @@ and `JWT_PRIVATE_KEY` (`make keys`); the sweep then signs in with that code.
   beside the shared one). Hetzner's compose now defaults `APPLE_TEAM_ID` to
   97YS86UB59 and `APP_LINKS_SHA256` to Play's two signing keys and the
   upload key.
+- Reporting a player (platform side) done 2026-11-01, to `docs/REPORTS.md`
+  (written first; the App Store asks for it): migration 00015 (`reports`, one
+  open per reporter and player, `rpt_` ids), `enum.ReportReason` and
+  `ReportStatus`, `biz/reports` (`File`, `List`, `Resolve`; 20 an hour),
+  `player-report`, `admin-reports`, `admin-report-resolve`, the console's
+  Reports page (and Players reading `?q=`), `biz.Deletion` deleting the
+  reports by and against a player, the privacy page, the e2e
+  `TestReportingAPlayer`. Nothing tells an admin a report came in: the
+  console's page is the only place to see it.

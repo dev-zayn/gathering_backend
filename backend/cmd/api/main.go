@@ -26,6 +26,7 @@ import (
 	"github.com/jamaa/gathering/backend/internal/biz/players"
 	"github.com/jamaa/gathering/backend/internal/biz/push"
 	"github.com/jamaa/gathering/backend/internal/biz/relay"
+	"github.com/jamaa/gathering/backend/internal/biz/reports"
 	"github.com/jamaa/gathering/backend/internal/biz/rooms"
 	"github.com/jamaa/gathering/backend/internal/biz/tournaments"
 	"github.com/jamaa/gathering/backend/internal/conf"
@@ -277,6 +278,9 @@ func main() {
 		HandleCooldown: HandleCooldown,
 	}
 
+	// A player reporting another, and the console reading it (docs/REPORTS.md).
+	reportRules := &reports.Service{DB: pg, Limiter: identity.NewLimiter(rdb), Audit: playersAudit}
+
 	// A player deleting their own account (docs/ACCOUNTS.md).
 	deletion := &biz.Deletion{
 		DB:        pg,
@@ -397,6 +401,7 @@ func main() {
 		Refresh:  refresh,
 		Signup:   signup,
 		Deletion: deletion,
+		Reports:  reportRules,
 		Devices:  devices,
 
 		Profiles: profiles,

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 
 import { api } from '../api.js'
 import Dialog from '../components/dialog.jsx'
@@ -14,7 +14,9 @@ const presenceLabel = { online: 'online', in_room: 'in a room', offline: 'offlin
 // Players: find by handle, open one's record (friends, rounds played, the
 // room they are in), switch one off or on.
 export default function Players() {
-  const [q, setQ] = useState('')
+  // A report links here with the player's handle already typed.
+  const [params] = useSearchParams()
+  const [q, setQ] = useState(params.get('q') ?? '')
   const [open, setOpen] = useState(null)
   const queries = useQueryClient()
   const list = useQuery({

@@ -13,6 +13,7 @@ const sentences = {
   internal_error: 'Something went wrong on our side.',
   not_supported: 'Not available yet.',
   room_closed: 'This room has already ended.',
+  report_resolved: 'Somebody already dealt with this report.',
   tournament_closed: 'This tournament is already over.',
   tournament_started: 'This tournament has already started.',
   tournament_not_running: 'This tournament has not started yet.',

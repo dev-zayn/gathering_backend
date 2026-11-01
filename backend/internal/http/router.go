@@ -16,6 +16,7 @@ import (
 	"github.com/jamaa/gathering/backend/internal/biz/inbox"
 	"github.com/jamaa/gathering/backend/internal/biz/players"
 	"github.com/jamaa/gathering/backend/internal/biz/relay"
+	"github.com/jamaa/gathering/backend/internal/biz/reports"
 	"github.com/jamaa/gathering/backend/internal/biz/rooms"
 	"github.com/jamaa/gathering/backend/internal/biz/tournaments"
 	"github.com/jamaa/gathering/backend/internal/http/admin"
@@ -69,6 +70,9 @@ type Deps struct {
 	// Tournaments is every rule about tournaments: the player's routes, the
 	// console's, and the page behind a tournament's link.
 	Tournaments *tournaments.Service
+
+	// Reports is a player reporting another, and the console reading them.
+	Reports *reports.Service
 
 	// AppLinks is how the phones claim a room's invite link as the app's,
 	// and the stores its page sends a phone without the app to.
@@ -133,6 +137,7 @@ func Mount(api huma.API, d Deps) {
 		Inbox:    d.Inbox,
 
 		Tournaments: d.Tournaments,
+		Reports:     d.Reports,
 	}).Register(api)
 
 	(&admin.Handler{
@@ -149,6 +154,7 @@ func Mount(api huma.API, d Deps) {
 		Inbox:     d.Inbox,
 
 		Tournaments: d.Tournaments,
+		Reports:     d.Reports,
 	}).Register(api)
 
 	(&guest.Handler{

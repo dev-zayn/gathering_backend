@@ -11,6 +11,7 @@ import (
 	"github.com/jamaa/gathering/backend/internal/biz/identity"
 	"github.com/jamaa/gathering/backend/internal/biz/inbox"
 	"github.com/jamaa/gathering/backend/internal/biz/players"
+	"github.com/jamaa/gathering/backend/internal/biz/reports"
 	"github.com/jamaa/gathering/backend/internal/biz/rooms"
 	"github.com/jamaa/gathering/backend/internal/biz/tournaments"
 	"github.com/jamaa/gathering/backend/internal/pkg/files"
@@ -45,6 +46,9 @@ type Handler struct {
 	// the player's notifications.
 	Friends *friends.Service
 	Inbox   *inbox.Inbox
+
+	// Reports is a player reporting another (docs/REPORTS.md).
+	Reports *reports.Service
 }
 
 func (h *Handler) Register(api huma.API) {

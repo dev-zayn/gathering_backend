@@ -10,6 +10,7 @@ import Dashboard from './pages/dashboard.jsx'
 import Games from './pages/games.jsx'
 import Game from './pages/game.jsx'
 import Players from './pages/players.jsx'
+import Reports from './pages/reports.jsx'
 import Rooms from './pages/rooms.jsx'
 import Room from './pages/room.jsx'
 import Tournaments from './pages/tournaments.jsx'
@@ -98,6 +99,7 @@ export default function App() {
             <Route path="games" element={<Games />} />
             <Route path="games/:id" element={<Game />} />
             <Route path="players" element={<Players />} />
+            <Route path="reports" element={<Reports />} />
             <Route path="rooms" element={<Rooms />} />
             <Route path="rooms/:id" element={<Room />} />
             <Route path="tournaments" element={<Tournaments />} />
