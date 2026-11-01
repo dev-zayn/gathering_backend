@@ -12,6 +12,8 @@ stays there (`/opt/ga3da/secrets`).
 | `https://docs.ga3da.fun` | the developer docs (the app section behind `DOCS_USER`) |
 | `https://games.ga3da.fun/<game>/` | every game in `../gathering_games` |
 | `https://ga3da.fun/r/<code>`, `/t/<code>` | invite links, and the phones' `/.well-known/` documents |
+| `https://ga3da.fun/` | the landing page (`site/index.html`, its pictures in `site/img/`, Arabic) |
+| `https://ga3da.fun/privacy` | the privacy policy the store listings link to (`site/privacy.html`, Arabic then English; `#delete` is how to delete an account) |
 
 ## For now
 

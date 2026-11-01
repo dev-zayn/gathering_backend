@@ -8,6 +8,16 @@
 	handle @links {
 		reverse_proxy api:8080
 	}
+	# The site, from ./site: / is the landing page (index.html, its pictures
+	# in img/), /privacy the privacy policy the store listings link to (its
+	# #delete for deleting an account).
+	@site path / /privacy /app-icon.png /fonts/* /img/*
+	handle @site {
+		root * /etc/caddy/ga3da/site
+		try_files {path}.html {path}
+		encode zstd gzip
+		file_server
+	}
 	handle {
 		respond 404
 	}
