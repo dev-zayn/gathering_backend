@@ -17,6 +17,9 @@ it comes to that.
 note up to 300 characters. **204**. One open report per reporter and player:
 reporting again replaces its reason and note, and keeps its place in the list.
 
+`name` covers what the player wrote about themselves: the nickname, the @handle
+and the bio.
+
 Refusals, in the order they are checked:
 
 | Status | Code | When |

@@ -168,6 +168,7 @@ function Record({ id, onClose, flip }) {
           </div>
           <div className="grid grid-cols-2 gap-3">
             <Fact label="Presence">{presenceLabel[r.presence] ?? r.presence}</Fact>
+            <Fact label="Bio">{r.bio || '—'}</Fact>
             <Fact label="Language">{r.language}</Fact>
             <Fact label="Phone" mono>
               {r.phone}

@@ -147,7 +147,8 @@ name}, created_at}`, `audience` as it was sent.
   games it shows now.
 - A player in the console (`GET /v1/admin/players/{player}`) gains
   `friends` (accepted friendships), `rounds` (results rows: rounds
-  played) and `room` (the open room they are in, `{id, code}`, or null).
+  played), `room` (the open room they are in, `{id, code}`, or null) and
+  `bio` (other players read it on the card, so a report may be about it).
 - The list (`GET /v1/admin/players?q=&limit=`) is the console's own, not
   the players' search: with nothing typed it is everybody, the newest
   first; with a handle's start, those handles in order. Switched-off

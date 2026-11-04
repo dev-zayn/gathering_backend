@@ -47,6 +47,7 @@ type playerDetailJSON struct {
 	Handle    string          `json:"handle"`
 	Phone     string          `json:"phone,omitempty"`
 	Avatar    string          `json:"avatar"`
+	Bio       string          `json:"bio" doc:"What they wrote about themselves: other players read it on their card, so a report may be about it."`
 	Language  string          `json:"language"`
 	Disabled  bool            `json:"disabled"`
 	Presence  string          `json:"presence" enum:"online,in_room,offline"`
@@ -144,7 +145,7 @@ func (h *Handler) player(ctx context.Context, in *playerPath) (*playerResponse, 
 	}
 	row := h.row(ctx, p)
 	out := &playerResponse{Body: playerDetailJSON{
-		ID: row.ID, Nickname: row.Nickname, Handle: row.Handle, Phone: row.Phone, Avatar: row.Avatar,
+		ID: row.ID, Nickname: row.Nickname, Handle: row.Handle, Phone: row.Phone, Avatar: row.Avatar, Bio: p.Bio,
 		Language: row.Language, Disabled: row.Disabled, Presence: row.Presence, CreatedAt: row.CreatedAt,
 		LastSeen: row.LastSeen, Friends: tally.Friends, Rounds: tally.Rounds,
 	}}

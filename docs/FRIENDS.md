@@ -131,7 +131,7 @@ deleted by the housekeeping job.
 ```json
 Card (the M1 card, extended):
 { "id": "ply_…", "nickname": "سارة", "handle": "sara_1203", "avatar": "a07",
-  "avatar_url": null, "friendship": "none", "mutual_friends": 2,
+  "avatar_url": null, "bio": "", "friendship": "none", "mutual_friends": 2,
   "presence": null }
 
 Friend:

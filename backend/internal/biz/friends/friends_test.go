@@ -452,14 +452,14 @@ func TestABlockEndsEverything(t *testing.T) {
 func TestTheCard(t *testing.T) {
 	f := newFixture(t)
 	zayn, sara, ali, mona, gone := f.player("Zayn"), f.player("Sara"), f.player("Ali"), f.player("Mona"), f.player("Gone")
-	if err := f.db.Exec(`UPDATE players SET avatar_key = 'avatars/sara.png' WHERE id = ?`, sara.ID).Error; err != nil {
+	if err := f.db.Exec(`UPDATE players SET avatar_key = 'avatars/sara.png', bio = 'أحب الدومينو' WHERE id = ?`, sara.ID).Error; err != nil {
 		t.Fatal(err)
 	}
 	f.presence.set(sara.ID, players.State{State: players.Online})
 	f.presence.set(ali.ID, players.State{State: players.Online})
 
 	c := f.card(zayn, sara.Handle)
-	if c.ID != sara.ID || c.Nickname != "Sara" || c.Handle != sara.Handle || c.Avatar != "" || c.AvatarURL == nil ||
+	if c.ID != sara.ID || c.Nickname != "Sara" || c.Handle != sara.Handle || c.Bio != "أحب الدومينو" || c.Avatar != "" || c.AvatarURL == nil ||
 		*c.AvatarURL != "https://signed.test/avatars/sara.png" || c.Friendship != None || c.MutualFriends != 0 || c.Presence != nil {
 		t.Fatalf("a stranger's card: %+v", c)
 	}

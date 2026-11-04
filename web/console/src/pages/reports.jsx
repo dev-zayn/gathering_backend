@@ -11,7 +11,7 @@ import { useMe } from '../lib/me.js'
 const STATUSES = ['open', 'resolved', 'all']
 const statusLabel = { open: 'Open', resolved: 'Dealt with', all: 'All' }
 const reasonLabel = {
-  name: 'Name or @handle',
+  name: 'Name, @handle or bio',
   photo: 'Photo',
   harassment: 'Harassment',
   cheating: 'Cheating',

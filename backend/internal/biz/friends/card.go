@@ -15,10 +15,11 @@ import (
 )
 
 // PlayerCard is another player as the caller sees them: the public card,
-// where the caller stands with them, the friends they share, and — between
-// friends only — where they are.
+// the bio they wrote, where the caller stands with them, the friends they
+// share, and — between friends only — where they are.
 type PlayerCard struct {
 	players.Card
+	Bio           string    `json:"bio" doc:"What they wrote about themselves, or empty."`
 	Friendship    string    `json:"friendship" enum:"none,requested,incoming,friends,blocked" doc:"Where the caller stands with them: requested (the caller asked), incoming (they asked), blocked (the caller blocked them)."`
 	MutualFriends int       `json:"mutual_friends" doc:"Accepted friends the two share."`
 	Presence      *Presence `json:"presence" doc:"Between friends only; null for anybody else."`
@@ -56,6 +57,7 @@ func (s *Service) Card(ctx context.Context, viewerID, ref string) (*PlayerCard, 
 	}
 	out := &PlayerCard{
 		Card:       players.NewCard(ctx, s.Files, s.AvatarTTL, p.ID, p.Nickname, p.Handle, p.AvatarKey),
+		Bio:        p.Bio,
 		Friendship: None,
 	}
 	if p.ID == viewerID {
