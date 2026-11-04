@@ -27,8 +27,13 @@ type Notice struct {
 // The message's fixed parts, as the app is built to them.
 const (
 	priority = "HIGH"
-	channel  = "inbox" // the app makes it, and sets it as Firebase's default
-	sound    = "default"
+	channel  = "inbox_chime" // the app makes it, and sets it as Firebase's default
+
+	// The app's own sound: a file in Android's res/raw, named without its
+	// extension, and one in the iOS bundle, named with it. A build without
+	// the file plays the phone's sound instead.
+	androidSound = "gaada_notify"
+	iosSound     = "gaada_notify.wav"
 
 	// maxCollapse is APNs' limit on apns-collapse-id, in bytes.
 	maxCollapse = 64
@@ -50,11 +55,11 @@ func Message(n Notice, token string) fcm.Message {
 		Data:         DataOf(n),
 		Android: &fcm.AndroidConfig{
 			Priority:     priority,
-			Notification: &fcm.AndroidNotification{ChannelID: channel, Tag: collapse},
+			Notification: &fcm.AndroidNotification{ChannelID: channel, Sound: androidSound, Tag: collapse},
 		},
 		APNS: &fcm.APNSConfig{
 			Headers: map[string]string{"apns-collapse-id": collapse},
-			Payload: &fcm.APNSPayload{Aps: fcm.Aps{Sound: sound, Badge: &badge}},
+			Payload: &fcm.APNSPayload{Aps: fcm.Aps{Sound: iosSound, Badge: &badge}},
 		},
 	}
 	m.To(token)

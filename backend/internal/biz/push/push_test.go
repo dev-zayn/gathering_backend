@@ -226,9 +226,9 @@ func shape(token, title, body string, data map[string]string, collapse string, b
 		"notification": map[string]any{"title": title, "body": body},
 		"data":         d,
 		"android": map[string]any{"priority": "HIGH",
-			"notification": map[string]any{"channel_id": "inbox", "tag": collapse}},
+			"notification": map[string]any{"channel_id": "inbox_chime", "sound": "gaada_notify", "tag": collapse}},
 		"apns": map[string]any{"headers": map[string]any{"apns-collapse-id": collapse},
-			"payload": map[string]any{"aps": map[string]any{"sound": "default", "badge": badge}}},
+			"payload": map[string]any{"aps": map[string]any{"sound": "gaada_notify.wav", "badge": badge}}},
 	}
 }
 

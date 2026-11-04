@@ -357,3 +357,7 @@ and `JWT_PRIVATE_KEY` (`make keys`); the sweep then signs in with that code.
   reports by and against a player, the privacy page, the e2e
   `TestReportingAPlayer`. Nothing tells an admin a report came in: the
   console's page is the only place to see it.
+- The notification's own sound (platform side) done 2026-11-01, to
+  `docs/PUSH.md`: a push names channel `inbox_chime`, Android sound
+  `gaada_notify` and iOS sound `gaada_notify.wav`. A build without them plays the
+  phone's sound, so the server and the app may ship in any order.

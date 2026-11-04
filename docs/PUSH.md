@@ -77,9 +77,10 @@ with an OAuth 2 token from the service account (scope
               "game": "fixture.xo", "player": "ply_…", "announcement": "ann_…",
               "tournament": "trn_…", "match": "trm_…" },
     "android": { "priority": "HIGH",
-                 "notification": { "channel_id": "inbox", "tag": "<collapse>" } },
+                 "notification": { "channel_id": "inbox_chime", "sound": "gaada_notify",
+                                   "tag": "<collapse>" } },
     "apns": { "headers": { "apns-collapse-id": "<collapse>" },
-              "payload": { "aps": { "sound": "default", "badge": <unread> } } } } }
+              "payload": { "aps": { "sound": "gaada_notify.wav", "badge": <unread> } } } } }
 ```
 
 - The title and body are the inbox row's own, in the language they were
@@ -152,9 +153,19 @@ with an OAuth 2 token from the service account (scope
   accept opens the player's card, an invite joins the room by its code and
   opens its lobby, a game's opens the game at its link, and an announcement
   opens its game's store page or else the inbox. It is marked read.
-- **Android:** the `inbox` channel ("الإشعارات" / "Notifications") is made
-  by the app and set as Firebase's default channel; `POST_NOTIFICATIONS` is
-  declared.
+- **Android:** the `inbox_chime` channel ("الإشعارات" / "Notifications") is
+  made by the app and set as Firebase's default channel; `POST_NOTIFICATIONS`
+  is declared. It rings گعدة's own sound, `res/raw/gaada_notify.wav` (the app's
+  `scripts/make_sounds.py`): a channel's sound cannot change once it exists, so
+  this replaces the old `inbox`, which the app deletes, and a player who had
+  turned that one off finds this one off too. Below Android 8 there are no
+  channels, and the message's `sound` names the file.
+- **The sound and old builds:** a build from before this has no `inbox_chime`,
+  so Android lands the message in the manifest's default (`inbox`) with the
+  phone's sound; a build without the file on iOS plays the phone's sound too.
+  Neither loses the notification, so the server and the app may ship in any order.
+- **In the foreground** no tray and no system sound: the toast, with a softer
+  copy of the sound, behind the Me tab's sound switch.
 - **iOS:** `UIBackgroundModes` `remote-notification`, and the
   `aps-environment` entitlement. Delivery on iOS also needs the APNs key
   uploaded to the Firebase project and the Push capability on the App ID

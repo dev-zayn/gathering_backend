@@ -27,10 +27,13 @@ type AndroidConfig struct {
 	Notification *AndroidNotification `json:"notification,omitempty"`
 }
 
-// AndroidNotification is the notification's channel, and its tag: a second
-// notification with the same tag replaces the first in the tray.
+// AndroidNotification is the notification's channel, its sound and its tag: a
+// second notification with the same tag replaces the first in the tray. Sound
+// is a file in the app's res/raw, for phones too old for channels; on the rest
+// the channel decides.
 type AndroidNotification struct {
 	ChannelID string `json:"channel_id,omitempty"`
+	Sound     string `json:"sound,omitempty"`
 	Tag       string `json:"tag,omitempty"`
 }
 
