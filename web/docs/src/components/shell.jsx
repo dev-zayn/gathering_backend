@@ -13,6 +13,7 @@ import BrandMark from '@/components/brand-mark.jsx'
 import { Search } from '@/components/search'
 import { GROUPS, HOME, PAGES, SECTION } from '@/pages.js'
 import { cn } from '@/lib/utils'
+import { builtAt, versionLabel } from '@/lib/version'
 
 // The frame around every page. The rail is the console's: a ceramic panel
 // with a tile per page, the open one lit orange and its sections hanging
@@ -117,7 +118,12 @@ export function Shell({ page, sections, children }) {
               {page && <PrevNext page={page} />}
             </main>
             <footer className="mt-12 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-6 text-xs text-ink-3">
-              <span>© {new Date().getFullYear()} Gathering. All rights reserved.</span>
+              <span className="inline-flex flex-wrap items-center gap-x-3 gap-y-1">
+                <span>© {new Date().getFullYear()} Gathering. All rights reserved.</span>
+                <span className="font-mono" title={builtAt}>
+                  {versionLabel}
+                </span>
+              </span>
               <span className="inline-flex items-center gap-2">
                 <span className="kbd">←</span>
                 <span className="kbd">→</span>

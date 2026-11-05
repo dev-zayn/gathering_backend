@@ -3,10 +3,12 @@ import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import path from 'node:path'
 
+import { buildVersion } from './version.mjs'
+
 // The build lands in dist/, which nginx serves. The console is static files
 // on their own origin, calling the API at VITE_API_URL.
 export default defineConfig({
-  plugins: [react(), tailwindcss()],
+  plugins: [react(), tailwindcss(), buildVersion(import.meta.dirname)],
   resolve: { alias: { '@': path.resolve(import.meta.dirname, 'src') } },
   base: '/',
   build: {

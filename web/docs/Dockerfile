@@ -10,6 +10,10 @@ WORKDIR /w
 COPY package.json package-lock.json ./
 RUN npm ci
 COPY . ./
+# The commit this is built from: the copy sent here has no .git, so the deploy
+# names it (version.mjs). Empty, the docs show their version alone.
+ARG BUILD_COMMIT
+ENV BUILD_COMMIT=$BUILD_COMMIT
 RUN npm run build
 
 FROM nginx:1.30-alpine

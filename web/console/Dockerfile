@@ -21,6 +21,10 @@ ENV VITE_PASSWORD_SIGNIN=$VITE_PASSWORD_SIGNIN
 # The laptop's dev sign-in button. Never on in production.
 ARG VITE_DEV_ADMIN
 ENV VITE_DEV_ADMIN=$VITE_DEV_ADMIN
+# The commit this is built from: the copy sent here has no .git, so the deploy
+# names it (version.mjs). Empty, the console shows its version alone.
+ARG BUILD_COMMIT
+ENV BUILD_COMMIT=$BUILD_COMMIT
 RUN npm run build
 
 FROM nginx:1.30-alpine

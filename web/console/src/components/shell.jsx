@@ -20,10 +20,12 @@ import {
 
 import { useMe } from '../lib/me.js'
 import { applyTheme, nextTheme, savedTheme } from '../lib/theme.js'
+import { builtAt, versionLabel } from '../lib/version.js'
 import { signOut } from '../sso.js'
 
 // The frame every page sits in: the rail of sections on Navy, with the
-// wordmark at its head and who is signed in at its foot. On a phone the rail
+// wordmark at its head and who is signed in at its foot, then which build
+// this is. On a phone the rail
 // is a drawer behind the bar's menu key.
 const groups = [
   [
@@ -101,6 +103,9 @@ export default function Shell() {
         </nav>
 
         <Account />
+        <p className="text-rail-ink-2 mx-3 mt-3 font-mono text-[11px]" title={builtAt}>
+          Console {versionLabel}
+        </p>
       </aside>
 
       <main className="min-w-0 px-4 py-6 sm:px-6 lg:px-10 lg:py-9">

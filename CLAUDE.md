@@ -404,3 +404,12 @@ and `JWT_PRIVATE_KEY` (`make keys`); the sweep then signs in with that code.
   (on its own players: `TestConsole` no longer switches off another test's
   player; signing the same number in twice within a minute is 429, so the
   refused sign-in stays the identity tests'), the docs' Sign-in pages.
+- The console and the docs say which build they are, done 2026-11-05:
+  `version.mjs` in each (the `package.json` version, the commit from
+  `BUILD_COMMIT` or git with a `+` for uncommitted changes in that folder,
+  the build time) as `virtual:version` and `/version.json` (no-cache in
+  both nginx configs; the docs' app section has its own under `/app/`), shown
+  in the console's rail and on its sign-in page and in the docs' footer;
+  `BUILD_COMMIT` a build arg in both Dockerfiles and `compose.yml`, set by
+  `deploy.sh` and by the "alone" commands in `deploy/hetzner/README.md`
+  ("Which build is live").

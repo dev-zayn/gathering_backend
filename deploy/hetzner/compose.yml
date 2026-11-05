@@ -110,11 +110,16 @@ services:
         # the api; the api's own host refuses the console's routes.
         VITE_API_URL: ""
         VITE_PASSWORD_SIGNIN: "true"
+        # The commit the page and /version.json name: the copy here has no
+        # .git, so whoever deploys sets it (deploy.sh does).
+        BUILD_COMMIT: ${BUILD_COMMIT:-}
 
   docs:
     <<: *service
     build:
       context: ../../web/docs
+      args:
+        BUILD_COMMIT: ${BUILD_COMMIT:-}
     environment:
       DOCS_USER: ${DOCS_USER:?}
       DOCS_PASSWORD: ${DOCS_PASSWORD:?}

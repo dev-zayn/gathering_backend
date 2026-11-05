@@ -94,8 +94,28 @@ check them, send that folder, then rebuild only that service:
 
     (cd web/docs && npm run build && npm run lint)
     rsync -az --delete --exclude node_modules --exclude dist --exclude dist-app web/docs/ root@<ip>:/opt/ga3da/gathering/web/docs/
-    ssh root@<ip> 'cd /opt/ga3da/gathering/deploy/hetzner && docker compose --env-file /opt/ga3da/secrets/ga3da.env build docs &&
-      docker compose --env-file /opt/ga3da/secrets/ga3da.env up -d docs'
+    ssh root@<ip> "cd /opt/ga3da/gathering/deploy/hetzner && BUILD_COMMIT=$(git rev-parse --short HEAD) docker compose --env-file /opt/ga3da/secrets/ga3da.env build docs &&
+      docker compose --env-file /opt/ga3da/secrets/ga3da.env up -d docs"
+
+The console goes out the same way, with `web/console` and the service
+`console`.
+
+### Which build is live
+
+The console and the docs each say which build they are: the version in their
+`package.json` and the commit they were built from, in the console's rail and
+on its sign-in page, and in the docs' footer. Each also answers it, with when
+it was built (`web/console/version.mjs`, and the same file in `web/docs`):
+
+    curl https://console.ga3da.fun/version.json
+    curl https://docs.ga3da.fun/version.json          # the app section: /app/version.json, behind the password
+
+The image is built on the server from a copy with no `.git`, so the commit
+comes from `BUILD_COMMIT` when it is built: `deploy.sh` sets it (with a `+`
+when the tree it sent had changes not yet committed), and the commands above
+do. Built without it, they name their version alone. Raise `version` in the
+`package.json` when a release is worth a name of its own; the commit already
+names every build.
 
 On the server (`ssh root@<ip>`):
 

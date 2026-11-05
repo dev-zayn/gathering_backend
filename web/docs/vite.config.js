@@ -9,6 +9,7 @@ import { rehypePlugins } from './mdx/rehype.mjs'
 import { recmaPlugins } from './mdx/recma.mjs'
 import { searchIndex } from './mdx/search.mjs'
 import { pagesList } from './mdx/pages.mjs'
+import { buildVersion } from './version.mjs'
 
 const app = process.env.VITE_SECTION === 'app'
 
@@ -26,6 +27,7 @@ export default defineConfig({
     tailwindcss(),
     searchIndex(),
     pagesList(),
+    buildVersion(import.meta.dirname),
   ],
   resolve: {
     alias: { '@': path.resolve(import.meta.dirname, 'src') },

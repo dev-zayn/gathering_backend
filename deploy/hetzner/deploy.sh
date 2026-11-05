@@ -38,8 +38,13 @@ if [ -n "${FIREBASE_KEY:-}" ]; then
     sed -i 's|^FCM_CREDENTIALS_FILE=.*|FCM_CREDENTIALS_FILE=/run/firebase/firebase.json|' $root/secrets/ga3da.env"
 fi
 
+# The commit the console and the docs say they were built from (version.mjs),
+# with a + when the tree sent has changes not yet committed.
+commit=$(git rev-parse --short HEAD)
+if [ -n "$(git status --porcelain)" ]; then commit="$commit+"; fi
+
 ssh "$host" "cd $root/gathering/deploy/hetzner &&
-  docker compose --env-file $root/secrets/ga3da.env up -d --build --remove-orphans &&
+  BUILD_COMMIT=$commit docker compose --env-file $root/secrets/ga3da.env up -d --build --remove-orphans &&
   docker compose --env-file $root/secrets/ga3da.env exec -T caddy caddy reload --config /etc/caddy/ga3da/Caddyfile --adapter caddyfile &&
   docker image prune -f >/dev/null"
 ssh "$host" "sh $root/gathering/deploy/hetzner/games.sh"

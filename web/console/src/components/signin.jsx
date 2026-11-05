@@ -1,5 +1,6 @@
 import { useState } from 'react'
 
+import { builtAt, versionLabel } from '../lib/version.js'
 import { devAdmin, devSignIn, passwordSignIn, passwordSignInWith, signIn, ssoConfigured } from '../sso.js'
 
 const LAST_NAME = 'ga.console.name'
@@ -141,6 +142,9 @@ export default function SignIn({ note, onSignedIn }) {
               {error}
             </p>
           )}
+          <p className="text-ink-3 mt-10 font-mono text-[11px]" title={builtAt}>
+            Console {versionLabel}
+          </p>
         </div>
       </main>
     </div>
