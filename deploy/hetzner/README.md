@@ -9,7 +9,7 @@ stays there (`/opt/ga3da/secrets`).
 | --- | --- |
 | `https://api.ga3da.fun` | the api: the app, the relay's sockets, `/files/*` (but not the console's routes) |
 | `https://console.ga3da.fun` | the console: its own sign-in, any name and the console password |
-| `https://docs.ga3da.fun` | the developer docs (the app section behind `DOCS_USER`) |
+| `https://docs.ga3da.fun` | the developer docs (the app section behind `DOCS_USER`), and the minigame guide at `/guide/` |
 | `https://games.ga3da.fun/<game>/` | every game in `../gathering_games` |
 | `https://ga3da.fun/r/<code>`, `/t/<code>` | invite links, and the phones' `/.well-known/` documents |
 | `https://ga3da.fun/` | the landing page (`site/index.html`, its pictures in `site/img/`, Arabic) |
@@ -64,7 +64,38 @@ Object Storage `AWS_ENDPOINT_URL_S3`), then `DEBUG`, `OTP_FIXED_CODE` and
 
 The same command deploys every change: `deploy/hetzner/deploy.sh root@<ip>`.
 It builds the arcade games, syncs, rebuilds what changed and restarts it;
-the database migrates itself on the api's start.
+the database migrates itself on the api's start. It sends the Mac's tree as it
+is, committed or not, and every game folder, and republishes every game.
+
+### One game alone
+
+To put out one game and touch nothing else (how انقلاب and طابو went out),
+check it, then send its folder alone. The games server reads the folder as it
+is, with no restart:
+
+    (cd ../gathering_games/<game> && bun run build && bun run lint && bun run test)
+    rsync -az --exclude node_modules ../gathering_games/<game>/ root@<ip>:/opt/ga3da/gathering_games/<game>/
+
+A game already in the store is updated with that. A new one is added in the
+console (Games): Register by URL `https://games.ga3da.fun/<game>/`, then its
+Icon (`art/icon.png`), its store copy, and Publish. The registry reads a
+changed manifest again about once a day, or at once with the game's "Re-read it
+now"; a manifest asking for more scopes waits there until you accept it.
+
+Mind the app on the phones: a game that hides the app's bar in play needs build
+6 or later, which stops the frame under Android's status bar. On older builds the
+game draws under the clock.
+
+### The docs alone
+
+The docs (`web/docs`, and the minigame guide in `web/docs/guide/`, which
+`python3 build.py` in `../gathering_docs` writes) are one image. Build and
+check them, send that folder, then rebuild only that service:
+
+    (cd web/docs && npm run build && npm run lint)
+    rsync -az --delete --exclude node_modules --exclude dist --exclude dist-app web/docs/ root@<ip>:/opt/ga3da/gathering/web/docs/
+    ssh root@<ip> 'cd /opt/ga3da/gathering/deploy/hetzner && docker compose --env-file /opt/ga3da/secrets/ga3da.env build docs &&
+      docker compose --env-file /opt/ga3da/secrets/ga3da.env up -d docs'
 
 On the server (`ssh root@<ip>`):
 

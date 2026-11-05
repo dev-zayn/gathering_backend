@@ -28,7 +28,7 @@ make e2e            # the in-repo sweep against a running api (E2E_API, E2E_CODE
                     # joined/left must reach a socket within 1 s, each logged as a "time" line
 (cd backend && golangci-lint run --build-tags e2e ./...)   # lint the sweep's files too
 make keys           # a new signing key
-make games          # build the arcade's five games in ../gathering_games (each its own bun project, into its dist/)
+make games          # build the arcade's games (the Makefile's ARCADE, ten) in ../gathering_games (each its own bun project, into its dist/)
 make fixtures       # the fixtures on :8091 over ../gathering_games (xo, tap as they are; a built game from its dist/)
 scripts/games-local.sh [wifi|ip]   # the fixtures on :8091 at http://localhost (adb reverse for every emulator), every
                     # game in the registry moved there; `wifi` (or an ip) for a phone on the network instead
@@ -294,7 +294,7 @@ and `JWT_PRIVATE_KEY` (`make keys`); the sweep then signs in with that code.
   proxies `/v1/*`, the bare domain carries the links;
   `setup.sh` makes the secrets in /opt/ga3da/secrets; `deploy.sh` from the
   Mac; `games.sh` registers, gives icons and publishes). Caddy's routing
-  checked locally; not yet run on a server. CI's govulncheck action pinned
+  checked locally; live on the server the same day. CI's govulncheck action pinned
   to v1.1.0 (v1.8.0 never existed, so the check job never ran).
 - The console's password sign-in (2026-10-25, the user's ask: one sign-in,
   not Caddy's dialog and the console's screen): `admin-session-password`
@@ -319,6 +319,12 @@ and `JWT_PRIVATE_KEY` (`make keys`); the sweep then signs in with that code.
   with the brand's wordmark (`public/brand/`, never set in a font) and a
   drawer on a phone; the sign-in beside the brand's pattern and lockup; the
   dashboard's groups as cards; a game's tile falling back to its letter.
+- The landing page (2026-10-30, the user's ask) and the privacy policy:
+  `deploy/hetzner/site/` (`index.html`, one static Arabic page with the
+  games' posters and the app's shots in `site/img/`; `privacy.html`, Arabic
+  then English, `#delete` saying how to delete an account, the page the
+  store listings link to), served by Caddy from the bare domain beside the
+  invite links.
 - Google and Apple sign-in (platform side) done 2026-10-31, to
   `docs/SSO.md` (written first; the user's ask: no phone for such a player,
   not linked to a phone account): `enum.Provider`, `model.Identity`'s
@@ -357,7 +363,27 @@ and `JWT_PRIVATE_KEY` (`make keys`); the sweep then signs in with that code.
   reports by and against a player, the privacy page, the e2e
   `TestReportingAPlayer`. Nothing tells an admin a report came in: the
   console's page is the only place to see it.
+- The room's chat (platform side) done 2026-11-01, to `docs/ROOMS.md` "The
+  chat" (the user's ask: chat with emotes in every room): a `chat` relay
+  frame carries words or one of ten emotes, and pages never hear it. The
+  relay cleans the words and masks listed ones (`biz/rooms/chat_words.txt`),
+  limits a socket to one a second with a burst of five (`RELAY_CHAT_RATE`),
+  and keeps the room's last 50 for hello, apart from the log a game's
+  traffic moves on. A manifest's `room.chat: false` turns it off (refused
+  `chat_off`); the Room says `config.chat`, so an older app or platform
+  simply has no chat. `friends-blocked` (`GET /v1/friends/blocked`) lets the
+  app hide what blocked players say.
 - The notification's own sound (platform side) done 2026-11-01, to
   `docs/PUSH.md`: a push names channel `inbox_chime`, Android sound
   `gaada_notify` and iOS sound `gaada_notify.wav`. A build without them plays the
   phone's sound, so the server and the app may ship in any order.
+- One game at a time on ga3da.fun (انقلاب 2026-10-26, طابو 2026-11-02, the
+  user's ask): the game's folder alone sent to the server and only its id
+  registered, given its icon and store copy, and published
+  (`deploy/hetzner/README.md`, "One game alone"); `deploy.sh` deliberately
+  not run, since it sends the Mac's whole tree and every game as they are.
+  `make games` builds طابو too (`ARCADE`, ten games).
+- A player's bio on their card (platform side), committed 2026-11-04, to
+  `docs/FRIENDS.md`, `docs/CONSOLE.md` and `docs/REPORTS.md`: the card
+  another player opens carries `bio`, the console's player page shows it,
+  and a `name` report covers the nickname, the @handle and the bio.

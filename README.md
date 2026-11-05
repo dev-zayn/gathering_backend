@@ -69,8 +69,8 @@ does).
 
 The games live outside this repo, one folder each in the workspace's
 `../gathering_games/`, each beside its own manifest (`.well-known/`): `xo` and
-`tap`, plain pages served as they are, and the arcade's five party games,
-projects of their own served from the `dist/` they build:
+`tap`, plain pages served as they are, and the arcade's games (the Makefile's
+`ARCADE`), projects of their own served from the `dist/` they build:
 
     make games      # bun install + build in each arcade game, then the brand check over them
 
