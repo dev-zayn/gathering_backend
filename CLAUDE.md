@@ -387,3 +387,20 @@ and `JWT_PRIVATE_KEY` (`make keys`); the sweep then signs in with that code.
   `docs/FRIENDS.md`, `docs/CONSOLE.md` and `docs/REPORTS.md`: the card
   another player opens carries `bio`, the console's player page shows it,
   and a `name` report covers the nickname, the @handle and the bio.
+- Switching a player off ends what they hold, done 2026-11-05, to
+  `docs/CONSOLE.md` "Switching a player off" (fixed first: the switch only
+  set the flag, so a switched-off player kept their session for up to an
+  hour and their games' tokens until they expired; found by the docs audit
+  of 2026-11-04): `biz.Switch` (`Off`: under the row lock the flag, every
+  session revoked, `game_tokens` and unspent `oauth_codes` deleted; after
+  the commit the whitelist cleared for each session and each game, the
+  player taken out of every open room by `rooms.Service.Leave` so their
+  socket closes 4003, presence cleared, the audit line `player.disabled`
+  with `{sessions, rooms}`; `On`: the flag and `player.enabled`; a deleted
+  account 404 both ways), `admin-player-disable` and `admin-player-enable`
+  calling it (the handler held the old rule), `PlayerStore.SetDisabled`
+  left as the tests' seed, the tests `TestSwitchingAPlayerOff` and
+  `TestSwitchingFindsOnlyLivePlayers`, the e2e `TestSwitchingAPlayerOff`
+  (on its own players: `TestConsole` no longer switches off another test's
+  player; signing the same number in twice within a minute is 429, so the
+  refused sign-in stays the identity tests'), the docs' Sign-in pages.

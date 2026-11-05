@@ -305,7 +305,7 @@ A player taps your tile and arrives already signed in. There is no password for 
 <Row>
   <Col>
 
-    The game token is good for an hour. Renew it with the refresh token rather than waiting for the player to open the game again.
+    The game token is good for an hour. Our routes refuse it sooner, with a `401`, once the player takes the game off their shelf, an admin suspends it, or the player is switched off. Renew it with the refresh token rather than waiting for the player to open the game again.
 
     A renewal keeps the refresh token it used — you are not handed a new one each time — and its `scope` is what your manifest grants now, not what it granted at the launch. It stops working the moment the player takes the game off their shelf, an admin suspends it, or the player is switched off, and then the answer is `invalid_grant`.
 

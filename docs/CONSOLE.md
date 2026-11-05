@@ -156,6 +156,40 @@ name}, created_at}`, `audience` as it was sent.
   on (2026-10-25; it was the players' search, which answers nobody for an
   empty box and hides the switched off).
 
+### Switching a player off
+
+`admin-player-disable`, `POST /v1/admin/players/{player}/disable`, and
+`admin-player-enable`, `POST /v1/admin/players/{player}/enable`, role
+`admin`, answer 204, or 404 `not_found` for nobody or a deleted account
+(`biz.Switch`, 2026-11-05; until then the switch only set the flag, and a
+switched-off player kept their session for up to an hour and their games'
+tokens until they expired).
+
+- **Off**, in one transaction under the player's row lock: `disabled`
+  true, every session revoked, the player's `game_tokens` (a game's refresh
+  tokens) and unspent `oauth_codes` deleted. After the commit: each
+  session's tokens and each game's tokens for the player (every game with a
+  refresh token or on their shelf) cleared from the whitelist, so an access
+  token is refused at its next use; the player taken out of every open room
+  as by their own leave (the room hears `left`, a host's room passes to the
+  next seat or ends `empty`, their socket closes 4003 `left`); presence
+  cleared; the audit line `player.disabled` in area `players` (actor the
+  admin, subject the player, detail `{sessions, rooms}`). A failure after the
+  commit is logged; the player stays off. Switching off a player already off
+  ends anything since, and writes no second line.
+- What follows from the flag, as before: sign-in, a provider's sign-in and
+  a refresh answer 403 `player_disabled` / 401, the player is left out of
+  every search, card and list, pushes skip them, a game's renewal is
+  `invalid_grant`. Their library, friendships, results and tournament seats
+  stay; a tournament match they cannot play goes the way any absence does.
+- **On**: `disabled` false and the audit line `player.enabled`; nothing they
+  held comes back, so their next sign-in is a new session, and a game's
+  server signs them in again from their next launch. On a player already
+  on, nothing is written.
+- A room ticket a game's server already holds (signed, verified offline
+  through the JWKS) lives out its ten minutes (`TOKEN_ROOM_TTL`): the
+  platform cannot reach it.
+
 ## Signing in with the console's password
 
 For a team with no identity provider (2026-10-25):

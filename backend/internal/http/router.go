@@ -46,8 +46,10 @@ type Deps struct {
 	Refresh *identity.Refresh
 	Signup  *biz.Signup
 
-	// Deletion is a player deleting their own account (docs/ACCOUNTS.md).
+	// Deletion is a player deleting their own account (docs/ACCOUNTS.md);
+	// Switch is the console switching one off and back on (docs/CONSOLE.md).
 	Deletion *biz.Deletion
+	Switch   *biz.Switch
 	Devices  *identity.Devices
 
 	// The player's own record, and who is here.
@@ -146,6 +148,7 @@ func Mount(api huma.API, d Deps) {
 		Admins:    d.Admins,
 		Players:   d.Players,
 		Presence:  d.Presence,
+		Switch:    d.Switch,
 		Dashboard: d.Dashboard,
 		Audit:     d.Audit,
 		Registry:  d.Registry,

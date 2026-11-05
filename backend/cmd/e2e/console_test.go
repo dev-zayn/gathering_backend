@@ -151,6 +151,92 @@ func TestConsoleRooms(t *testing.T) {
 		dash.Rooms.Today, *dash.RoundsToday)
 }
 
+// Switching a player off (docs/CONSOLE.md, "Switching a player off") ends
+// what they hold now: B, in A's room with a socket open, is taken out of it
+// (A hears left, B's socket closes 4003), and B's access token and refresh
+// token stop working at once. The audit log names the admin and the room;
+// the console reads B off, then on again. (Signing in again is refused
+// player_disabled: the identity tests prove it, since a second code for one
+// number within a minute is 429 here.)
+func TestSwitchingAPlayerOff(t *testing.T) {
+	id := "sweep." + strconv.FormatInt(time.Now().UnixNano(), 36)
+	studio := serveStudio(t, id)
+
+	admin := newClient(t)
+	admin.origin = console
+	var me struct {
+		ID string `json:"id"`
+	}
+	admin.call("POST", "/v1/admin/session/dev", map[string]any{"name": "sweep"}, 200, nil)
+	admin.call("GET", "/v1/admin/me", nil, 200, &me)
+	admin.call("POST", "/v1/admin/games", map[string]any{"url": studio + "/"}, 201, nil)
+	admin.call("PATCH", "/v1/admin/games/"+id, map[string]any{"tagline": "لاعب موقوف", "category": "brain"}, 200, nil)
+	admin.upload("PUT", "/v1/admin/games/"+id+"/icon", "icon.png", "image/png", tinyPNG(t), 200, nil)
+	admin.call("POST", "/v1/admin/games/"+id+"/publish", nil, 200, nil)
+	t.Cleanup(func() {
+		admin.call("POST", "/v1/admin/games/"+id+"/suspend", map[string]any{"reason": "the switch-off sweep is over"}, 200, nil)
+	})
+
+	a, _ := player(t, "Host")
+	b, pb := player(t, "Switched")
+	bID := pb["id"].(string)
+	refresh, _ := pb["refresh_token"].(string)
+	var room roomJSON
+	a.call("POST", "/v1/rooms", map[string]any{"game": id}, 201, &room)
+	b.call("POST", "/v1/rooms/join", map[string]any{"code": room.Code}, 200, nil)
+	sa := connect(t, a, room.ID, 0, false)
+	sb := connect(t, b, room.ID, 0, false)
+	sa.expect("hello")
+	sb.expect("hello")
+
+	admin.call("POST", "/v1/admin/players/"+bID+"/disable", nil, 204, nil)
+	if code, reason := sb.closed(); code != 4003 || reason != "left" {
+		t.Fatalf("the switched-off player's socket closed %d %q", code, reason)
+	}
+	for {
+		l := sa.expect("left")
+		if string(l.Player) == `"`+bID+`"` {
+			break
+		}
+	}
+	t.Logf("ok   switched off: out of the room (the host heard left), the socket closed 4003")
+
+	b.call("GET", "/v1/me", nil, 401, nil)
+	newClient(t).call("POST", "/v1/auth/refresh", map[string]any{"refresh_token": refresh}, 401, nil)
+	t.Logf("ok   the access token 401 at once, and the refresh token 401")
+
+	var log struct {
+		Entries []struct {
+			Action string         `json:"action"`
+			Actor  string         `json:"actor"`
+			Detail map[string]any `json:"detail"`
+		} `json:"entries"`
+	}
+	admin.call("GET", "/v1/admin/audit?area=players&action=player.disabled&subject="+bID, nil, 200, &log)
+	if len(log.Entries) != 1 || log.Entries[0].Actor != me.ID || log.Entries[0].Detail["sessions"] != float64(1) {
+		t.Fatalf("the audit log: %+v", log)
+	}
+	if rooms, _ := log.Entries[0].Detail["rooms"].([]any); len(rooms) != 1 || rooms[0] != room.ID {
+		t.Fatalf("the audit line's rooms: %+v", log.Entries[0].Detail)
+	}
+
+	var record struct {
+		Disabled bool            `json:"disabled"`
+		Room     *map[string]any `json:"room"`
+	}
+	admin.call("GET", "/v1/admin/players/"+bID, nil, 200, &record)
+	if !record.Disabled || record.Room != nil {
+		t.Fatalf("B's record while off: %+v", record)
+	}
+	admin.call("POST", "/v1/admin/players/"+bID+"/enable", nil, 204, nil)
+	admin.call("GET", "/v1/admin/players/"+bID, nil, 200, &record)
+	if record.Disabled {
+		t.Fatal("still off after enable")
+	}
+	admin.call("POST", "/v1/admin/players/ply_nobodynobody0000/disable", nil, 404, nil)
+	t.Logf("ok   the audit log has player.disabled (the admin, 1 session, the room); the record reads off and in no room, then on")
+}
+
 // The console's announcements (docs/CONSOLE.md, "Announcements"): every
 // problem at once, a dry run that counts and writes nothing, a send to two
 // chosen players (one by @handle, one by id) that lands in both inboxes as a

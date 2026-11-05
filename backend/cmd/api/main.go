@@ -342,6 +342,17 @@ func main() {
 	hub := relay.NewHub(rdb, roomRules, presence, relayCfg, log)
 	roomRules.Publisher = hub
 
+	// The console switching a player off: every session, game token and open
+	// room's seat ends with it (docs/CONSOLE.md).
+	switchRules := &biz.Switch{
+		DB:        pg,
+		Sessions:  sessions,
+		Whitelist: whitelist,
+		Rooms:     roomRules,
+		Presence:  presence,
+		Audit:     playersAudit,
+	}
+
 	// The tournaments, whose matches are played in rooms: the rules ask the
 	// tournaments who may sit in a match room and what its rounds decide,
 	// and the tournaments ask the rooms for a match's room and to close it.
@@ -401,6 +412,7 @@ func main() {
 		Refresh:  refresh,
 		Signup:   signup,
 		Deletion: deletion,
+		Switch:   switchRules,
 		Reports:  reportRules,
 		Devices:  devices,
 

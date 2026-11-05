@@ -130,9 +130,8 @@ func TestConsole(t *testing.T) {
 	if len(list.Players) == 0 {
 		t.Fatalf("players list empty")
 	}
-	id := list.Players[0]["id"].(string)
-	c.call("POST", "/v1/admin/players/"+id+"/disable", nil, 204, nil)
-	c.call("POST", "/v1/admin/players/"+id+"/enable", nil, 204, nil)
+	// Switching off is TestSwitchingAPlayerOff's, on players of its own: it
+	// ends their sessions, which would pull the rug from under another test.
 	c.call("GET", "/v1/admin/audit?area=players", nil, 200, nil)
 	c.call("GET", "/v1/admin/admins", nil, 200, nil)
 	c.call("DELETE", "/v1/admin/session", nil, 204, nil)

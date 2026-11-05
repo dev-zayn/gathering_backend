@@ -75,7 +75,7 @@ func (s *PlayerStore) Create(ctx context.Context, p *model.Player) error {
 
 // Update writes what a player may change about themselves. The phone and the
 // switch are not among them: the phone is proven, not edited, and the switch
-// is an admin's (SetDisabled).
+// is an admin's (biz.Switch).
 func (s *PlayerStore) Update(ctx context.Context, p *model.Player) error {
 	p.UpdatedAt = data.Now()
 	p.Handle = strings.ToLower(p.Handle)
@@ -96,8 +96,9 @@ func (s *PlayerStore) Touch(ctx context.Context, id string) error {
 		Update("last_seen_at", data.Now()).Error
 }
 
-// SetDisabled is the admin's switch. Their sessions are the caller's to end;
-// this only stops the next sign-in.
+// SetDisabled flips the flag and nothing else: it stops the next sign-in.
+// The console's switch is biz.Switch, which also ends what the player holds;
+// tests use this to seed a player switched off.
 func (s *PlayerStore) SetDisabled(ctx context.Context, id string, disabled bool) error {
 	return data.Conn(ctx, s.db).Model(&model.Player{}).Where("id = ?", id).
 		Updates(map[string]any{"disabled": disabled, "updated_at": data.Now()}).Error

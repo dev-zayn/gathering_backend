@@ -19,11 +19,16 @@ import (
 )
 
 type Handler struct {
-	Console   *identity.Console
-	Cookie    authn.Cookie
-	Admins    *identity.AdminStore
-	Players   *identity.PlayerStore
-	Presence  *players.Presence
+	Console  *identity.Console
+	Cookie   authn.Cookie
+	Admins   *identity.AdminStore
+	Players  *identity.PlayerStore
+	Presence *players.Presence
+
+	// Switch is a player switched off, everything they hold ended with it,
+	// and back on.
+	Switch *biz.Switch
+
 	Dashboard *biz.Dashboard
 	Audit     audit.Reader
 

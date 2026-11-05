@@ -88,13 +88,15 @@ func (h *Handler) registerPlayers(api huma.API) {
 	huma.Register(api, huma.Operation{
 		OperationID: "admin-player-disable", Method: http.MethodPost, Path: "/v1/admin/players/{player}/disable",
 		Summary:     "Switch a player off",
-		Description: "They cannot sign in again and are not found by anybody. Their session ends at its next refresh.",
+		Description: "They cannot sign in again and are not found by anybody. Every session they hold ends now, and so do their games' tokens; they are taken out of an open room, and their socket closes. 404 not_found for nobody or a deleted account.",
 		Tags:        []string{"admin"}, Metadata: write, DefaultStatus: http.StatusNoContent,
 	}, h.disable)
 
 	huma.Register(api, huma.Operation{
 		OperationID: "admin-player-enable", Method: http.MethodPost, Path: "/v1/admin/players/{player}/enable",
-		Summary: "Switch a player back on", Tags: []string{"admin"}, Metadata: write, DefaultStatus: http.StatusNoContent,
+		Summary:     "Switch a player back on",
+		Description: "They may sign in again; nothing they held comes back. 404 not_found for nobody or a deleted account.",
+		Tags:        []string{"admin"}, Metadata: write, DefaultStatus: http.StatusNoContent,
 	}, h.enable)
 }
 
@@ -156,23 +158,9 @@ func (h *Handler) player(ctx context.Context, in *playerPath) (*playerResponse, 
 }
 
 func (h *Handler) disable(ctx context.Context, in *playerPath) (*noContent, error) {
-	return nil, h.setDisabled(ctx, in.Player, true)
+	return nil, h.Switch.Off(ctx, actor(ctx), in.Player)
 }
 
 func (h *Handler) enable(ctx context.Context, in *playerPath) (*noContent, error) {
-	return nil, h.setDisabled(ctx, in.Player, false)
-}
-
-func (h *Handler) setDisabled(ctx context.Context, id string, disabled bool) error {
-	p, err := h.Players.ByID(ctx, id)
-	if err != nil {
-		return errors.Internal(err)
-	}
-	if p == nil {
-		return errors.NotFound("not_found")
-	}
-	if err := h.Players.SetDisabled(ctx, id, disabled); err != nil {
-		return errors.Internal(err)
-	}
-	return nil
+	return nil, h.Switch.On(ctx, actor(ctx), in.Player)
 }

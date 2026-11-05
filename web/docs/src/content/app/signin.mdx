@@ -63,4 +63,6 @@ One code per number per minute, five per hour, 120 per minute across the platfor
 (`429 too_many_requests` with `retry_after`). A code and its otp token live five minutes, a
 signup token fifteen. An access token lives an hour; the session, and so its refresh tokens,
 ninety days from sign-in, however often it is refreshed. A disabled player is refused with
-`403 player_disabled` at sign-in.
+`403 player_disabled` at sign-in. Switching a player off ends every session they hold at once:
+the next call answers `401` and so does the refresh, so the app lands on its sign-in screen; an
+open room hears them leave and their socket closes `4003 left`.
