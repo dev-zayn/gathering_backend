@@ -115,7 +115,7 @@ A player taps your tile and arrives already signed in. There is no password for 
         Your game id.
       </Property>
       <Property name="client_secret" type="string">
-        The secret you were handed at registration.
+        The secret you were handed at registration, in the form: an `Authorization: Basic` header is not read.
       </Property>
     </Properties>
 
@@ -200,13 +200,16 @@ A player taps your tile and arrives already signed in. There is no password for 
 
     <Properties>
       <Property name="invalid_grant" type="400">
-        The code was expired, already spent, never ours, does not belong to the client asking, or came with a `redirect_uri` or verifier it was not minted with. **All give the same answer on purpose** — telling them apart would let somebody probe which codes had existed.
+        The code was expired, already spent, never ours, does not belong to the client asking, or came without the `redirect_uri` it was minted with or with a verifier that does not answer its challenge. **All give the same answer on purpose** — telling them apart would let somebody probe which codes had existed.
       </Property>
       <Property name="invalid_client" type="401">
         The `client_id` and `client_secret` do not match. An unknown game and a wrong secret read the same, for the same reason.
       </Property>
       <Property name="unsupported_grant_type" type="400">
         `grant_type` was something other than `authorization_code` or `refresh_token`.
+      </Property>
+      <Property name="invalid_request" type="400">
+        The body did not parse as a form.
       </Property>
     </Properties>
 
@@ -253,14 +256,14 @@ A player taps your tile and arrives already signed in. There is no password for 
         `null` for a game opened outside a room, and once the player has left it. Its fields are in [Rooms](/rooms#your-server-and-the-room).
       </Property>
       <Property name="scope" type="string[]">
-        What this token carries. Read it; do not assume it.
+        What this token carries. Read it; do not assume it. `identity:read` opens the player's fields above and the room members' nicknames, `notify:send` [notifications](/notifications), `results:write` a room's [results](/rooms#results); `friends:read` is your page's `friends.list()` and opens nothing to your server.
       </Property>
       <Property name="live" type="boolean">
-        A person was present when the token was minted. A renewal cannot invent one.
+        The player's session was a fresh sign-in (a code, Google or Apple), not a refreshed one, when your game was opened. A renewal cannot invent one.
       </Property>
     </Properties>
 
-    The phone number is never here, under any scope. `GET /oauth/userinfo` is the same answer under the standard OIDC names, for a client library that expects them.
+    The phone number is never here, under any scope. `GET /oauth/userinfo` is the player under the standard OIDC names — `sub`, `name`, `preferred_username`, and `picture` for an uploaded picture — with `game` beside them, for a client library that expects them.
 
   </Col>
   <Col sticky>
@@ -304,7 +307,7 @@ A player taps your tile and arrives already signed in. There is no password for 
 
     The game token is good for an hour. Renew it with the refresh token rather than waiting for the player to open the game again.
 
-    A renewal keeps the refresh token it used — you are not handed a new one each time. It stops working the moment the player takes the game off their shelf or an admin suspends it, and then the answer is `invalid_grant`.
+    A renewal keeps the refresh token it used — you are not handed a new one each time — and its `scope` is what your manifest grants now, not what it granted at the launch. It stops working the moment the player takes the game off their shelf, an admin suspends it, or the player is switched off, and then the answer is `invalid_grant`.
 
     ### What to store
 
@@ -376,7 +379,7 @@ A player taps your tile and arrives already signed in. There is no password for 
 
     For a player signing in to your own site with their Gathering session rather than starting from the tile. Standard authorization code with PKCE.
 
-    It starts in a browser, so there is no secret to send at this step — that is what the verifier replaces.
+    It starts in a browser, so there is no secret to send at this step — that is what the verifier replaces. The request carries the player's Gathering session token in `Authorization: Bearer`; without one the answer is a `401`, not a redirect.
 
     ### Query parameters
 
@@ -391,7 +394,7 @@ A player taps your tile and arrives already signed in. There is no password for 
         `code`.
       </Property>
       <Property name="code_challenge" type="string">
-        The base64url SHA-256 of a verifier you generated and kept.
+        The unpadded base64url SHA-256 of a verifier you generated and kept.
       </Property>
       <Property name="code_challenge_method" type="string">
         `S256`.
@@ -417,7 +420,7 @@ A player taps your tile and arrives already signed in. There is no password for 
       </Property>
     </Properties>
 
-    A `redirect_uri` that is not one of yours gets no redirect at all: a `422` with `invalid_fields`, because sending a code to an address we do not know is the whole attack.
+    A `redirect_uri` that is not one of yours gets no redirect at all: a `422` with `invalid_fields`, because sending a code to an address we do not know is the whole attack. An unknown or unpublished `client_id` gets none either: a `404 not_found`.
 
   </Col>
   <Col sticky>
@@ -467,6 +470,45 @@ A player taps your tile and arrives already signed in. There is no password for 
   code. That is deliberate, and it is why the failure tells you nothing useful — check your own side
   first.
 </Note>
+
+---
+
+## Keys and discovery {{ tag: 'GET', label: '/.well-known/openid-configuration' }}
+
+<Row>
+  <Col>
+
+    For a standard OAuth or OIDC library, so it finds this page's endpoints by itself: the issuer, `/oauth/authorize`, `/oauth/token`, `/oauth/userinfo`, the key set, the `code` response type, the two grants, `S256` and the four scopes.
+
+    `/.well-known/jwks.json` is our public key: ES256 on P-256, named by the `kid` every token we sign carries in its header. It is how your server verifies a [room ticket](/rooms#the-ticket), or a game token, without asking us. There is one key; a new one has a new `kid`, and nothing signed with the old one is accepted after.
+
+    A `401` or `403` from the token check carries `WWW-Authenticate: Bearer` with `resource_metadata` naming `/.well-known/oauth-protected-resource` (RFC 9728), the document that names us as the authorization server; `error="invalid_token"` on a `401`, and `error="insufficient_scope"` with the `scope` on a `scope_required`.
+
+  </Col>
+  <Col sticky>
+
+    <CodeGroup title="Response" tag="GET" label="/.well-known/openid-configuration">
+
+    ```json
+    {
+      "issuer": "https://api.gathering.example",
+      "jwks_uri": "https://api.gathering.example/.well-known/jwks.json",
+      "authorization_endpoint": "https://api.gathering.example/oauth/authorize",
+      "token_endpoint": "https://api.gathering.example/oauth/token",
+      "userinfo_endpoint": "https://api.gathering.example/oauth/userinfo",
+      "response_types_supported": ["code"],
+      "grant_types_supported": ["authorization_code", "refresh_token"],
+      "subject_types_supported": ["public"],
+      "id_token_signing_alg_values_supported": ["ES256"],
+      "code_challenge_methods_supported": ["S256"],
+      "scopes_supported": ["identity:read", "friends:read", "notify:send", "results:write"]
+    }
+    ```
+
+    </CodeGroup>
+
+  </Col>
+</Row>
 
 <Guides
   title="Where to next"

@@ -2,22 +2,28 @@
 
 A phone and a code, or Google or Apple, then a session. Refreshing it, ending it, and who is signed in. {{ className: 'lead' }}
 
-Every route under `/v1/` takes `Authorization: Bearer <token>`. There are three tokens on the
-way in and one on the way out; the `scope` in every answer says which you hold.
+Every route under `/v1/` but `auth/signin`, `auth/sso` and `auth/refresh` takes
+`Authorization: Bearer <token>`. There are three tokens on the way in and one on the way out;
+the `scope` in every answer says which you hold.
 
 ## The flow
 
 1. `POST /v1/auth/signin` `{ "phone": "07701234567" }` → `{ scope: "otp", access_token, expires_in }`.
-   The answer is the same whether or not the number is known.
+   The answer is the same whether or not the number is known. `400 invalid_phone` for a
+   number that is not an Iraqi mobile; `502 otp_send_failed` when the message could not be sent.
 2. `POST /v1/auth/otp/verify` `{ "code": "418302" }` with the otp token →
    a known number: `{ scope: "session", access_token, refresh_token, expires_in, player }`;
    an unknown one: `{ scope: "signup", access_token, expires_in }` and nothing written.
-   `401 wrong_code` carries `attempts_left`; five wrong codes kill the code.
-   `POST /v1/auth/otp/resend` with the same token sends a new code (two resends per token).
+   `401 wrong_code` carries `attempts_left`; five wrong codes kill the code, and a dead or
+   expired code is `401 code_expired`.
+   `POST /v1/auth/otp/resend` with the same token sends a new code and answers a new otp token
+   (two resends per token; then `429 no_resends_left`).
 3. `POST /v1/auth/signup` `{ "nickname", "avatar"?, "language"? }` with the signup token →
    `201` with a session and the `player`. The `@handle` is made from the nickname.
+   `409 phone_taken` when the number was signed up meanwhile.
 4. `POST /v1/auth/refresh` `{ "refresh_token" }` → a new pair. Single use: replaying a spent
-   one revokes the whole session (`401 invalid_refresh_token`).
+   one revokes the whole session (`401 invalid_refresh_token`, its only refusal: an ended or
+   expired session and a switched-off player read the same).
 5. `POST /v1/auth/logout` → `204`. The record on the server dies; dropping the token alone
    would leave us willing to refresh it.
 
@@ -47,12 +53,14 @@ player who signed up with a phone.
 | `DELETE /v1/me` | the player deletes their account: `204`, every session ends; `409 in_room` or `409 in_tournament` (an open or running one) until they leave. The games played keep a seat named «لاعب محذوف» |
 | `PATCH /v1/me` | any of `nickname`, `handle`, `bio`, `avatar`, `language`; `422 invalid_fields`, `409 handle_taken`, `409 handle_cooldown` (a week) |
 | `PUT /v1/me/presence` | the foreground heartbeat, every 45 s; friends see online for a minute after the last |
-| `PUT /v1/me/device` `{ platform, token }` · `DELETE /v1/me/device` | the phone's Firebase token, so an invite can ring it |
+| `PUT /v1/me/device` `{ platform, token }` · `DELETE /v1/me/device` | the phone's Firebase token, so a notification can ring it |
 | `GET /v1/players/search?q=` | handles starting with `q` (3 characters at least) |
-| `GET /v1/players/{handle}` | the public card: `{ id, nickname, handle, avatar, friendship }` |
+| `GET /v1/players/{handle}` | the public card, by handle or id: `{ id, nickname, handle, avatar, avatar_url, bio, friendship, mutual_friends, presence }`, `presence` between friends only; `404 not_found` for nobody, a switched-off player, or one who blocked the caller |
 
 ## Limits
 
 One code per number per minute, five per hour, 120 per minute across the platform
-(`429 too_many_requests` with `retry_after`). An access token lives an hour, a refresh token
-ninety days. A disabled player is refused with `403 player_disabled`.
+(`429 too_many_requests` with `retry_after`). A code and its otp token live five minutes, a
+signup token fifteen. An access token lives an hour; the session, and so its refresh tokens,
+ninety days from sign-in, however often it is refreshed. A disabled player is refused with
+`403 player_disabled` at sign-in.

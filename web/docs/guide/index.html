@@ -1,0 +1,2259 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Gathering Minigame Guide</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230F172A'/%3E%3Cg fill='%23F59E0B' transform='translate(32 32) scale(0.3892) translate(0 -35.785)'%3E%3Crect x='-10.3' y='-10.3' width='20.6' height='20.6' rx='4' transform='translate(-18.5 12.8) rotate(45)'/%3E%3Crect x='-10.3' y='-10.3' width='20.6' height='20.6' rx='4' transform='translate(18.5 12.8) rotate(45)'/%3E%3Crect x='-13' y='-22.3' width='26' height='44.6' rx='9.3' transform='translate(-25 50.5) rotate(44.4)'/%3E%3Crect x='-13' y='-22.3' width='26' height='44.6' rx='9.3' transform='translate(25 50.5) rotate(-44.4)'/%3E%3C/g%3E%3C/svg%3E">
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="How to build a minigame for گعدة · Gathering: the page, the bridge, rooms, the manifest, and a brief to hand an AI model.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Lalezar&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,500,1,0&icon_names=arrow_downward,arrow_forward,block,bolt,casino,check,checklist,code,content_copy,dark_mode,description,dns,emoji_events,error,fit_screen,groups,hub,lock,menu_book,play_arrow,replay,rocket_launch,smart_toy,smartphone,speed,sports_esports,swap_horiz,terminal,translate,visibility,web_asset,wifi&display=block">
+<style>
+/* Layout: the app's Play tab as a docs page. A night stage with drifting
+   sparks behind one centred column; a HUD bar on top; a violet slate for the
+   hero and for the AI brief; cartridges in their own hues for the steps;
+   plates on hard slabs for everything that is read. Dark first. */
+:root {
+  color-scheme: dark;
+  --ground: #0F1222;
+  --ground-deep: #0B0E1C;
+  --card: #1B2038;
+  --tile: #171B31;
+  --ink: #F4F5FA;
+  --muted: #A9ADC6;
+  --tertiary: #8C91AE;
+  --hair: rgba(255, 255, 255, 0.08);
+  --hair-strong: rgba(255, 255, 255, 0.16);
+  --slab: #0B0E1C;
+  --accent: #FFB300;
+  --accent-ink: #FFC843;
+  --accent-slab: #8F6400;
+  --on-accent: #1A1300;
+  --violet: #7C4DFF;
+  --violet-top: #6A35FF;
+  --violet-foot: #3300B3;
+  --glass: #6A33FB;
+  --glass-slab: #2B0094;
+  --on-violet: #FFFFFF;
+  --success: #3DDC97;
+  --info: #4CC9F0;
+  --danger: #FF5C6C;
+  --code-bg: #10142A;
+  --code-ink: #E6E8F2;
+  --glow-violet: rgba(124, 77, 255, 0.34);
+  --glow-amber: rgba(255, 179, 0, 0.10);
+  --hud: rgba(15, 18, 34, 0.94);
+
+  --display: "Lalezar", "IBM Plex Sans Arabic", system-ui, sans-serif;
+  --body: "IBM Plex Sans Arabic", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "Geist Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+
+  --r-plate: 18px;
+  --r-slate: 28px;
+  --depth: 4px;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    color-scheme: light;
+    --ground: #F6F6FA;
+    --ground-deep: #ECEDF5;
+    --card: #FFFFFF;
+    --tile: #F1F2F8;
+    --ink: #15172B;
+    --muted: #5B5F7A;
+    --tertiary: #6F7390;
+    --hair: rgba(21, 23, 43, 0.08);
+    --hair-strong: rgba(21, 23, 43, 0.16);
+    --slab: #D6D8E6;
+    --accent-ink: #8A5A00;
+    --success: #12865A;
+    --info: #0A7FA6;
+    --danger: #D22B3D;
+    --glow-violet: rgba(124, 77, 255, 0.16);
+    --glow-amber: rgba(255, 179, 0, 0.10);
+    --hud: rgba(246, 246, 250, 0.94);
+  }
+}
+:root[data-theme="light"] {
+  color-scheme: light;
+  --ground: #F6F6FA;
+  --ground-deep: #ECEDF5;
+  --card: #FFFFFF;
+  --tile: #F1F2F8;
+  --ink: #15172B;
+  --muted: #5B5F7A;
+  --tertiary: #6F7390;
+  --hair: rgba(21, 23, 43, 0.08);
+  --hair-strong: rgba(21, 23, 43, 0.16);
+  --slab: #D6D8E6;
+  --accent-ink: #8A5A00;
+  --success: #12865A;
+  --info: #0A7FA6;
+  --danger: #D22B3D;
+  --glow-violet: rgba(124, 77, 255, 0.16);
+  --glow-amber: rgba(255, 179, 0, 0.10);
+  --hud: rgba(246, 246, 250, 0.94);
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: 84px; }
+body {
+  margin: 0;
+  background: var(--ground);
+  color: var(--ink);
+  font: 400 16px/1.65 var(--body);
+  -webkit-font-smoothing: antialiased;
+  overflow-x: clip;
+}
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0 0 auto;
+  height: env(safe-area-inset-top, 0px);
+  z-index: 30;
+  background: var(--hud);
+}
+a { color: var(--accent-ink); text-underline-offset: 3px; }
+code, pre, kbd { font-family: var(--mono); }
+:not(pre) > code {
+  font-size: 0.88em;
+  padding: 0.1em 0.4em;
+  border-radius: 6px;
+  background: var(--tile);
+  border: 1px solid var(--hair);
+  overflow-wrap: anywhere;
+}
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; border-radius: 10px; }
+
+.ms {
+  font-family: "Material Symbols Rounded";
+  font-weight: normal;
+  font-style: normal;
+  font-size: 1.25em;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  direction: ltr;
+  font-feature-settings: "liga";
+  -webkit-font-smoothing: antialiased;
+  flex: none;
+}
+
+/* ---- the stage ---------------------------------------------------------- */
+.stage { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+.stage::before {
+  content: "";
+  position: absolute;
+  inset: -20% -20% auto auto;
+  width: 90vmax;
+  height: 90vmax;
+  background: radial-gradient(closest-side, var(--glow-violet), transparent 70%);
+}
+.stage::after {
+  content: "";
+  position: absolute;
+  inset: auto auto -30% -25%;
+  width: 70vmax;
+  height: 70vmax;
+  background: radial-gradient(closest-side, var(--glow-amber), transparent 70%);
+}
+#sparks { position: absolute; inset: 0; width: 100%; height: 100%; }
+
+.wrap {
+  position: relative;
+  z-index: 1;
+  max-width: 920px;
+  margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+
+/* ---- the HUD bar ---------------------------------------------------------- */
+.hud {
+  position: sticky;
+  top: env(safe-area-inset-top, 0px);
+  z-index: 20;
+  transition: background-color 0.18s ease, box-shadow 0.18s ease;
+}
+.hud.scrolled { background: var(--hud); box-shadow: 0 1px 0 var(--hair); }
+.hud .wrap { display: flex; align-items: center; gap: 10px; min-height: 64px; padding-block: 8px; }
+.plate {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 5px 16px 5px 5px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--card) 82%, transparent);
+  border: 1px solid rgba(255, 179, 0, 0.4);
+  text-decoration: none;
+  color: var(--ink);
+  min-width: 0;
+}
+.mark {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(var(--accent), #F5A400);
+  color: var(--on-accent);
+  box-shadow: 0 3px 0 var(--accent-slab);
+  flex: none;
+}
+/* The brand's mark (../gathering_brand/mark), as the app icon draws it. */
+.mark svg { width: 24px; height: auto; }
+.plate b { display: block; font: 19px/1.1 var(--display); letter-spacing: 0.2px; }
+.plate small { display: block; font: 500 11.5px/1.3 var(--mono); color: var(--accent-ink); }
+.plate span { min-width: 0; }
+.hud .spacer { flex: 1; }
+.counter {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 44px;
+  padding: 0 14px 0 4px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--card) 82%, transparent);
+  border: 1px solid var(--hair);
+  font: 500 13px/1 var(--mono);
+  color: var(--ink);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.counter .disc {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: rgba(124, 77, 255, 0.2);
+  color: var(--violet);
+}
+.counter.lit { border-color: rgba(255, 179, 0, 0.5); }
+.counter.lit .disc { background: rgba(255, 179, 0, 0.18); color: var(--accent-ink); }
+@media (max-width: 560px) {
+  .counter.version { display: none; }
+  .plate small { display: none; }
+}
+
+/* ---- keys: the arcade keys ------------------------------------------------ */
+.key {
+  --face-top: #FFC21F;
+  --face-foot: #F5AC00;
+  --key-slab: var(--accent-slab);
+  --key-ink: var(--on-accent);
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 54px;
+  padding: 4px 24px 0;
+  border: 0;
+  border-radius: 18px;
+  background: linear-gradient(var(--face-top), var(--face-foot));
+  color: var(--key-ink);
+  font: 20px/1.1 var(--display);
+  text-decoration: none;
+  cursor: pointer;
+  box-shadow: 0 6px 0 var(--key-slab), 0 16px 30px -14px var(--key-glow, transparent);
+  transform: translateY(0);
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+  overflow: hidden;
+  isolation: isolate;
+  -webkit-tap-highlight-color: transparent;
+}
+.key::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 50% 0;
+  background: linear-gradient(rgba(255, 255, 255, 0.24), rgba(255, 255, 255, 0));
+  z-index: -1;
+}
+.key:active { transform: translateY(4px); box-shadow: 0 2px 0 var(--key-slab); }
+.key .ms { font-size: 24px; margin-top: -4px; }
+.key.accent { --key-glow: rgba(255, 179, 0, 0.55); }
+.key.accent::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  width: 46%;
+  background: linear-gradient(105deg, transparent, rgba(255, 255, 255, 0.42), transparent);
+  transform: translateX(-140%) skewX(-18deg);
+  animation: shine 4.2s ease-in-out infinite;
+  z-index: -1;
+}
+@keyframes shine { 0% { transform: translateX(-140%) skewX(-18deg); } 28%, 100% { transform: translateX(320%) skewX(-18deg); } }
+.key.glass {
+  --face-top: #7240FC;
+  --face-foot: var(--glass);
+  --key-slab: var(--glass-slab);
+  --key-ink: var(--on-violet);
+  box-shadow: 0 5px 0 var(--key-slab), inset 0 0 0 1px rgba(255, 255, 255, 0.14);
+}
+.key.glass:active { box-shadow: 0 1px 0 var(--key-slab), inset 0 0 0 1px rgba(255, 255, 255, 0.14); }
+.key.small { min-height: 38px; padding: 3px 14px 0; border-radius: 12px; font-size: 16px; box-shadow: 0 3px 0 var(--key-slab); }
+.key.small:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--key-slab); }
+.key.small .ms { font-size: 18px; margin-top: -3px; }
+.key.small::after { display: none; }
+
+/* ---- the hero slate -------------------------------------------------------- */
+.hero { padding-block: 28px 8px; }
+.slate {
+  position: relative;
+  border-radius: var(--r-slate);
+  background: linear-gradient(135deg, var(--violet-top), var(--violet-foot));
+  color: var(--on-violet);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 14px 50px -22px rgba(124, 77, 255, 0.7);
+  isolation: isolate;
+}
+.slate .field {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  overflow: hidden;
+  z-index: -1;
+}
+.slate .field::before {
+  content: "";
+  position: absolute;
+  inset: -120px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120' fill='none' stroke='white' stroke-opacity='.09' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='24' cy='26' r='10'/%3E%3Cpath d='M78 16l16 16M94 16L78 32'/%3E%3Cpath d='M26 74l12 20H14z'/%3E%3Crect x='76' y='76' width='18' height='18' rx='3'/%3E%3C/svg%3E");
+  animation: drift 24s linear infinite;
+}
+.slate .field::after {
+  content: "";
+  position: absolute;
+  top: -90px;
+  right: -90px;
+  width: 300px;
+  height: 300px;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(255, 179, 0, 0.36), transparent);
+}
+@keyframes drift { to { transform: translate(120px, -120px); } }
+.hero .slate { padding: clamp(22px, 4vw, 40px); padding-top: clamp(30px, 5vw, 44px); }
+.hero .words { max-width: 34rem; padding-right: 118px; }
+.eyebrow { margin: 0 0 6px; font: 600 13.5px/1.3 var(--body); color: rgba(255, 255, 255, 0.74); }
+.hero h1 {
+  margin: 0;
+  font: clamp(38px, 6.4vw, 60px)/1.04 var(--display);
+  letter-spacing: 0.2px;
+  text-wrap: balance;
+  text-shadow: 0 3px 0 rgba(31, 0, 120, 0.55);
+}
+.hero .lede { margin: 14px 0 0; font-size: 17px; color: rgba(255, 255, 255, 0.86); max-width: 33rem; }
+.hero .lede code { background: rgba(0, 0, 0, 0.22); border-color: rgba(255, 255, 255, 0.16); color: #fff; }
+.keys { display: flex; flex-wrap: wrap; gap: 14px 12px; margin-top: 26px; }
+.wells { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 26px; }
+.well {
+  border-radius: 16px;
+  padding: 12px 8px 10px;
+  text-align: center;
+  background: rgba(20, 0, 80, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+.well b { display: block; font: 30px/1.05 var(--display); padding-top: 4px; font-variant-numeric: tabular-nums; }
+.well span { display: block; font: 700 11.5px/1.3 var(--body); color: rgba(255, 255, 255, 0.74); }
+.stickers { position: absolute; top: -22px; right: 18px; width: 120px; height: 112px; pointer-events: none; }
+.sticker {
+  position: absolute;
+  width: 58px;
+  height: 58px;
+  border-radius: 16px;
+  display: grid;
+  place-items: center;
+  color: #10132A;
+  box-shadow: 0 5px 0 var(--s-slab), 0 12px 18px -8px rgba(0, 0, 0, 0.5);
+  animation: bob 6s ease-in-out infinite;
+}
+.sticker .ms { font-size: 30px; }
+.sticker.die { --s-slab: #8F6400; background: linear-gradient(#FFC21F, #F5AC00); top: 10px; right: 54px; rotate: -12deg; width: 66px; height: 66px; }
+.sticker.die .ms { font-size: 36px; }
+.sticker.pad { --s-slab: #1D6E8A; background: linear-gradient(#6FD6F5, #3DBCE6); top: 0; right: 0; rotate: 10deg; animation-delay: -2s; }
+.sticker.cup { --s-slab: #17734C; background: linear-gradient(#5FE6AC, #34CC88); top: 64px; right: 24px; rotate: -4deg; width: 50px; height: 50px; animation-delay: -4s; }
+.sticker.cup .ms { font-size: 26px; }
+@keyframes bob { 50% { translate: 0 -6px; } }
+@media (max-width: 560px) {
+  .hero .words { padding-right: 0; padding-top: 70px; }
+  .stickers { right: 10px; transform: scale(0.86); transform-origin: top right; }
+  .wells { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .well b { font-size: 24px; }
+}
+
+/* ---- the chip strip ------------------------------------------------------ */
+.strip {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 18px 2px 12px;
+  scrollbar-width: none;
+}
+.strip::-webkit-scrollbar { display: none; }
+.chip {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 2px 14px 0;
+  border-radius: 14px;
+  background: var(--card);
+  color: var(--muted);
+  border: 1px solid var(--hair);
+  box-shadow: 0 3px 0 var(--slab);
+  font: 700 13.5px/1 var(--body);
+  text-decoration: none;
+  transition: transform 0.12s, box-shadow 0.12s;
+}
+.chip:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--slab); }
+.chip.on { background: var(--accent); color: var(--on-accent); border-color: transparent; box-shadow: 0 3px 0 var(--accent-slab); }
+.chip .ms { font-size: 18px; margin-top: -2px; }
+
+/* ---- sections ------------------------------------------------------------ */
+section.part { padding-block: 36px 8px; }
+.st {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0 0 14px;
+  font: clamp(26px, 3.6vw, 32px)/1.15 var(--display);
+  letter-spacing: 0.2px;
+  text-wrap: balance;
+}
+.st .bars { display: inline-flex; gap: 3px; transform: skewX(-20deg); flex: none; margin-top: -4px; }
+.st .bars i { display: block; width: 6px; height: 22px; background: var(--accent); }
+.st .bars i + i { width: 4px; background: var(--violet); }
+.st .count {
+  font: 700 13px/1 var(--mono);
+  padding: 5px 9px;
+  border-radius: 999px;
+  color: var(--accent-ink);
+  background: rgba(255, 179, 0, 0.14);
+  border: 1px solid rgba(255, 179, 0, 0.4);
+}
+.intro { margin: 0 0 18px; color: var(--muted); max-width: 44rem; font-size: 16.5px; }
+h3 { font: 22px/1.2 var(--display); margin: 0 0 6px; letter-spacing: 0.2px; }
+p { margin: 0 0 12px; }
+.measure { max-width: 44rem; }
+
+/* plates: a card on its hard slab */
+.plate-card {
+  position: relative;
+  border-radius: var(--r-plate);
+  background: var(--card);
+  border: 1px solid var(--hair);
+  box-shadow: 0 var(--depth) 0 var(--slab);
+  margin-bottom: var(--depth);
+}
+.pad { padding: 18px 20px; }
+
+/* ---- the flow -------------------------------------------------------------- */
+.flow { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 22px; margin-bottom: 18px; }
+.station { position: relative; padding: 16px; }
+.station .disc, .rule .disc {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, hsl(var(--h) 85% 52%), hsl(calc(var(--h) + 18) 85% 30%));
+  color: #fff;
+  margin-bottom: 10px;
+}
+.station b { display: block; font: 18px/1.2 var(--display); margin-bottom: 4px; padding-top: 2px; }
+.station span { display: block; font-size: 13.5px; color: var(--muted); line-height: 1.5; }
+.station span code { font-size: 0.85em; }
+.station:not(:last-child)::after {
+  content: "arrow_forward";
+  font-family: "Material Symbols Rounded";
+  font-feature-settings: "liga";
+  position: absolute;
+  top: 26px;
+  right: -21px;
+  width: 20px;
+  text-align: center;
+  font-size: 20px;
+  color: var(--accent);
+  z-index: 2;
+}
+.side-note {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 14px 18px;
+  border-radius: var(--r-plate);
+  border: 1.5px dashed var(--hair-strong);
+  color: var(--muted);
+  font-size: 15px;
+}
+.side-note .ms { color: var(--info); font-size: 24px; margin-top: 2px; }
+@media (max-width: 760px) {
+  .flow { grid-template-columns: minmax(0, 1fr); gap: 26px; }
+  .station:not(:last-child)::after { content: "arrow_downward"; top: auto; bottom: -25px; right: auto; left: 30px; }
+}
+
+/* ---- cartridges --------------------------------------------------------- */
+.cart {
+  position: relative;
+  border-radius: 24px;
+  background: var(--card);
+  border: 1px solid var(--hair);
+  box-shadow: 0 5px 0 hsl(calc(var(--h) + 18) 70% 18%);
+  margin-bottom: 26px;
+  overflow: hidden;
+}
+.cart .label {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 20px;
+  color: #fff;
+  background:
+    repeating-linear-gradient(-45deg, rgba(255, 255, 255, 0.07) 0 8px, transparent 8px 22px),
+    linear-gradient(135deg, hsl(var(--h) 85% 52%), hsl(calc(var(--h) + 18) 85% 26%));
+}
+.cart .num {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  flex: none;
+  background: #fff;
+  color: hsl(calc(var(--h) + 18) 80% 24%);
+  font: 30px/1 var(--display);
+  padding-top: 5px;
+  rotate: -6deg;
+  box-shadow: 0 4px 0 hsl(calc(var(--h) + 18) 80% 18%);
+}
+.cart .label h3 { margin: 0; color: #fff; text-shadow: 0 2px 0 hsl(calc(var(--h) + 18) 85% 22%); font-size: clamp(21px, 3vw, 25px); }
+.cart .label p { margin: 2px 0 0; color: rgba(255, 255, 255, 0.86); font-size: 14.5px; line-height: 1.45; }
+.cart .body { padding: 18px 20px 6px; min-width: 0; }
+.cart .body > p { max-width: 44rem; }
+
+.duo { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin-bottom: 18px; }
+.duo .cart { margin-bottom: 5px; }
+.duo .cart .body { padding-bottom: 16px; }
+.duo .cart .body p { margin: 0; color: var(--muted); }
+@media (max-width: 640px) { .duo { grid-template-columns: minmax(0, 1fr); } }
+
+.ribbon {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  padding: 16px 18px;
+  border-radius: var(--r-plate);
+  background: linear-gradient(135deg, rgba(255, 179, 0, 0.16), rgba(255, 179, 0, 0.05));
+  border: 1px solid rgba(255, 179, 0, 0.42);
+  box-shadow: 0 var(--depth) 0 rgba(143, 100, 0, 0.55);
+  margin-bottom: 8px;
+}
+.ribbon .ms { color: var(--accent-ink); font-size: 28px; }
+.ribbon b { display: block; font: 20px/1.2 var(--display); padding-top: 2px; margin-bottom: 2px; }
+.ribbon p { margin: 0; color: var(--muted); }
+
+/* ---- code ---------------------------------------------------------------- */
+figure.code {
+  margin: 0 0 18px;
+  border-radius: 16px;
+  background: var(--code-bg);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 var(--depth) 0 var(--slab);
+  overflow: hidden;
+  min-width: 0;
+}
+figure.code figcaption {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 8px 7px 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  font: 500 12.5px/1.2 var(--mono);
+  color: #A9ADC6;
+}
+figure.code figcaption .file { display: inline-flex; align-items: center; gap: 6px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
+figure.code figcaption .file .ms { font-size: 16px; color: #FFC843; }
+.copy {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 32px;
+  padding: 0 11px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: #1B2038;
+  color: #F4F5FA;
+  font: 600 12.5px/1 var(--body);
+  cursor: pointer;
+  box-shadow: 0 2px 0 #080A16;
+}
+.copy:active { transform: translateY(1px); box-shadow: 0 1px 0 #080A16; }
+.copy .ms { font-size: 16px; }
+.copy.done { color: #3DDC97; border-color: rgba(61, 220, 151, 0.45); }
+pre {
+  margin: 0;
+  padding: 14px 16px 16px;
+  overflow: auto;
+  font: 500 13px/1.62 var(--mono);
+  color: var(--code-ink);
+  tab-size: 2;
+  direction: ltr;
+  text-align: left;
+}
+pre code { font: inherit; background: none; border: 0; padding: 0; }
+pre.tall { max-height: 460px; }
+pre.brief { max-height: 560px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.token.comment, .token.prolog, .token.doctype { color: #8C91AE; font-style: italic; }
+.token.punctuation, .token.operator { color: #A9ADC6; }
+.token.string, .token.attr-value, .token.char { color: #3DDC97; }
+.token.keyword, .token.boolean, .token.builtin { color: #C3ADFF; }
+.token.number, .token.property, .token.attr-name { color: #FFC843; }
+.token.function, .token.tag, .token.selector, .token.class-name { color: #6FD6F5; }
+.token.variable, .token.parameter { color: #F4F5FA; }
+
+/* ---- tables -------------------------------------------------------------- */
+.table-wrap { overflow-x: auto; margin-bottom: 18px; border-radius: var(--r-plate); }
+table { width: 100%; border-collapse: collapse; font-size: 14.5px; }
+.table-wrap table { min-width: 560px; }
+th {
+  text-align: left;
+  font: 700 11.5px/1.3 var(--body);
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--tertiary);
+  padding: 13px 16px 10px;
+  border-bottom: 1px solid var(--hair-strong);
+}
+td { padding: 11px 16px; border-bottom: 1px solid var(--hair); vertical-align: top; line-height: 1.55; }
+tr:last-child td { border-bottom: 0; }
+td:first-child { white-space: nowrap; }
+td:first-child code { color: var(--accent-ink); }
+
+/* ---- page rules ------------------------------------------------------- */
+.rules { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 14px; margin-bottom: 18px; }
+.rule { padding: 16px 18px; }
+.rule b { display: block; font: 18px/1.25 var(--display); padding-top: 2px; margin-bottom: 4px; }
+.rule p { margin: 0; color: var(--muted); font-size: 14.5px; line-height: 1.55; }
+
+/* ---- steps (getting listed) -------------------------------------------- */
+.route { list-style: none; margin: 0 0 18px; padding: 0; display: grid; gap: 12px; counter-reset: stop; }
+.route li { display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 14px; align-items: start; padding: 16px 18px; counter-increment: stop; }
+.route li::before {
+  content: counter(stop);
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--accent);
+  color: var(--on-accent);
+  font: 24px/1 var(--display);
+  padding-top: 4px;
+  box-shadow: 0 3px 0 var(--accent-slab);
+}
+.route b { display: block; font: 19px/1.25 var(--display); padding-top: 4px; }
+.route p { margin: 2px 0 0; color: var(--muted); font-size: 15px; }
+
+/* ---- checklist ------------------------------------------------------------ */
+.checks { padding: 8px; }
+.checks-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 12px 12px; flex-wrap: wrap; }
+.checks-head b { font: 20px/1.2 var(--display); padding-top: 2px; }
+.pips { display: flex; align-items: center; gap: 6px; font: 600 13px/1 var(--mono); color: var(--muted); }
+.pips i { width: 10px; height: 10px; border-radius: 50%; border: 2px solid var(--hair-strong); }
+.pips i.on { background: var(--accent); border-color: var(--accent); }
+.check {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+  padding: 12px;
+  border-radius: 14px;
+  cursor: pointer;
+}
+.check:hover { background: var(--tile); }
+.check input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.check .box {
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  display: grid;
+  place-items: center;
+  background: var(--tile);
+  border: 1px solid var(--hair-strong);
+  box-shadow: 0 3px 0 var(--slab);
+  color: transparent;
+  transition: transform 0.1s;
+}
+.check input:checked + .box { background: var(--success); border-color: transparent; color: #0B0E1C; box-shadow: 0 3px 0 #17734C; }
+.check input:focus-visible + .box { outline: 3px solid var(--accent); outline-offset: 2px; }
+.check .box .ms { font-size: 20px; }
+.check span.t { padding-top: 3px; }
+.check input:checked ~ .t { color: var(--muted); }
+
+/* ---- the AI slate ---------------------------------------------------------- */
+.ai .slate { padding: clamp(22px, 4vw, 38px); margin-bottom: 26px; }
+.ai .slate h2 { margin: 0; font: clamp(30px, 4.6vw, 44px)/1.08 var(--display); text-wrap: balance; text-shadow: 0 3px 0 rgba(31, 0, 120, 0.55); }
+.ai .slate p { color: rgba(255, 255, 255, 0.86); max-width: 38rem; margin: 12px 0 0; }
+.ai .slate p code { background: rgba(0, 0, 0, 0.22); border-color: rgba(255, 255, 255, 0.16); color: #fff; }
+.ways { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
+.way {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: rgba(20, 0, 80, 0.36);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  font: 600 13.5px/1.3 var(--body);
+}
+.way .ms { font-size: 19px; color: #FFC843; }
+.robot {
+  position: absolute;
+  top: -20px;
+  right: 22px;
+  width: 64px;
+  height: 64px;
+  border-radius: 18px;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(#FFC21F, #F5AC00);
+  color: var(--on-accent);
+  box-shadow: 0 5px 0 var(--accent-slab), 0 14px 22px -10px rgba(0, 0, 0, 0.5);
+  rotate: 10deg;
+  animation: bob 6s ease-in-out infinite;
+}
+.robot .ms { font-size: 36px; }
+.ai .slate .head { padding-right: 84px; }
+.pair { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+@media (max-width: 760px) { .pair { grid-template-columns: minmax(0, 1fr); } }
+.pair h3 { font-size: 20px; margin-bottom: 10px; }
+.pair .note { color: var(--muted); font-size: 14px; margin-top: -6px; }
+
+footer { padding-block: 40px 56px; color: var(--tertiary); font-size: 14px; }
+footer .wrap { display: grid; gap: 6px; }
+footer b { font: 18px/1.2 var(--display); color: var(--ink); }
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+</style>
+</head>
+<body>
+<div class="stage" aria-hidden="true"><canvas id="sparks"></canvas></div>
+
+<header class="hud" id="hud">
+  <div class="wrap">
+    <a class="plate" href="#top">
+      <span class="mark" aria-hidden="true"><svg viewBox="-46.04 -0.11 92.08 71.79" fill="currentColor"><rect x="-10.3" y="-10.3" width="20.6" height="20.6" rx="4" transform="translate(-18.5 12.8) rotate(45)"/><rect x="-10.3" y="-10.3" width="20.6" height="20.6" rx="4" transform="translate(18.5 12.8) rotate(45)"/><rect x="-13" y="-22.3" width="26" height="44.6" rx="9.3" transform="translate(-25 50.5) rotate(44.4)"/><rect x="-13" y="-22.3" width="26" height="44.6" rx="9.3" transform="translate(25 50.5) rotate(-44.4)"/></svg></span>
+      <span><b>Gathering</b><small>minigame guide</small></span>
+    </a>
+    <span class="spacer"></span>
+    <span class="counter version" title="The bridge this guide describes"><span class="disc"><span class="ms">hub</span></span>bridge · Nov 2026</span>
+    <a class="counter lit" href="#ai"><span class="disc"><span class="ms">smart_toy</span></span>AI brief</a>
+  </div>
+</header>
+
+<main id="top">
+  <div class="wrap hero">
+    <div class="slate">
+      <div class="field" aria-hidden="true"></div>
+      <div class="stickers" aria-hidden="true">
+        <span class="sticker die"><span class="ms">casino</span></span>
+        <span class="sticker pad"><span class="ms">sports_esports</span></span>
+        <span class="sticker cup"><span class="ms">emoji_events</span></span>
+      </div>
+      <div class="words">
+        <p class="eyebrow">For game makers · گعدة</p>
+        <h1>Build a game friends play together.</h1>
+        <p class="lede">Your game is one web page. Gathering opens it full screen on every phone at the table, hands it <code>window.gathering</code>, and carries every move between the phones. You write the game; the app runs the room.</p>
+      </div>
+      <div class="keys">
+        <a class="key accent" href="#quickstart"><span class="ms">play_arrow</span>Start building</a>
+        <a class="key glass" href="#ai"><span class="ms">smart_toy</span>Hand it to an AI</a>
+      </div>
+      <div class="wells">
+        <div class="well"><b>1</b><span>web page</span></div>
+        <div class="well"><b>1–64</b><span>players a room</span></div>
+        <div class="well"><b>0</b><span>sockets to write</span></div>
+      </div>
+    </div>
+  </div>
+
+  <nav class="wrap" aria-label="On this page">
+    <div class="strip">
+      <a class="chip on" href="#flow"><span class="ms">hub</span>How it works</a>
+      <a class="chip" href="#quickstart"><span class="ms">rocket_launch</span>Quickstart</a>
+      <a class="chip" href="#manifest"><span class="ms">code</span>Manifest</a>
+      <a class="chip" href="#page"><span class="ms">smartphone</span>Page rules</a>
+      <a class="chip" href="#bridge"><span class="ms">swap_horiz</span>Bridge</a>
+      <a class="chip" href="#rooms"><span class="ms">groups</span>Rooms</a>
+      <a class="chip" href="#server"><span class="ms">dns</span>Your server</a>
+      <a class="chip" href="#listing"><span class="ms">emoji_events</span>Getting listed</a>
+      <a class="chip" href="#checklist"><span class="ms">checklist</span>Checklist</a>
+      <a class="chip" href="#ai"><span class="ms">smart_toy</span>AI brief</a>
+    </div>
+  </nav>
+
+  <div class="wrap">
+
+    <!-- ===================================================== how it works -->
+    <section class="part" id="flow" aria-labelledby="flow-t">
+      <h2 class="st" id="flow-t"><span class="bars" aria-hidden="true"><i></i><i></i></span>How it works</h2>
+      <p class="intro">Four things happen between a tap on your tile and your first frame. Only the last one is yours to write.</p>
+      <div class="flow">
+        <div class="station plate-card" style="--h:256"><span class="disc"><span class="ms">sports_esports</span></span><b>A player taps your tile</b><span>In the app's store, on their shelf, or from a room's lobby.</span></div>
+        <div class="station plate-card" style="--h:196"><span class="disc"><span class="ms">lock</span></span><b>The app opens a session</b><span><code>POST /v1/games/{id}/session</code> returns your entry URL with a one-time code.</span></div>
+        <div class="station plate-card" style="--h:136"><span class="disc"><span class="ms">rocket_launch</span></span><b>Your page loads</b><span>Full screen in a WebView: <code>entry?code=cod_…</code></span></div>
+        <div class="station plate-card" style="--h:16"><span class="disc"><span class="ms">hub</span></span><b>You talk to the bridge</b><span><code>window.gathering</code>: dialogs, storage, players, the room.</span></div>
+      </div>
+      <div class="side-note"><span class="ms">dns</span><span>Your page <b>never opens a socket and never holds a token</b>. A server of your own is optional; you need one only for your own accounts, leaderboards or anti-cheat, and it trades the <code>?code=</code> for a game token (<a href="#server">Your server</a>).</span></div>
+
+      <h3 style="margin-top:28px">Two ways to play, one page</h3>
+      <p class="measure" style="color:var(--muted)"><code>await g.room.current()</code> decides which one this page load is.</p>
+      <div class="duo">
+        <div class="cart" style="--h:286">
+          <div class="label"><span class="num"><span class="ms" style="font-size:28px">smartphone</span></span><div><h3>Practice</h3><p><code>room.current()</code> is <code>null</code></p></div></div>
+          <div class="body"><p>One phone, the whole game. This is what a player sees when they open your game from the store, and what you see in a desktop browser.</p></div>
+        </div>
+        <div class="cart" style="--h:166">
+          <div class="label"><span class="num"><span class="ms" style="font-size:28px">groups</span></span><div><h3>Room</h3><p><code>room.current()</code> is a room</p></div></div>
+          <div class="body"><p>Every phone draws from one shared state. The host referees, writes the state and ends the round with the scores.</p></div>
+        </div>
+      </div>
+      <div class="ribbon"><span class="ms">replay</span><div><b>One page load is one round.</b><p><code>room.end({ scores })</code> ends the round, not the room. The host's "play again" opens your page again on every phone, fresh, with the state back at <code>{ version: 0, data: null }</code>. Never reset your page for a new round.</p></div></div>
+    </section>
+
+    <!-- ======================================================= quickstart -->
+    <section class="part" id="quickstart" aria-labelledby="qs-t">
+      <h2 class="st" id="qs-t"><span class="bars" aria-hidden="true"><i></i><i></i></span>Quickstart <span class="count">5 steps</span></h2>
+      <p class="intro">A turn-based game for 2–8 players, from an empty folder to a page the app can list. Plain HTML, CSS and JavaScript; no build step.</p>
+
+      <article class="cart" style="--h:256">
+        <div class="label"><span class="num">1</span><div><h3>Lay out the files</h3><p>Three files and the manifest, all on one https origin that loads without a login.</p></div></div>
+        <div class="body">
+          <figure class="code"><figcaption><span class="file"><span class="ms">code</span>your-game/</span><button class="copy" type="button" data-copy=""><span class="ms">content_copy</span><span class="lbl">Copy</span></button></figcaption><pre class="language-none"><code class="language-none">your-game/
+├── index.html
+├── style.css
+├── app.js
+└── .well-known/
+    └── gathering-game.json   ← the manifest, served as application/json</code></pre></figure>
+          <p>The page is right to left and dark, padded for the notch and the home indicator. The room keys stay hidden until practice mode shows them.</p>
+          <figure class="code"><figcaption><span class="file"><span class="ms">code</span>index.html</span><button class="copy" type="button" data-copy=""><span class="ms">content_copy</span><span class="lbl">Copy</span></button></figcaption><pre class="language-markup"><code class="language-markup">&lt;!doctype html&gt;
+&lt;html lang="ar" dir="rtl"&gt;
+&lt;head&gt;
+  &lt;meta charset="utf-8"&gt;
+  &lt;meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"&gt;
+  &lt;meta name="color-scheme" content="dark"&gt;
+  &lt;title&gt;اسم لعبتك&lt;/title&gt;
+  &lt;link rel="stylesheet" href="style.css"&gt;
+&lt;/head&gt;
+&lt;body&gt;
+  &lt;main class="screen"&gt;
+    &lt;header class="top"&gt;
+      &lt;h1&gt;اسم لعبتك&lt;/h1&gt;
+      &lt;span id="mode" class="chip"&gt;تمرين&lt;/span&gt;
+    &lt;/header&gt;
+    &lt;p id="status" class="status" role="status" aria-live="polite"&gt;&lt;/p&gt;
+    &lt;div id="board" class="board"&gt;&lt;/div&gt;
+    &lt;section id="together" class="together" hidden&gt;
+      &lt;button id="play-friend" type="button"&gt;العب ويا صديق&lt;/button&gt;
+      &lt;button id="join-room" type="button"&gt;انضم لغرفة&lt;/button&gt;
+      &lt;p id="together-line" role="status" aria-live="polite"&gt;&lt;/p&gt;
+    &lt;/section&gt;
+  &lt;/main&gt;
+  &lt;script src="app.js"&gt;&lt;/script&gt;
+&lt;/body&gt;
+&lt;/html&gt;</code></pre></figure>
+          <figure class="code"><figcaption><span class="file"><span class="ms">code</span>style.css</span><button class="copy" type="button" data-copy=""><span class="ms">content_copy</span><span class="lbl">Copy</span></button></figcaption><pre class="language-css"><code class="language-css">:root {
+  color-scheme: dark;
+  --bg: #0F1222;
+  --ink: #F4F5FA;
+  --muted: #A9ADC6;
+  --key: #FFB300;
+  --on-key: #1A1300;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink); }
+body { font-family: system-ui, sans-serif; -webkit-tap-highlight-color: transparent; }
+.screen {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-top: calc(env(safe-area-inset-top) + 12px);
+  padding-bottom: calc(env(safe-area-inset-bottom) + 24px);
+  padding-inline: 16px;
+}
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.status { margin: 0; min-height: 1.5em; color: var(--muted); }
+.together { display: flex; flex-wrap: wrap; gap: 8px; margin-block-start: auto; }
+button {
+  font: inherit;
+  border: 0;
+  border-radius: 14px;
+  padding: 14px 20px;
+  background: var(--key);
+  color: var(--on-key);
+}
+button:disabled { opacity: 0.5; }</code></pre></figure>
+        </div>
+      </article>
+
+      <article class="cart" style="--h:226">
+        <div class="label"><span class="num">2</span><div><h3>Wait for the bridge</h3><p>The app injects <code>window.gathering</code> after your scripts start.</p></div></div>
+        <div class="body">
+          <p>Never decide "I'm not in the app" because <code>window.gathering</code> is missing at load time. Copy <code>bridgeReady()</code> as it is: it resolves the bridge once the app installs it, or <code>null</code> in a plain browser.</p>
+          <figure class="code"><figcaption><span class="file"><span class="ms">code</span>app.js · bridgeReady()</span><button class="copy" type="button" data-copy=""><span class="ms">content_copy</span><span class="lbl">Copy</span></button></figcaption><pre class="language-javascript"><code class="language-javascript">function bridgeReady() {
+  if (window.gathering &amp;&amp; window.gathering.__installed) return Promise.resolve(window.gathering);
+  if (!window.GatheringBridge) return Promise.resolve(null); // a plain desktop browser
+  return new Promise(function (resolve) {
+    var done = false;
+    function finish() {
+      if (done) return;
+      done = true;
+      window.removeEventListener('gatheringready', finish);
+      resolve(window.gathering &amp;&amp; window.gathering.__installed ? window.gathering : null);
+    }
+    window.addEventListener('gatheringready', finish);
+    setTimeout(finish, 10000);
+  });
+}</code></pre></figure>
+          <p>Then start. Read the player, ask for the room, and hide the splash on every path, failures included.</p>
+          <figure class="code"><figcaption><span class="file"><span class="ms">code</span>app.js · main()</span><button class="copy" type="button" data-copy=""><span class="ms">content_copy</span><span class="lbl">Copy</span></button></figcaption><pre class="language-javascript"><code class="language-javascript">(async function main() {
+  g = (await bridgeReady()) || browserStub();
+  try {
+    me = await g.player.me();
+    const room = await g.room.current();
+    if (room) await enterRoom(room); // together, in a room
+    else startPractice();            // one phone, no room
+  } catch (code) {
+    g.log('start failed:', code);
+    say('صار خلل. سكّر اللعبة وافتحها مرة ثانية.');
+  } finally {
+    g.hideSplash(); // with "splash": true, on every path
+  }
+})();</code></pre></figure>
+          <p>In a desktop browser <code>bridgeReady()</code> gives <code>null</code>, and this stand-in keeps the game playable in practice mode. It is the only place <code>alert</code> and <code>confirm</code> may appear.</p>
+          <figure class="code"><figcaption><span class="file"><span class="ms">code</span>app.js · browserStub()</span><button class="copy" type="button" data-copy=""><span class="ms">content_copy</span><span class="lbl">Copy</span></button></figcaption><pre class="language-javascript tall"><code class="language-javascript">function browserStub() {
+  const reject = (code) =&gt; () =&gt; Promise.reject(code);
+  const ls = (k) =&gt; 'stub.' + k;
+  return {
+    send() {}, call: reject('unknown_action'),
+    showToast: (o) =&gt; console.log('[toast]', o &amp;&amp; o.title, o &amp;&amp; o.subtitle),
+    showDialog: (o) =&gt; Promise.resolve(confirm([o.title, o.body].filter(Boolean).join('\n'))),
+    prompt: (o) =&gt; Promise.resolve(window.prompt(o.message || o.title || '', o.initialValue || '')),
+    showActionSheet: () =&gt; Promise.resolve(null),
+    showLoading() {}, hideLoading() {}, showSplash() {}, hideSplash() {},
+    setAppBar() {}, showAppBar() {}, hideAppBar() {}, setAppBarColor() {}, setStatusBarColor() {},
+    setZoom() {}, setTextSelection() {}, setOrientation() {},
+    celebrate: (o) =&gt; { alert((o &amp;&amp; o.title) || 'انتهت الجولة'); return Promise.resolve(); },
+    haptic() {}, playSound() {}, setMuted() {},
+    copyToClipboard: (t) =&gt; navigator.clipboard &amp;&amp; navigator.clipboard.writeText(String(t)),
+    getFromClipboard: () =&gt; Promise.resolve(null),
+    openExternalUrl: (u) =&gt; { window.open(u, '_blank'); return Promise.resolve(true); },
+    getDeviceInfo: () =&gt; Promise.resolve({ platform: 'other', osVersion: '', locale: 'ar-IQ', languageCode: 'ar',
+      isDarkMode: true, screenWidth: innerWidth, screenHeight: innerHeight }),
+    getAppInfo: () =&gt; Promise.resolve({ name: 'browser', version: '0', build: '0', isDebug: true, language: 'ar' }),
+    getAuthCode: () =&gt; Promise.resolve(null),
+    player: { me: () =&gt; Promise.resolve({ id: 'local', nickname: 'أنت', handle: 'you', avatar: null, avatarUrl: null }) },
+    storage: {
+      get: (k) =&gt; Promise.resolve(JSON.parse(localStorage.getItem(ls(k)) || 'null')),
+      set: (k, v) =&gt; Promise.resolve(localStorage.setItem(ls(k), JSON.stringify(v))),
+      remove: (k) =&gt; Promise.resolve(localStorage.removeItem(ls(k))),
+    },
+    permissions: { request: () =&gt; Promise.resolve('denied'), status: () =&gt; Promise.resolve('prompt'),
+      openSettings: () =&gt; Promise.resolve(false) },
+    room: { current: () =&gt; Promise.resolve(null), members: () =&gt; Promise.resolve([]), send() {},
+      getState: reject('not_in_room'), setState: reject('not_in_room'), start: reject('not_in_room'),
+      end: reject('not_in_room'), leave: reject('not_in_room'), kick: reject('not_in_room'),
+      invite: reject('not_in_room'), ticket: reject('not_in_room'), on() {}, off() {},
+      create: reject('offline'), join: reject('offline') },
+    friends: { add: reject('not_found'), status: reject('not_found'),
+      list: reject('scope_required'), invite: reject('not_in_room') },
+    close() {}, minimize() {}, goBack: () =&gt; history.back(), reload: () =&gt; location.reload(),
+    reloadHome: () =&gt; location.replace(location.pathname), log: (...a) =&gt; console.log('[game]', ...a),
+  };
+}</code></pre></figure>
+        </div>
+      </article>
+
+      <article class="cart" style="--h:196">
+        <div class="label"><span class="num">3</span><div><h3>Make it playable alone</h3><p>Pure rules first, so practice and the host share them.</p></div></div>
+        <div class="body">
+          <p><code>applyMove</code> returns a new state, or <code>null</code> when the move isn't allowed. <code>render</code> draws the whole screen from a state, every time.</p>
+          <figure class="code"><figcaption><span class="file"><span class="ms">code</span>app.js · rules and drawing</span><button class="copy" type="button" data-copy=""><span class="ms">content_copy</span><span class="lbl">Copy</span></button></figcaption><pre class="language-javascript"><code class="language-javascript">'use strict';
+
+let g;               // window.gathering, or the browser stub
+let me;              // { id, nickname, handle, avatar, avatarUrl }
+let onMove = () =&gt; {};
+
+// ---- Your game: pure rules, the same on every phone ----------------------
+
+function initialState(playerIds) {
+  return { players: playerIds, turn: playerIds[0], scores: {}, winner: null };
+}
+
+// The next state, or null when the move is not allowed (wrong turn, taken cell…).
+// Decide `winner` here: a player id, 'draw', or null while the round goes on.
+function applyMove(state, playerId, move) {
+  if (state.winner || state.turn !== playerId) return null;
+  // TODO: apply `move` and return a NEW state object.
+  return null;
+}
+
+// One line per player that RANKS them: the winner 1, the others 2, a draw all 1.
+// A round where nobody is ranked better decides nothing in a tournament.
+function scoresFrom(state) {
+  return state.players.map((id) =&gt; ({
+    player: id,
+    score: state.scores[id] || 0,
+    rank: state.winner === 'draw' || state.winner === id ? 1 : 2,
+  }));
+}
+
+// Draw the whole screen from `state`, every time. Call onMove(move) from input.
+function render(state) {
+  // TODO
+}
+
+function say(words) {
+  document.getElementById('status').textContent = words;
+}</code></pre></figure>
+          <p>Outside a room the whole game plays on one phone, and two keys offer a room for your game. <code>create()</code> and <code>join()</code> resolve <code>{ id, code }</code>, then the room's lobby takes your page's place.</p>
+          <figure class="code"><figcaption><span class="file"><span class="ms">code</span>app.js · practice</span><button class="copy" type="button" data-copy=""><span class="ms">content_copy</span><span class="lbl">Copy</span></button></figcaption><pre class="language-javascript"><code class="language-javascript">// One phone, no room: the whole game, played alone.
+function startPractice() {
+  document.getElementById('mode').textContent = 'تمرين';
+  let state = initialState([me.id]);
+  render(state);
+  onMove = (move) =&gt; {
+    const next = applyMove(state, me.id, move);
+    if (!next) return g.haptic('selection');
+    state = next;
+    render(state);
+    g.playSound('tap');
+    if (state.winner) {
+      g.celebrate({ kind: state.winner === 'draw' ? 'draw' : state.winner === me.id ? 'win' : 'lose' });
+    }
+  };
+  offerRoom();
+}
+
+// Outside a room, two keys take the player into one for this game.
+function offerRoom() {
+  const box = document.getElementById('together');
+  const line = document.getElementById('together-line');
+  const keys = box.querySelectorAll('button');
+  box.hidden = false;
+  const enter = (ask) =&gt; {
+    keys.forEach((k) =&gt; (k.disabled = true));
+    ask().then(
+      () =&gt; {}, // { id, code }: the room's lobby now takes this page's place
+      (code) =&gt; {
+        keys.forEach((k) =&gt; (k.disabled = false));
+        if (code !== 'cancelled') line.textContent = wordsFor(code);
+      },
+    );
+  };
+  document.getElementById('play-friend').onclick = () =&gt; enter(() =&gt; g.room.create());
+  document.getElementById('join-room').onclick = () =&gt; enter(() =&gt; g.room.join());
+}
+
+function wordsFor(code) {
+  return ({
+    offline: 'ما في إنترنت. جرّب بعدين.',
+    in_another_room: 'إنت بغرفة ثانية.',
+    room_full: 'الغرفة مليانة.',
+    room_closed: 'الغرفة تسكّرت.',
+    invalid_code: 'الرمز مو صحيح.',
+  })[code] || 'ما صارت. جرّب مرة ثانية.';
+}</code></pre></figure>
+        </div>
+      </article>
+
+      <article class="cart" style="--h:136">
+        <div class="label"><span class="num">4</span><div><h3>Play it in a room</h3><p>The host referees; every phone draws from the shared state.</p></div></div>
+        <div class="body">
+          <p>Other players send their moves as messages. The host checks each with <code>applyMove</code> and writes the state with the version it last saw. A <code>state_stale</code> rejection means someone wrote first: read the state again, then decide. When the round is won the host ends it with scores that <b>rank</b> every player (<code>scoresFrom</code>): a tournament counts each round by its ranks.</p>
+          <figure class="code"><figcaption><span class="file"><span class="ms">code</span>app.js · room (authoritative host)</span><button class="copy" type="button" data-copy=""><span class="ms">content_copy</span><span class="lbl">Copy</span></button></figcaption><pre class="language-javascript"><code class="language-javascript">// In a room the host referees (manifest: "host": "authoritative", "state": "blob").
+// Other phones send moves; the host checks them and writes the state;
+// EVERY phone, the host's too, draws from the 'state' event.
+async function enterRoom(current) {
+  document.getElementById('mode').textContent = 'غرفة ' + current.code;
+  let isHost = current.you.role === 'host';
+  let version = 0;
+  let state = null;
+  let celebrated = false;
+
+  const show = (data) =&gt; {
+    state = data;
+    render(state);
+    if (state &amp;&amp; state.winner &amp;&amp; !celebrated) {
+      celebrated = true; // each phone celebrates its own outcome, once
+      g.celebrate({ kind: state.winner === 'draw' ? 'draw' : state.winner === me.id ? 'win' : 'lose' });
+      // The host ends the ROUND; the room stays open for "play again".
+      if (isHost) g.room.end({ scores: scoresFrom(state) }).catch((c) =&gt; g.log('room.end', c));
+    }
+  };
+
+  g.room.on('state', (s) =&gt; { version = s.version; show(s.data); });
+  g.room.on('message', (m) =&gt; {
+    if (isHost &amp;&amp; m.from !== me.id &amp;&amp; m.data &amp;&amp; m.data.type === 'move') referee(m.from, m.data.move);
+  });
+  g.room.on('host', async () =&gt; { isHost = (await g.room.current()).you.role === 'host'; });
+
+  const saved = await g.room.getState().catch(() =&gt; null);
+  if (saved &amp;&amp; saved.data) {
+    version = saved.version;
+    show(saved.data);
+  } else if (isHost) {
+    const seated = (await g.room.members()).filter((m) =&gt; m.role !== 'spectator');
+    await write(initialState(seated.map((m) =&gt; m.id)));
+  }
+
+  onMove = (move) =&gt; (isHost ? referee(me.id, move) : g.room.send({ type: 'move', move }));
+
+  function referee(playerId, move) {
+    if (!state || state.winner) return;
+    const next = applyMove(state, playerId, move); // null when illegal
+    if (next) write(next);
+  }
+
+  async function write(next) {
+    try {
+      version = await g.room.setState(next, version);
+      show(next);
+    } catch (code) {
+      if (code !== 'state_stale') return g.log('setState', code);
+      const s = await g.room.getState(); // someone wrote first: read, then decide
+      version = s.version;
+      show(s.data);
+    }
+  }
+}</code></pre></figure>
+          <p>A real-time game (<code>"host": "peer"</code>, <code>"pace": "realtime"</code>) works differently: every phone counts from the round's <code>startedAt</code>, each input is one <code>send</code>, and the host ends the round with the scores it counted. It takes the place of the <code>enterRoom</code> above.</p>
+          <figure class="code"><figcaption><span class="file"><span class="ms">code</span>app.js · room (real-time peers)</span><button class="copy" type="button" data-copy=""><span class="ms">content_copy</span><span class="lbl">Copy</span></button></figcaption><pre class="language-javascript"><code class="language-javascript">// A race (manifest: "host": "peer", "pace": "realtime"), in place of the
+// enterRoom above. Everyone counts from the round's start; each tap is one
+// message; the host ends the round, ranked by taps.
+let onTap = () =&gt; {}; // call onTap() from your tap handler
+
+async function enterRoom(current) {
+  const taps = {};
+  g.room.on('message', (m) =&gt; {
+    if (m.from !== me.id &amp;&amp; m.data.type === 'tap') taps[m.from] = (taps[m.from] || 0) + 1;
+  });
+  onTap = () =&gt; {
+    taps[me.id] = (taps[me.id] || 0) + 1;
+    g.room.send({ type: 'tap' }); // ≤ 30 sends a second, each under 16 KiB
+  };
+  const endsAt = current.startedAt + 10000; // ten seconds, on this phone's clock
+  setTimeout(async () =&gt; {
+    onTap = () =&gt; {};
+    g.celebrate({ kind: 'rank', title: 'خلص السباق', message: 'نقراتك: ' + (taps[me.id] || 0) });
+    if (current.you.role !== 'host') return;
+    const seated = (await g.room.members()).filter((m) =&gt; m.role !== 'spectator');
+    await g.room.end({ scores: seated.map((m) =&gt; ({ player: m.id, score: taps[m.id] || 0 })) });
+  }, Math.max(0, endsAt - Date.now()));
+}</code></pre></figure>
+        </div>
+      </article>
+
+      <article class="cart" style="--h:76">
+        <div class="label"><span class="num">5</span><div><h3>Publish the manifest</h3><p>The only thing Gathering knows about your game.</p></div></div>
+        <div class="body">
+          <p>Serve it at <code>/.well-known/gathering-game.json</code>, public (a private or localhost address is refused), as <code>application/json</code>, under 256 KB, answering within ten seconds. A catch-all route that returns your <code>index.html</code> is the most common mistake.</p>
+          <figure class="code"><figcaption><span class="file"><span class="ms">code</span>.well-known/gathering-game.json</span><button class="copy" type="button" data-copy=""><span class="ms">content_copy</span><span class="lbl">Copy</span></button></figcaption><pre class="language-json"><code class="language-json">{
+  "id": "yourstudio.game",
+  "name": "اسم لعبتك",
+  "version": "1.0.0",
+  "mode": "embedded",
+  "entry": "https://games.yourstudio.example/",
+  "orientation": "portrait",
+  "splash": true,
+  "publisher": { "tier": "partner", "name": "اسم استوديوك" },
+  "scopes": ["identity:read"],
+  "permissions": [],
+  "room": {
+    "players": { "min": 2, "max": 8 },
+    "host": "authoritative",
+    "pace": "turn",
+    "state": "blob",
+    "lan": true,
+    "rejoin": true,
+    "spectators": false,
+    "chat": true
+  }
+}</code></pre></figure>
+          <p>Check it from outside your network before you send it in:</p>
+          <figure class="code"><figcaption><span class="file"><span class="ms">terminal</span>terminal</span><button class="copy" type="button" data-copy=""><span class="ms">content_copy</span><span class="lbl">Copy</span></button></figcaption><pre class="language-bash"><code class="language-bash">curl -sS -o /dev/null -w '%{http_code} %{content_type}\n' \
+  https://games.yourstudio.example/.well-known/gathering-game.json
+# want: 200 application/json</code></pre></figure>
+        </div>
+      </article>
+    </section>
+
+    <!-- ========================================================= manifest -->
+    <section class="part" id="manifest" aria-labelledby="mf-t">
+      <h2 class="st" id="mf-t"><span class="bars" aria-hidden="true"><i></i><i></i></span>The manifest, field by field</h2>
+      <p class="intro">Validation reports every problem at once, as <code>{ "error": "invalid_fields", "fields": { … } }</code>.</p>
+      <div class="table-wrap plate-card">
+        <table>
+          <thead><tr><th>Field</th><th>Required</th><th>Rules</th></tr></thead>
+          <tbody>
+            <tr><td><code>id</code></td><td>yes</td><td>Permanent. Lowercase and dotted, matching <code>^[a-z0-9]+(\.[a-z0-9-]+)+$</code>, like <code>yourstudio.xo</code>, up to 64 characters. It is also your OAuth <code>client_id</code>.</td></tr>
+            <tr><td><code>name</code></td><td>yes</td><td>The tile's title, up to 120 characters.</td></tr>
+            <tr><td><code>version</code></td><td>yes</td><td>Your version string, up to 32 characters.</td></tr>
+            <tr><td><code>mode</code></td><td>yes</td><td>Always <code>embedded</code>.</td></tr>
+            <tr><td><code>entry</code></td><td>yes</td><td>The URL the frame loads. <code>?code=…</code>, and sometimes <code>&amp;path=…</code>, is added at launch.</td></tr>
+            <tr><td><code>orientation</code></td><td>no</td><td><code>portrait</code> (default) or <code>landscape</code>.</td></tr>
+            <tr><td><code>splash</code></td><td>no</td><td><code>true</code> keeps the app's cover over your page until you call <code>hideSplash()</code>. Left up, the player sees "taking longer than usual" after 20 s.</td></tr>
+            <tr><td><code>publisher.tier</code></td><td>yes</td><td><code>partner</code>. <code>first-party</code> is reserved for Gathering.</td></tr>
+            <tr><td><code>publisher.name</code></td><td>no</td><td>Your studio's name in the store, up to 120 characters.</td></tr>
+            <tr><td><code>scopes</code></td><td>no</td><td>What your game may do with the player: <code>identity:read</code> (their name and picture, to your server), <code>friends:read</code> (<code>friends.list()</code> in your page), <code>notify:send</code> and <code>results:write</code> (from your server).</td></tr>
+            <tr><td><code>permissions</code></td><td>no</td><td><code>camera</code>, <code>microphone</code>, <code>location</code>, <code>notification</code>, <code>storage</code>, <code>contacts</code>. Every listed one gets the app's question on one sheet when the game opens, and the game won't open if refused; the phone itself asks only at <code>permissions.request</code>. For an optional one, leave the list empty and ask at runtime. Android always refuses <code>storage</code>.</td></tr>
+            <tr><td><code>redirect_uris</code></td><td>no</td><td>Only for <a href="https://docs.ga3da.fun/auth">signing players in from your own website</a>: where they may be sent back, matched exactly.</td></tr>
+            <tr><td><code>room.players</code></td><td>yes</td><td><code>min</code> and <code>max</code>, 1 to 64. The host can't start below <code>min</code>; nobody joins beyond <code>max</code>.</td></tr>
+            <tr><td><code>room.host</code></td><td>yes</td><td><code>authoritative</code>: only the host writes the shared state. <code>peer</code>: anyone may.</td></tr>
+            <tr><td><code>room.pace</code></td><td>yes</td><td><code>turn</code> or <code>realtime</code>. Shown to players; the relay behaves the same.</td></tr>
+            <tr><td><code>room.state</code></td><td>no</td><td><code>blob</code> (default): a shared, versioned JSON state. <code>none</code>: messages only.</td></tr>
+            <tr><td><code>room.lan</code></td><td>no</td><td>Whether the game may be played over a same-Wi-Fi relay with no internet. Every room plays through the cloud relay today.</td></tr>
+            <tr><td><code>room.rejoin</code></td><td>no</td><td>A member who left may come back while a round is playing. Between rounds anybody who left may.</td></tr>
+            <tr><td><code>room.spectators</code></td><td>no</td><td>The room may hold people who only watch. Reserved: no room holds spectators yet.</td></tr>
+            <tr><td><code>room.chat</code></td><td>no</td><td>The app's chat and emotes over your rooms, <code>true</code> when left out. Say <code>false</code> for a game so fast a player can't look away. Your page never sees the chat and needs no code for it.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="side-note"><span class="ms">menu_book</span><span>The tagline, description, icon, screenshots and category are <b>not in the manifest</b>. Gathering's team writes that store copy: send what you want it to say, an icon (PNG or JPEG, up to 2 MB) and up to six screenshots.</span></div>
+    </section>
+
+    <!-- ======================================================= page rules -->
+    <section class="part" id="page" aria-labelledby="pg-t">
+      <h2 class="st" id="pg-t"><span class="bars" aria-hidden="true"><i></i><i></i></span>Page rules</h2>
+      <p class="intro">Your page is the top document of a full-screen WebView: WKWebView on iOS, WebView on Android.</p>
+      <div class="rules">
+        <div class="rule plate-card" style="--h:256"><span class="disc"><span class="ms">smartphone</span></span><b>Pad for the safe area</b><p><code>viewport-fit=cover</code>, then <code>env(safe-area-inset-top)</code> and <code>-bottom</code> on your screen. With the bar hidden an iPhone draws your page under the status bar; on Android the app stops it there itself. The same CSS is right on both.</p></div>
+        <div class="rule plate-card" style="--h:196"><span class="disc"><span class="ms">translate</span></span><b>Arabic first</b><p><code>&lt;html lang="ar" dir="rtl"&gt;</code> and logical properties like <code>margin-inline-start</code>. <code>getAppInfo().language</code> if you ship English too.</p></div>
+        <div class="rule plate-card" style="--h:286"><span class="disc"><span class="ms">dark_mode</span></span><b>Dark first</b><p>The app is dark by default. <code>getDeviceInfo().isDarkMode</code> tells you the app's look, which the player picks in the app, not the phone's setting.</p></div>
+        <div class="rule plate-card" style="--h:136"><span class="disc"><span class="ms">web_asset</span></span><b>The bar is the app's</b><p>Your tile and name, the room's code and the app's controls. Nothing you draw covers it. Hide it with <code>hideAppBar()</code> and keep your own way out that calls <code>g.close()</code>.</p></div>
+        <div class="rule plate-card" style="--h:16"><span class="disc"><span class="ms">block</span></span><b>No native dialogs</b><p><code>alert</code>, <code>confirm</code> and <code>prompt</code> can block the WebView. Use <code>showDialog</code> and <code>prompt</code> from the bridge.</p></div>
+        <div class="rule plate-card" style="--h:76"><span class="disc"><span class="ms">fit_screen</span></span><b>One screen, light to load</b><p>The frame is already full screen. Pinch-zoom and text selection start off. Don't load heavy assets before your first screen.</p></div>
+      </div>
+    </section>
+
+    <!-- =========================================================== bridge -->
+    <section class="part" id="bridge" aria-labelledby="br-t">
+      <h2 class="st" id="br-t"><span class="bars" aria-hidden="true"><i></i><i></i></span>Use the bridge, not the browser</h2>
+      <p class="intro">What your game does today, and the call that does it on Gathering. Every one is on <code>g</code>, the bridge <code>bridgeReady()</code> gave you.</p>
+      <div class="table-wrap plate-card">
+        <table>
+          <thead><tr><th>Your game does…</th><th>On Gathering</th></tr></thead>
+          <tbody>
+            <tr><td>A loading screen</td><td><code>"splash": true</code>, then <code>g.hideSplash()</code> when the first screen is ready. <code>g.showSplash('نحمّل…')</code> changes its line.</td></tr>
+            <tr><td><code>alert</code> / <code>confirm</code></td><td><code>await g.showDialog({ title, body, confirmText, cancelText })</code> → <code>true</code> or <code>false</code>. Leave out <code>cancelText</code> for one button.</td></tr>
+            <tr><td>A text popup</td><td><code>await g.prompt({ title, message, initialValue })</code> → a string or <code>null</code></td></tr>
+            <tr><td>A choice menu</td><td><code>await g.showActionSheet({ title, options })</code> → <code>{ index, value }</code> or <code>null</code></td></tr>
+            <tr><td>Toasts, a spinner</td><td><code>g.showToast({ title, subtitle })</code>, <code>g.showLoading({ message })</code> … <code>g.hideLoading()</code></td></tr>
+            <tr><td>A results screen</td><td><code>await g.celebrate({ kind, title, message })</code>, <code>kind</code> one of <code>win</code>, <code>lose</code>, <code>draw</code>, <code>rank</code>. Every round ends this way.</td></tr>
+            <tr><td><code>navigator.vibrate</code></td><td><code>g.haptic('light' | 'medium' | 'heavy' | 'selection' | 'vibrate')</code></td></tr>
+            <tr><td>Sound effects</td><td><code>g.playSound('tap' | 'tick' | 'join' | 'leave' | 'win' | 'lose' | 'countdown')</code>, played only while the player's sound switch is on. Your own music needs a switch of its own.</td></tr>
+            <tr><td><code>localStorage</code></td><td><code>await g.storage.set(key, value)</code>, <code>get</code>, <code>remove</code>. JSON, per game, wiped on sign-out: small local things only.</td></tr>
+            <tr><td>A name field or login</td><td><code>await g.player.me()</code> → <code>{ id, nickname, handle, avatar, avatarUrl }</code>. Never the phone number.</td></tr>
+            <tr><td>An Exit button</td><td><code>g.close()</code>. <code>g.goBack()</code> steps back and closes at the root; <code>g.minimize()</code> parks the game (not while your round plays in a room).</td></tr>
+            <tr><td>Camera, mic, location</td><td><code>await g.permissions.request('microphone')</code> → <code>granted</code>, <code>denied</code>, <code>permanentlyDenied</code>…, then the web API. Offer <code>g.permissions.openSettings()</code> on <code>permanentlyDenied</code>. On Android the frame doesn't yet pass the camera, microphone or location to your page's web APIs, and <code>&lt;input type="file"&gt;</code> opens nothing there: build without them.</td></tr>
+            <tr><td>Fullscreen, orientation, bar colour</td><td><code>g.hideAppBar()</code>, <code>g.setOrientation('landscape')</code> within what the manifest allows, <code>g.setAppBarColor('#1B1F3A')</code></td></tr>
+            <tr><td>Links, clipboard</td><td><code>await g.openExternalUrl(url)</code> (it leaves the app), <code>g.copyToClipboard(text)</code>, <code>await g.getFromClipboard()</code></td></tr>
+            <tr><td>Friends</td><td><code>g.friends.status(id)</code>, <code>g.friends.add(id)</code> (the app asks the player first), <code>g.friends.list()</code> with <code>friends:read</code>, <code>g.friends.invite(id)</code> in a room</td></tr>
+            <tr><td>Debug logging</td><td><code>g.log('anything', obj)</code> writes to the app's log</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3 style="margin-top:26px">When a call is refused</h3>
+      <p class="measure" style="color:var(--muted)">A rejected promise rejects with a <b>bare code string</b>, never an <code>Error</code>. Put every code a player can meet into your own words.</p>
+      <figure class="code"><figcaption><span class="file"><span class="ms">code</span>app.js</span><button class="copy" type="button" data-copy=""><span class="ms">content_copy</span><span class="lbl">Copy</span></button></figcaption><pre class="language-javascript"><code class="language-javascript">try {
+  await g.room.start();
+} catch (code) {            // a bare string, never an Error
+  if (code === 'host_only') g.showToast({ title: 'بس المضيف يبدي' });
+}</code></pre></figure>
+      <div class="table-wrap plate-card">
+        <table>
+          <thead><tr><th>Code</th><th>Meaning</th></tr></thead>
+          <tbody>
+            <tr><td><code>not_in_room</code></td><td>A room call while the game isn't in a room.</td></tr>
+            <tr><td><code>host_only</code></td><td>A host-only room call from someone else.</td></tr>
+            <tr><td><code>state_stale</code></td><td><code>room.setState</code> against an outdated version. Read again, then decide.</td></tr>
+            <tr><td><code>no_state</code></td><td><code>room.setState</code> in a room whose manifest says <code>"state": "none"</code>.</td></tr>
+            <tr><td><code>timeout</code></td><td><code>room.setState</code> unanswered for ten seconds (a blob over 16 KiB never arrives): read the state again. Also any platform call the network dropped.</td></tr>
+            <tr><td><code>rate_limited</code></td><td>Over 30 frames a second.</td></tr>
+            <tr><td><code>scope_required</code></td><td>The manifest lacks the scope, like <code>friends.list</code> without <code>friends:read</code>.</td></tr>
+            <tr><td><code>cancelled</code></td><td>The player closed the app's sheet. Say nothing.</td></tr>
+            <tr><td><code>offline</code> / <code>failed</code></td><td>The phone is offline / the call failed without a code.</td></tr>
+            <tr><td><code>unknown_action</code></td><td>No such call: a typo, or an older app.</td></tr>
+            <tr><td>joining and starting</td><td><code>in_room</code>, <code>not_a_room_game</code>, <code>invalid_code</code>, <code>in_another_room</code>, <code>room_not_found</code>, <code>room_full</code>, <code>room_closed</code>, <code>room_started</code>, <code>another_game</code>, <code>friends_only</code>, <code>kicked</code>, <code>not_found</code> (the game isn't published), <code>too_few_players</code>, <code>not_member</code></td></tr>
+            <tr><td>ending a round, kicks</td><td><code>room_not_started</code> (no round playing), <code>invalid_fields</code> (a scores line naming nobody in the room, twice, or ranked below 1; a kick naming yourself or someone not in the room)</td></tr>
+            <tr><td>tournaments</td><td><code>tournament_room</code> (<code>room.kick</code> or <code>friends.invite</code> in a match room), <code>not_in_match</code>, <code>not_in_tournament</code></td></tr>
+            <tr><td>friends</td><td><code>blocked</code>, <code>not_found</code>, <code>not_friends</code>, <code>already_member</code>. <code>friends.add</code> <i>resolves</i> <code>'cancelled'</code> when the player says no.</td></tr>
+            <tr><td>the rest</td><td><code>invalid_orientation</code>, <code>unknown_permission</code>, <code>not_supported</code> (a call this app doesn't answer yet)</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ============================================================ rooms -->
+    <section class="part" id="rooms" aria-labelledby="rm-t">
+      <h2 class="st" id="rm-t"><span class="bars" aria-hidden="true"><i></i><i></i></span>Rooms</h2>
+      <p class="intro">A room is a private table of 1–64 players with one host, and a relay that carries every message <b>in the same order to every phone</b>. The app owns the connection, the codes, invites, nearby rooms on the same Wi-Fi, reconnects and host hand-over. Remove your own lobby, matchmaking and sockets.</p>
+      <div class="table-wrap plate-card">
+        <table>
+          <thead><tr><th>Call</th><th>Returns and rules</th></tr></thead>
+          <tbody>
+            <tr><td><code>room.current()</code></td><td><code>{ id, code, game, status, round, you: { role, seat }, config, seq, startedAt, tournament }</code> or <code>null</code>. <code>status</code> is <code>lobby</code>, <code>playing</code> or <code>ended</code>; <code>role</code> is <code>host</code>, <code>player</code> or <code>spectator</code>; <code>tournament</code> is <code>null</code>, or the tournament match the room plays.</td></tr>
+            <tr><td><code>room.members()</code></td><td><code>[{ id, nickname, handle, avatar, avatarUrl, role, seat, connected }]</code>, by seat.</td></tr>
+            <tr><td><code>room.send(data, { to? })</code></td><td>Any JSON <b>under 16 KiB</b>, <b>at most 30 frames a second</b> per player, state writes included. The relay drops what goes over, without a word. A message with <code>to</code> is not echoed to you, and one to someone not in the room is dropped.</td></tr>
+            <tr><td><code>room.getState()</code></td><td><code>{ version, data }</code>, with <code>"state": "blob"</code>. Every round starts at version 0.</td></tr>
+            <tr><td><code>room.setState(data, version)</code></td><td>The new version. Pass the one you last saw. Host-only with <code>authoritative</code>; <code>no_state</code> in a room with <code>"state": "none"</code>.</td></tr>
+            <tr><td><code>room.start()</code> / <code>room.end({ scores })</code></td><td>Host only. <code>end</code> ends the round and records its results; the room stays open. It rejects <code>room_not_started</code> when no round is playing (the platform may have ended it) and <code>invalid_fields</code> for a line naming nobody in the room, a duplicate, or a rank below 1.</td></tr>
+            <tr><td><code>room.invite()</code></td><td>The app's invite sheet over your game; resolves the ids invited.</td></tr>
+            <tr><td><code>room.create()</code> / <code>room.join()</code></td><td>Outside a room only. <code>{ id, code }</code>, then the lobby takes your page's place.</td></tr>
+            <tr><td><code>room.leave()</code> / <code>room.kick(id)</code></td><td>Leave for the app's hub / the host removes a player (<code>tournament_room</code> in a match room).</td></tr>
+            <tr><td><code>room.ticket()</code></td><td><code>{ token, expiresAt }</code>, a short-lived ES256 JWT for your server.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <h3 style="margin-top:26px">Events</h3>
+      <p class="measure" style="color:var(--muted)"><code>g.room.on(event, fn)</code> and <code>g.room.off(event, fn?)</code>.</p>
+      <div class="table-wrap plate-card">
+        <table>
+          <thead><tr><th>Event</th><th>Detail</th></tr></thead>
+          <tbody>
+            <tr><td><code>state</code></td><td><code>{ version, data, by, seq }</code>; after a reconnect it may be <code>{ version, data }</code> alone. Render from this on every phone, the host's too.</td></tr>
+            <tr><td><code>message</code></td><td><code>{ from, seq, data, to? }</code>. Your own messages may come back: skip <code>from === me.id</code>.</td></tr>
+            <tr><td><code>members</code></td><td>The member list (accept a bare array or <code>{ list }</code>).</td></tr>
+            <tr><td><code>joined</code> / <code>left</code></td><td><code>{ player, seq }</code> with the whole member / <code>{ player, seq, reason }</code> with the id. A dropped connection is not a leave: <code>members</code> shows it as <code>connected: false</code>.</td></tr>
+            <tr><td><code>started</code> / <code>ended</code></td><td><code>ended</code> fires once per round with its <code>results</code> and a <code>reason</code>: <code>host</code>, <code>timeout</code> (the platform ends a round after two hours), <code>empty</code>, <code>idle</code>, <code>admin</code>, <code>tournament</code>, or empty for a plain end. Never score by it.</td></tr>
+            <tr><td><code>host</code></td><td><code>{ seq, player, by }</code>: the host changed. Check whether you are the host now.</td></tr>
+            <tr><td><code>kicked</code>, <code>connection</code></td><td><code>{ seq, player, by }</code> / <code>{ state }</code>: <code>connecting</code>, <code>open</code>, <code>reconnecting</code> or <code>closed</code>, for a "reconnecting…" line.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="ribbon"><span class="ms">emoji_events</span><div><b>Results</b><p>The host sends one entry per player that ranks them: <code>g.room.end({ scores: [{ player: 'ply_1', score: 37, rank: 1 }, …] })</code>. Leave out <code>rank</code> and the platform ranks by score, highest first, ties sharing a place (1, 1, 3). Each phone calls <code>celebrate()</code> for its own outcome; the app then shows the standings in the room's lobby.</p></div></div>
+      <div class="ribbon"><span class="ms">emoji_events</span><div><b>Tournaments</b><p>A room may be a tournament's match room (<code>room.current().tournament</code> is not <code>null</code>). Your game needs nothing new: every round that ends with results is counted by its ranks. In a knockout the round's winner is the player ranked strictly better; equal ranks are a draw and the pair plays again, so a knockout needs <code>room.players.min</code> of 2 or less. Only the match's players get in (<code>not_in_match</code>), nobody is kicked or invited (<code>room.kick</code> and <code>friends.invite</code> reject <code>tournament_room</code>; the <code>room.invite()</code> sheet's invites are refused), and the deciding round ends with <code>reason: 'tournament'</code>, after which the app shows its results with the way to the tournament. From your first screen, <code>g.tournament.create()</code> and <code>g.tournament.join()</code> start or join one; check that <code>g.tournament</code> exists first. <a href="https://docs.ga3da.fun/tournaments">The tournaments page</a> has the rest.</p></div></div>
+    </section>
+
+    <!-- =========================================================== server -->
+    <section class="part" id="server" aria-labelledby="sv-t">
+      <h2 class="st" id="sv-t"><span class="bars" aria-hidden="true"><i></i><i></i></span>Your own server <span class="count">optional</span></h2>
+      <p class="intro">Skip this unless you keep your own accounts, leaderboards or anti-cheat. At registration you get a <code>client_secret</code>, shown once: keep it in your server's environment, never in the page.</p>
+      <p class="measure">The frame loads <code>entry?code=cod_…</code>. The code is good for <b>one minute, one use</b>. Send it from the page to your server:</p>
+      <figure class="code"><figcaption><span class="file"><span class="ms">code</span>app.js</span><button class="copy" type="button" data-copy=""><span class="ms">content_copy</span><span class="lbl">Copy</span></button></figcaption><pre class="language-javascript"><code class="language-javascript">// page: hand the one-minute launch code to your server
+const code = new URLSearchParams(location.search).get('code')
+  || ((await g.getAuthCode()) || {}).authCode; // after a reload or in-game navigation
+await fetch('/api/login', { method: 'POST', body: JSON.stringify({ code }) });</code></pre></figure>
+      <figure class="code"><figcaption><span class="file"><span class="ms">terminal</span>your server</span><button class="copy" type="button" data-copy=""><span class="ms">content_copy</span><span class="lbl">Copy</span></button></figcaption><pre class="language-bash"><code class="language-bash"># your server: trade the code for a game token
+curl -X POST https://&lt;gathering-api&gt;/oauth/token \
+  -d grant_type=authorization_code -d code=$CODE \
+  -d client_id=yourstudio.game -d client_secret=$GATHERING_CLIENT_SECRET
+# → { "access_token": "…", "token_type": "Bearer", "expires_in": 3600,
+#     "refresh_token": "rft_…", "scope": "identity:read" }
+
+# then: who arrived?
+curl https://&lt;gathering-api&gt;/v1/bridge/context -H "Authorization: Bearer $ACCESS_TOKEN"
+# → { "player": { "id": "ply_…", "nickname": "زين", "handle": "zayn_4821", "avatar": "a03" },
+#     "room": null, "scope": ["identity:read"], "live": true }</code></pre></figure>
+      <div class="rules">
+        <div class="rule plate-card" style="--h:256"><span class="disc"><span class="ms">replay</span></span><b>Renew, don't loop</b><p>Renew with <code>grant_type=refresh_token</code>: the renewed token is <code>live: false</code> and carries no room. <code>invalid_grant</code> on renewal means the game was removed or suspended: stop. Names and pictures come only with <code>identity:read</code>.</p></div>
+        <div class="rule plate-card" style="--h:196"><span class="disc"><span class="ms">lock</span></span><b>Room tickets</b><p><code>g.room.ticket()</code> gives a JWT with the player, room, role, seat and round. Verify the signature against <code>/.well-known/jwks.json</code>, then the issuer, the audience (a list with your game id), the expiry (ten minutes) and that <code>kind</code> is <code>room</code>: only <code>kind</code> tells a ticket from your game token.</p></div>
+        <div class="rule plate-card" style="--h:76"><span class="disc"><span class="ms">emoji_events</span></span><b>Results</b><p>With <code>results:write</code>: <code>POST /v1/bridge/results</code> replaces that round's results whole, and a later host <code>room.end</code> leaves them as they are. Posted before the round ends, they count for a tournament match.</p></div>
+        <div class="rule plate-card" style="--h:136"><span class="disc"><span class="ms">bolt</span></span><b>Notifications</b><p>With <code>notify:send</code>: <code>POST /v1/bridge/notifications</code>, a title up to 60 characters, a body up to 160, a <code>deep_link</code>; also pushed to the phone; 10 a player per game an hour. An <code>idempotency_key</code> keeps one per thing; a <code>401</code> means stop for that player.</p></div>
+      </div>
+    </section>
+
+    <!-- ========================================================== listing -->
+    <section class="part" id="listing" aria-labelledby="ls-t">
+      <h2 class="st" id="ls-t"><span class="bars" aria-hidden="true"><i></i><i></i></span>Getting listed</h2>
+      <ol class="route">
+        <li class="plate-card"><div><b>Publish the manifest</b><p>And check it from outside your network: <code>200 application/json</code>.</p></div></li>
+        <li class="plate-card"><div><b>Send your origin to your Gathering contact</b><p>An admin registers it; the manifest is fetched and validated then. You get every error at once, or your <code>client_secret</code>.</p></div></li>
+        <li class="plate-card"><div><b>Gathering writes the store copy</b><p>Tagline, icon, description, screenshots and a category: <code>speed</code>, <code>brain</code>, <code>words</code>, <code>luck</code>, <code>guess</code>, <code>draw</code>, <code>party</code> or <code>other</code>.</p></div></li>
+        <li class="plate-card"><div><b>An admin publishes it</b><p>Until then the game answers 404 to players. New <code>version</code>, <code>entry</code> and <code>name</code> apply at once; wider scopes, changed permissions or a changed <code>room</code> block wait for an admin.</p></div></li>
+      </ol>
+      <div class="side-note"><span class="ms">sports_esports</span><span>Two plain reference games show both room patterns: <b>إكس أو</b> (<a href="https://games.ga3da.fun/xo/" target="_blank" rel="noopener"><code>games.ga3da.fun/xo</code></a>, turn-based, authoritative host) and <b>سباق النقر</b> (<a href="https://games.ga3da.fun/tap/" target="_blank" rel="noopener"><code>games.ga3da.fun/tap</code></a>, real-time peers), each a page beside its manifest (<code>.well-known/gathering-game.json</code>), source and all. Each has a "المزيد" screen that runs every bridge call and shows the answer.</span></div>
+    </section>
+
+    <!-- ======================================================== checklist -->
+    <section class="part" id="checklist" aria-labelledby="ck-t">
+      <h2 class="st" id="ck-t"><span class="bars" aria-hidden="true"><i></i><i></i></span>Before you submit</h2>
+      <div class="plate-card checks">
+        <div class="checks-head"><b>Your pre-flight</b><span class="pips" id="pips" aria-live="polite"></span></div>
+        <label class="check"><input type="checkbox" id="ck-1"><span class="box"><span class="ms">check</span></span><span class="t">The splash is hidden on success <b>and</b> on error.</span></label>
+        <label class="check"><input type="checkbox" id="ck-2"><span class="box"><span class="ms">check</span></span><span class="t"><code>room.current() === null</code> gives a complete, playable game.</span></label>
+        <label class="check"><input type="checkbox" id="ck-3"><span class="box"><span class="ms">check</span></span><span class="t">In a room every phone renders from <code>state</code>, and only the host calls <code>room.end({ scores })</code>, once a round, with scores that rank every player.</span></label>
+        <label class="check"><input type="checkbox" id="ck-4"><span class="box"><span class="ms">check</span></span><span class="t">Nothing sits under the notch or the home indicator, and the layout works right to left.</span></label>
+        <label class="check"><input type="checkbox" id="ck-5"><span class="box"><span class="ms">check</span></span><span class="t">No native <code>alert</code> or <code>confirm</code> outside the browser stub.</span></label>
+        <label class="check"><input type="checkbox" id="ck-6"><span class="box"><span class="ms">check</span></span><span class="t">The manifest answers <code>200 application/json</code>.</span></label>
+        <label class="check"><input type="checkbox" id="ck-7"><span class="box"><span class="ms">check</span></span><span class="t">No secret or token anywhere in the page.</span></label>
+      </div>
+    </section>
+
+    <!-- ============================================================= AI -->
+    <section class="part ai" id="ai" aria-labelledby="ai-t">
+      <div class="slate">
+        <div class="field" aria-hidden="true"></div>
+        <span class="robot" aria-hidden="true"><span class="ms">smart_toy</span></span>
+        <div class="head">
+          <p class="eyebrow">For AI models</p>
+          <h2 id="ai-t">Hand this brief to your AI.</h2>
+          <p>One Markdown file with everything a model needs to build a Gathering game: the rules it must keep, the manifest, the bootstrap, a complete template, the room patterns, and a self-check to answer with. Paste it before your request, or save it in your game's repository.</p>
+        </div>
+        <div class="ways">
+          <span class="way"><span class="ms">content_copy</span>Paste it into the chat, then ask</span>
+          <span class="way"><span class="ms">terminal</span>Save it as <code>AGENTS.md</code> in your repo</span>
+          <span class="way"><span class="ms">code</span>Or <code>CLAUDE.md</code> for Claude Code</span>
+        </div>
+        <div class="keys">
+          <button class="key accent" type="button" data-copy="brief-text"><span class="ms">content_copy</span><span class="lbl">Copy the brief</span></button>
+          <button class="key glass" type="button" data-copy="starter-text"><span class="ms">smart_toy</span><span class="lbl">Copy a starter prompt</span></button>
+        </div>
+        <div class="wells">
+          <div class="well"><b>643</b><span>lines of Markdown</span></div>
+          <div class="well"><b>12</b><span>sections</span></div>
+          <div class="well"><b>11</b><span>self-checks</span></div>
+        </div>
+      </div>
+      <div class="pair">
+        <div>
+          <h3>The brief</h3>
+          <p class="note">The same file beside this page: <a href="MINIGAME_AI_BRIEF.md" target="_blank" rel="noopener"><code>MINIGAME_AI_BRIEF.md</code></a></p>
+          <figure class="code">
+            <figcaption><span class="file"><span class="ms">description</span>MINIGAME_AI_BRIEF.md</span><button class="copy" type="button" data-copy="brief-text"><span class="ms">content_copy</span><span class="lbl">Copy</span></button></figcaption>
+            <pre class="brief" id="brief-text"># Gathering minigame brief (for AI models)
+
+You are writing a minigame for **گعدة · Gathering**, a phone app where friends
+play short games together in private rooms.
+Read this whole brief before you write any code. Every **MUST** is a hard
+rule. When the request you were given conflicts with one, keep the rule and
+say which one and why.
+
+The full human reference is https://docs.ga3da.fun (the manifest, the bridge,
+rooms, your own server, notifications, tournaments). Two working games are
+plain pages whose source you can read: https://games.ga3da.fun/xo/
+(turn-based, authoritative host) and https://games.ga3da.fun/tap/ (real-time
+peers), each with its manifest at `.well-known/gathering-game.json`. This brief
+is the part you need to build a game.
+
+## 1. What you are building
+
+- **One web page** (HTML, CSS, JavaScript) that the Gathering app opens full
+  screen in a WebView (iOS WKWebView, Android WebView).
+- The page talks to the app **only through `window.gathering`** (the
+  bridge). The app owns everything else: sign-in, players, rooms and the
+  relay between phones, invites, dialogs, sounds, haptics, storage.
+- It **plays alone** (practice mode) when opened outside a room, and
+  **together** when opened in a room.
+- **One page load is one round.** When the host starts the next round, the
+  app opens the page again, fresh, on every phone.
+
+## 2. What to hand back
+
+- `index.html`, `style.css`, `app.js` and `.well-known/gathering-game.json`
+  (the manifest), each **in full**. No build step unless you were asked for
+  one. Any framework is allowed; plain HTML/CSS/JS is preferred.
+- Every asset comes from the game's own origin. No CDNs, analytics or
+  trackers.
+- After the files, the **self-check list** (section 12), each item ticked or
+  explained.
+
+## 3. MUST
+
+1. Start with the `bridgeReady()` bootstrap from section 6, **copied as is**,
+   and fall back to `browserStub()` so the page also runs in a desktop
+   browser. `window.gathering` arrives **after** your scripts start: never
+   decide "not in the app" because it is missing at load time.
+2. Decide the mode with `await g.room.current()`: `null` means practice (one
+   phone, the whole game playable); a room object means multiplayer.
+3. In a room, **render every phone from the room's `state` event**, the
+   host's phone included. Never trust local state over it.
+4. End every round on every phone with `g.celebrate({ kind })` for that
+   phone's own outcome (`win`, `lose`, `draw` or `rank`). In a room, **only
+   the host** also calls `g.room.end({ scores })`, once, with one entry per
+   seated player that **ranks** them: a `rank` (1 is best, equal ranks tie)
+   or scores that order them. A tournament counts each round by its ranks,
+   so a round where nobody is ranked better counts for nobody.
+5. If the manifest says `"splash": true`, call `g.hideSplash()` on **every**
+   path, failures included (a `finally` block).
+6. Arabic first: `&lt;html lang="ar" dir="rtl"&gt;`, Arabic UI words, logical CSS
+   properties (`margin-inline-start`, `padding-inline`, `inset-inline-end`),
+   never `left`/`right` for layout.
+7. Dark first, phone first: one screen, no page-level scroll for the game
+   itself, `viewport-fit=cover`, and safe-area padding
+   (`env(safe-area-inset-top)` / `-bottom`). With the app's bar hidden an
+   iPhone draws the page under the status bar; Android's app stops the page
+   under it by itself. The same CSS is right on both.
+8. Treat every rejected bridge promise as a **bare code string**
+   (`catch (code) { if (code === 'host_only') … }`), never as an `Error`.
+9. Keep each `room.send` / `room.setState` payload **under 16 KiB** and
+   send **at most 30 frames a second** per player (state writes count).
+   Send inputs or deltas, not full snapshots, in real-time games.
+10. Write game rules as **pure functions** (`initialState`, `applyMove`
+    returning a new state or `null`), so the host and practice mode share
+    them.
+
+## 4. MUST NOT
+
+- No `alert`, `confirm` or `prompt` outside the browser stub. They can block
+  the WebView. Use `g.showDialog`, `g.prompt`, `g.showActionSheet`.
+- No WebSocket, WebRTC, Firebase, Photon or any multiplayer networking of
+  your own. The room is the relay.
+- No lobby, matchmaking, room codes or invite links of your own. Use
+  `g.room.create()` / `g.room.join()` / `g.room.invite()`.
+- No login screen, no player names typed by the player: use
+  `await g.player.me()`.
+- No `localStorage` (use `g.storage`), no `navigator.vibrate` (use
+  `g.haptic`), no "Exit" link (use `g.close()`).
+- No tokens, secrets or client secrets in the page.
+- Don't draw over the app's bar at the top: it holds the game's name, the
+  room's code and the app's own controls.
+- Don't reset the page for a new round. A new round is a new page load.
+
+## 5. The manifest: `/.well-known/gathering-game.json`
+
+Served from the game's origin, public (a private or localhost address is
+refused), as `application/json` (not your `index.html` through a catch-all
+route), under 256 KB, answering within 10 seconds.
+
+```json
+{
+  "id": "yourstudio.game",
+  "name": "اسم لعبتك",
+  "version": "1.0.0",
+  "mode": "embedded",
+  "entry": "https://games.yourstudio.example/",
+  "orientation": "portrait",
+  "splash": true,
+  "publisher": { "tier": "partner", "name": "اسم استوديوك" },
+  "scopes": ["identity:read"],
+  "permissions": [],
+  "room": {
+    "players": { "min": 2, "max": 8 },
+    "host": "authoritative",
+    "pace": "turn",
+    "state": "blob",
+    "lan": true,
+    "rejoin": true,
+    "spectators": false,
+    "chat": true
+  }
+}
+```
+
+| Field | Rule |
+| --- | --- |
+| `id` | Permanent, lowercase and dotted: `^[a-z0-9]+(\.[a-z0-9-]+)+$` (e.g. `yourstudio.quiz`), up to 64 characters. Also the OAuth `client_id`. |
+| `name`, `version` | Required, up to 120 and 32 characters. `name` is the tile's title. |
+| `mode` | Always `embedded`. |
+| `entry` | The https URL the frame loads; `?code=…` (and sometimes `&amp;path=…`) is appended. |
+| `orientation` | `portrait` (default) or `landscape`. |
+| `splash` | `true` keeps the app's cover up until `hideSplash()`. |
+| `publisher.tier` | `partner`. |
+| `publisher.name` | Your studio's name in the store, up to 120 characters. |
+| `scopes` | What the game may do with the player: `identity:read` (their name and picture, to your server), `friends:read` (`g.friends.list()` in the page), `notify:send` and `results:write` (from your server). Ask for none you don't use. |
+| `permissions` | `camera`, `microphone`, `location`, `notification`, `storage`, `contacts`. Listed ones get the app's question when the game opens, and it won't open if refused; the phone itself asks only at `g.permissions.request(name)`. Prefer `[]` and asking at runtime. Android always refuses `storage`. |
+| `redirect_uris` | Only for signing players in from your own website (https://docs.ga3da.fun/auth): where they may be sent back, matched exactly. |
+| `room.players` | `min`/`max`, 1 to 64, `max` ≥ `min`. |
+| `room.host` | `authoritative` (only the host writes the state) or `peer` (anyone may). |
+| `room.pace` | `turn` or `realtime` (shown to players). |
+| `room.state` | `blob` (default: a shared, versioned JSON state) or `none` (messages only). |
+| `room.lan` | Whether the game may be played on a same-Wi-Fi relay with no internet. Every room plays through the cloud relay today. |
+| `room.rejoin` | Whether a member who left may come back while a round is playing. Between rounds anybody who left may. |
+| `room.spectators` | Watchers allowed. Reserved: no room holds spectators yet. |
+| `room.chat` | The app's chat and emotes over your rooms: `true` when left out. `false` for a game so fast a player can't look away. The page never sees the chat and needs no code for it. |
+
+The tagline, description, icon, screenshots and category are **not** in the
+manifest; Gathering's team writes that store copy.
+
+## 6. The bootstrap (copy as is)
+
+```js
+function bridgeReady() {
+  if (window.gathering &amp;&amp; window.gathering.__installed) return Promise.resolve(window.gathering);
+  if (!window.GatheringBridge) return Promise.resolve(null); // a plain desktop browser
+  return new Promise(function (resolve) {
+    var done = false;
+    function finish() {
+      if (done) return;
+      done = true;
+      window.removeEventListener('gatheringready', finish);
+      resolve(window.gathering &amp;&amp; window.gathering.__installed ? window.gathering : null);
+    }
+    window.addEventListener('gatheringready', finish);
+    setTimeout(finish, 10000);
+  });
+}
+```
+
+The browser stub (a desktop stand-in; the only place `alert`/`confirm` may
+appear):
+
+```js
+function browserStub() {
+  const reject = (code) =&gt; () =&gt; Promise.reject(code);
+  const ls = (k) =&gt; 'stub.' + k;
+  return {
+    send() {}, call: reject('unknown_action'),
+    showToast: (o) =&gt; console.log('[toast]', o &amp;&amp; o.title, o &amp;&amp; o.subtitle),
+    showDialog: (o) =&gt; Promise.resolve(confirm([o.title, o.body].filter(Boolean).join('\n'))),
+    prompt: (o) =&gt; Promise.resolve(window.prompt(o.message || o.title || '', o.initialValue || '')),
+    showActionSheet: () =&gt; Promise.resolve(null),
+    showLoading() {}, hideLoading() {}, showSplash() {}, hideSplash() {},
+    setAppBar() {}, showAppBar() {}, hideAppBar() {}, setAppBarColor() {}, setStatusBarColor() {},
+    setZoom() {}, setTextSelection() {}, setOrientation() {},
+    celebrate: (o) =&gt; { alert((o &amp;&amp; o.title) || 'انتهت الجولة'); return Promise.resolve(); },
+    haptic() {}, playSound() {}, setMuted() {},
+    copyToClipboard: (t) =&gt; navigator.clipboard &amp;&amp; navigator.clipboard.writeText(String(t)),
+    getFromClipboard: () =&gt; Promise.resolve(null),
+    openExternalUrl: (u) =&gt; { window.open(u, '_blank'); return Promise.resolve(true); },
+    getDeviceInfo: () =&gt; Promise.resolve({ platform: 'other', osVersion: '', locale: 'ar-IQ', languageCode: 'ar',
+      isDarkMode: true, screenWidth: innerWidth, screenHeight: innerHeight }),
+    getAppInfo: () =&gt; Promise.resolve({ name: 'browser', version: '0', build: '0', isDebug: true, language: 'ar' }),
+    getAuthCode: () =&gt; Promise.resolve(null),
+    player: { me: () =&gt; Promise.resolve({ id: 'local', nickname: 'أنت', handle: 'you', avatar: null, avatarUrl: null }) },
+    storage: {
+      get: (k) =&gt; Promise.resolve(JSON.parse(localStorage.getItem(ls(k)) || 'null')),
+      set: (k, v) =&gt; Promise.resolve(localStorage.setItem(ls(k), JSON.stringify(v))),
+      remove: (k) =&gt; Promise.resolve(localStorage.removeItem(ls(k))),
+    },
+    permissions: { request: () =&gt; Promise.resolve('denied'), status: () =&gt; Promise.resolve('prompt'),
+      openSettings: () =&gt; Promise.resolve(false) },
+    room: { current: () =&gt; Promise.resolve(null), members: () =&gt; Promise.resolve([]), send() {},
+      getState: reject('not_in_room'), setState: reject('not_in_room'), start: reject('not_in_room'),
+      end: reject('not_in_room'), leave: reject('not_in_room'), kick: reject('not_in_room'),
+      invite: reject('not_in_room'), ticket: reject('not_in_room'), on() {}, off() {},
+      create: reject('offline'), join: reject('offline') },
+    friends: { add: reject('not_found'), status: reject('not_found'),
+      list: reject('scope_required'), invite: reject('not_in_room') },
+    close() {}, minimize() {}, goBack: () =&gt; history.back(), reload: () =&gt; location.reload(),
+    reloadHome: () =&gt; location.replace(location.pathname), log: (...a) =&gt; console.log('[game]', ...a),
+  };
+}
+```
+
+## 7. The template
+
+Fill in the `TODO`s; keep the structure. Files:
+
+```text
+your-game/
+├── index.html
+├── style.css
+├── app.js
+└── .well-known/
+    └── gathering-game.json   ← the manifest, served as application/json
+```
+
+`index.html`:
+
+```html
+&lt;!doctype html&gt;
+&lt;html lang="ar" dir="rtl"&gt;
+&lt;head&gt;
+  &lt;meta charset="utf-8"&gt;
+  &lt;meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"&gt;
+  &lt;meta name="color-scheme" content="dark"&gt;
+  &lt;title&gt;اسم لعبتك&lt;/title&gt;
+  &lt;link rel="stylesheet" href="style.css"&gt;
+&lt;/head&gt;
+&lt;body&gt;
+  &lt;main class="screen"&gt;
+    &lt;header class="top"&gt;
+      &lt;h1&gt;اسم لعبتك&lt;/h1&gt;
+      &lt;span id="mode" class="chip"&gt;تمرين&lt;/span&gt;
+    &lt;/header&gt;
+    &lt;p id="status" class="status" role="status" aria-live="polite"&gt;&lt;/p&gt;
+    &lt;div id="board" class="board"&gt;&lt;/div&gt;
+    &lt;section id="together" class="together" hidden&gt;
+      &lt;button id="play-friend" type="button"&gt;العب ويا صديق&lt;/button&gt;
+      &lt;button id="join-room" type="button"&gt;انضم لغرفة&lt;/button&gt;
+      &lt;p id="together-line" role="status" aria-live="polite"&gt;&lt;/p&gt;
+    &lt;/section&gt;
+  &lt;/main&gt;
+  &lt;script src="app.js"&gt;&lt;/script&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+```
+
+`style.css` (a starting point; make it yours):
+
+```css
+:root {
+  color-scheme: dark;
+  --bg: #0F1222;
+  --ink: #F4F5FA;
+  --muted: #A9ADC6;
+  --key: #FFB300;
+  --on-key: #1A1300;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink); }
+body { font-family: system-ui, sans-serif; -webkit-tap-highlight-color: transparent; }
+.screen {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-top: calc(env(safe-area-inset-top) + 12px);
+  padding-bottom: calc(env(safe-area-inset-bottom) + 24px);
+  padding-inline: 16px;
+}
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.status { margin: 0; min-height: 1.5em; color: var(--muted); }
+.together { display: flex; flex-wrap: wrap; gap: 8px; margin-block-start: auto; }
+button {
+  font: inherit;
+  border: 0;
+  border-radius: 14px;
+  padding: 14px 20px;
+  background: var(--key);
+  color: var(--on-key);
+}
+button:disabled { opacity: 0.5; }
+```
+
+`app.js`, in this order: `bridgeReady()`, `browserStub()` (section 6), then:
+
+```js
+'use strict';
+
+let g;               // window.gathering, or the browser stub
+let me;              // { id, nickname, handle, avatar, avatarUrl }
+let onMove = () =&gt; {};
+
+// ---- Your game: pure rules, the same on every phone ----------------------
+
+function initialState(playerIds) {
+  return { players: playerIds, turn: playerIds[0], scores: {}, winner: null };
+}
+
+// The next state, or null when the move is not allowed (wrong turn, taken cell…).
+// Decide `winner` here: a player id, 'draw', or null while the round goes on.
+function applyMove(state, playerId, move) {
+  if (state.winner || state.turn !== playerId) return null;
+  // TODO: apply `move` and return a NEW state object.
+  return null;
+}
+
+// One line per player that RANKS them: the winner 1, the others 2, a draw all 1.
+// A round where nobody is ranked better decides nothing in a tournament.
+function scoresFrom(state) {
+  return state.players.map((id) =&gt; ({
+    player: id,
+    score: state.scores[id] || 0,
+    rank: state.winner === 'draw' || state.winner === id ? 1 : 2,
+  }));
+}
+
+// Draw the whole screen from `state`, every time. Call onMove(move) from input.
+function render(state) {
+  // TODO
+}
+
+function say(words) {
+  document.getElementById('status').textContent = words;
+}
+
+(async function main() {
+  g = (await bridgeReady()) || browserStub();
+  try {
+    me = await g.player.me();
+    const room = await g.room.current();
+    if (room) await enterRoom(room); // together, in a room
+    else startPractice();            // one phone, no room
+  } catch (code) {
+    g.log('start failed:', code);
+    say('صار خلل. سكّر اللعبة وافتحها مرة ثانية.');
+  } finally {
+    g.hideSplash(); // with "splash": true, on every path
+  }
+})();
+
+// One phone, no room: the whole game, played alone.
+function startPractice() {
+  document.getElementById('mode').textContent = 'تمرين';
+  let state = initialState([me.id]);
+  render(state);
+  onMove = (move) =&gt; {
+    const next = applyMove(state, me.id, move);
+    if (!next) return g.haptic('selection');
+    state = next;
+    render(state);
+    g.playSound('tap');
+    if (state.winner) {
+      g.celebrate({ kind: state.winner === 'draw' ? 'draw' : state.winner === me.id ? 'win' : 'lose' });
+    }
+  };
+  offerRoom();
+}
+
+// Outside a room, two keys take the player into one for this game.
+function offerRoom() {
+  const box = document.getElementById('together');
+  const line = document.getElementById('together-line');
+  const keys = box.querySelectorAll('button');
+  box.hidden = false;
+  const enter = (ask) =&gt; {
+    keys.forEach((k) =&gt; (k.disabled = true));
+    ask().then(
+      () =&gt; {}, // { id, code }: the room's lobby now takes this page's place
+      (code) =&gt; {
+        keys.forEach((k) =&gt; (k.disabled = false));
+        if (code !== 'cancelled') line.textContent = wordsFor(code);
+      },
+    );
+  };
+  document.getElementById('play-friend').onclick = () =&gt; enter(() =&gt; g.room.create());
+  document.getElementById('join-room').onclick = () =&gt; enter(() =&gt; g.room.join());
+}
+
+function wordsFor(code) {
+  return ({
+    offline: 'ما في إنترنت. جرّب بعدين.',
+    in_another_room: 'إنت بغرفة ثانية.',
+    room_full: 'الغرفة مليانة.',
+    room_closed: 'الغرفة تسكّرت.',
+    invalid_code: 'الرمز مو صحيح.',
+  })[code] || 'ما صارت. جرّب مرة ثانية.';
+}
+
+// In a room the host referees (manifest: "host": "authoritative", "state": "blob").
+// Other phones send moves; the host checks them and writes the state;
+// EVERY phone, the host's too, draws from the 'state' event.
+async function enterRoom(current) {
+  document.getElementById('mode').textContent = 'غرفة ' + current.code;
+  let isHost = current.you.role === 'host';
+  let version = 0;
+  let state = null;
+  let celebrated = false;
+
+  const show = (data) =&gt; {
+    state = data;
+    render(state);
+    if (state &amp;&amp; state.winner &amp;&amp; !celebrated) {
+      celebrated = true; // each phone celebrates its own outcome, once
+      g.celebrate({ kind: state.winner === 'draw' ? 'draw' : state.winner === me.id ? 'win' : 'lose' });
+      // The host ends the ROUND; the room stays open for "play again".
+      if (isHost) g.room.end({ scores: scoresFrom(state) }).catch((c) =&gt; g.log('room.end', c));
+    }
+  };
+
+  g.room.on('state', (s) =&gt; { version = s.version; show(s.data); });
+  g.room.on('message', (m) =&gt; {
+    if (isHost &amp;&amp; m.from !== me.id &amp;&amp; m.data &amp;&amp; m.data.type === 'move') referee(m.from, m.data.move);
+  });
+  g.room.on('host', async () =&gt; { isHost = (await g.room.current()).you.role === 'host'; });
+
+  const saved = await g.room.getState().catch(() =&gt; null);
+  if (saved &amp;&amp; saved.data) {
+    version = saved.version;
+    show(saved.data);
+  } else if (isHost) {
+    const seated = (await g.room.members()).filter((m) =&gt; m.role !== 'spectator');
+    await write(initialState(seated.map((m) =&gt; m.id)));
+  }
+
+  onMove = (move) =&gt; (isHost ? referee(me.id, move) : g.room.send({ type: 'move', move }));
+
+  function referee(playerId, move) {
+    if (!state || state.winner) return;
+    const next = applyMove(state, playerId, move); // null when illegal
+    if (next) write(next);
+  }
+
+  async function write(next) {
+    try {
+      version = await g.room.setState(next, version);
+      show(next);
+    } catch (code) {
+      if (code !== 'state_stale') return g.log('setState', code);
+      const s = await g.room.getState(); // someone wrote first: read, then decide
+      version = s.version;
+      show(s.data);
+    }
+  }
+}
+```
+
+For a real-time game with `"host": "peer"`, replace `enterRoom` with this
+shape (the host's `room.start()` opens the page on every phone; a page opened
+on the start syncs from `startedAt`):
+
+```js
+// A race (manifest: "host": "peer", "pace": "realtime"), in place of the
+// enterRoom above. Everyone counts from the round's start; each tap is one
+// message; the host ends the round, ranked by taps.
+let onTap = () =&gt; {}; // call onTap() from your tap handler
+
+async function enterRoom(current) {
+  const taps = {};
+  g.room.on('message', (m) =&gt; {
+    if (m.from !== me.id &amp;&amp; m.data.type === 'tap') taps[m.from] = (taps[m.from] || 0) + 1;
+  });
+  onTap = () =&gt; {
+    taps[me.id] = (taps[me.id] || 0) + 1;
+    g.room.send({ type: 'tap' }); // ≤ 30 sends a second, each under 16 KiB
+  };
+  const endsAt = current.startedAt + 10000; // ten seconds, on this phone's clock
+  setTimeout(async () =&gt; {
+    onTap = () =&gt; {};
+    g.celebrate({ kind: 'rank', title: 'خلص السباق', message: 'نقراتك: ' + (taps[me.id] || 0) });
+    if (current.you.role !== 'host') return;
+    const seated = (await g.room.members()).filter((m) =&gt; m.role !== 'spectator');
+    await g.room.end({ scores: seated.map((m) =&gt; ({ player: m.id, score: taps[m.id] || 0 })) });
+  }, Math.max(0, endsAt - Date.now()));
+}
+```
+
+## 8. Rooms
+
+A room is a private table: 1–64 players, one host, a relay that delivers every
+message **in the same order to every phone**. Outside a room `current()` is
+`null`, `members()` is `[]`, `send()` is dropped, `create()`/`join()` take the
+player into a room for this game (then the room's lobby replaces the page, so
+don't count on running after they resolve), and every other room call rejects
+`not_in_room`.
+
+| Call | Returns / notes |
+| --- | --- |
+| `room.current()` | `{ id, code, game, status, round, you: { role, seat }, config, seq, startedAt, tournament }` or `null`. `status`: `lobby`/`playing`/`ended`; `role`: `host`/`player`/`spectator`; `startedAt`: the round's start in this phone's ms; `tournament`: `null`, or the tournament match this room plays (below). |
+| `room.members()` | `[{ id, nickname, handle, avatar, avatarUrl, role, seat, connected }]`, by seat. |
+| `room.send(data, { to? })` | Any JSON under 16 KiB (the whole frame), ≤ 30 frames/s; over that the relay drops it silently. `to` targets one player: not echoed to the sender, dropped if they aren't in the room. |
+| `room.getState()` | `{ version, data }`; every round starts at `{ version: 0, data: null }`. |
+| `room.setState(data, version)` | New version. Pass the version you last saw; rejects `state_stale` if someone wrote first (read again, then decide). Host-only with `authoritative`; `no_state` with `"state": "none"`. |
+| `room.start()` / `room.end({ scores })` | Host only. `end` ends the **round**, records results; the room stays. `end` rejects `room_not_started` when no round is playing (the platform may have ended it) and `invalid_fields` for a line naming nobody in the room, a duplicate, or a rank below 1. |
+| `room.leave()` / `room.kick(id)` | The player leaves (back to the app's hub) / host removes someone (`tournament_room` in a match room). |
+| `room.invite()` | The app's invite sheet; resolves the invited ids (`[]` if closed). |
+| `room.ticket()` | `{ token, expiresAt }`, a short-lived ES256 JWT for the game's server. |
+| `room.create({ visibility? })` / `room.join({ code? })` | Outside a room only; `{ id, code }`, then the lobby takes the page's place. |
+
+Events, `g.room.on(event, fn)` / `g.room.off(event, fn?)`:
+
+| Event | Detail |
+| --- | --- |
+| `state` | `{ version, data, by, seq }`; after a reconnect it may be `{ version, data }` alone. Render from this on every phone. |
+| `message` | `{ from, seq, data, to? }`. You may get your own back: skip `from === me.id`. |
+| `members` | The member list (accept a bare array or `{ list }`). |
+| `joined` / `left` | `{ player, seq }` with `player` the whole member / `{ player, seq, reason }` with `player` an id. A dropped connection is not a leave (`connected: false`). |
+| `started` / `ended` | `{ at, by, seq, round }` / `{ at, by, seq, reason, round, results }`, once per round. `reason`: `host`, `timeout` (the platform ends a round after two hours), `empty`, `idle`, `admin`, `tournament`, or `''`, a plain end: never score by it. |
+| `host` | `{ seq, player, by }`: the host changed; re-check whether you are the host. |
+| `kicked`, `connection` | `{ seq, player, by }` / `{ state }`: `connecting`, `open`, `reconnecting` or `closed`, for a "reconnecting…" line. |
+
+Results: `g.room.end({ scores: [{ player: 'ply_1', score: 37, rank: 1 }, …] })`.
+`rank` is optional; without it the platform ranks by score, highest first,
+ties sharing a place. The app shows the standings in the room's lobby, and the
+host's "play again" starts the next round in the same room.
+
+**Tournaments.** A room may be a tournament's match room
+(`room.current().tournament` is not `null`). The game needs nothing new: every
+round that ends with results is counted, by its ranks. In a knockout a round's
+winner is the player ranked strictly better; equal ranks are a draw and the
+pair plays again, so a knockout needs `room.players.min` of 2 or less. Only
+the match's players get in (anyone else's `room.join` rejects
+`not_in_match`), nobody is kicked (`room.kick` and `friends.invite` reject `tournament_room`; the
+`room.invite()` sheet's invites are refused and it resolves `[]`), and the
+round that decides the match ends with `reason: 'tournament'` (so does a match
+decided away from the table, or a tournament called off), and the app shows
+the round's results with the way to the tournament. Outside a room, `g.tournament.create()`
+and `g.tournament.join({ code? })` start or join one from the game's first
+screen, `g.tournament.list()` lists the player's; in a match room
+`g.tournament.current()` gives the match and `g.tournament.open()` shows the
+bracket or the table (`not_in_tournament` elsewhere). Check that
+`g.tournament` exists first: an older app has none. More:
+https://docs.ga3da.fun/tournaments.
+
+## 9. Use the bridge, not the browser
+
+| Instead of… | Call |
+| --- | --- |
+| a loading screen | `"splash": true`, then `g.hideSplash()`; `g.showSplash('…')` re-words it |
+| `alert` / `confirm` / a modal | `await g.showDialog({ title, body, confirmText, cancelText })` → `true`/`false` |
+| a text popup | `await g.prompt({ title, message, initialValue })` → `string` or `null` |
+| a choice menu | `await g.showActionSheet({ title, options: ['أ', { label, value, destructive }] })` → `{ index, value }` or `null` |
+| toasts / a spinner | `g.showToast({ title, subtitle })` / `g.showLoading({ message })` … `g.hideLoading()` |
+| a results screen | `await g.celebrate({ kind: 'win' \| 'lose' \| 'draw' \| 'rank', title, message })` |
+| vibration / sounds | `g.haptic('light' \| 'medium' \| 'heavy' \| 'selection' \| 'vibrate')` / `g.playSound('tap' \| 'tick' \| 'join' \| 'leave' \| 'win' \| 'lose' \| 'countdown')` |
+| `localStorage` | `await g.storage.set(key, json)`, `get(key)`, `remove(key)`: per game, wiped on sign-out, small things only |
+| a name field / login | `await g.player.me()` → `{ id, nickname, handle, avatar, avatarUrl }` |
+| an Exit button | `g.close()`; `g.goBack()` steps back; `g.minimize()` parks the game (not mid-round in a room) |
+| fullscreen | `g.hideAppBar()` (keep your own way out that calls `g.close()`: an iPhone has no back key) |
+| orientation, bar colour | `g.setOrientation('portrait' \| 'landscape' \| 'auto')`, within what the manifest allows (a portrait game stays portrait); `g.setAppBarColor('#1B1F3A')`, `g.setStatusBarColor(…)` |
+| camera / mic / location | `await g.permissions.request('microphone')` → `granted`, `denied`, `permanentlyDenied`…; then the web API. On Android the frame doesn't yet pass the camera, microphone or location to the page's web APIs, and `&lt;input type="file"&gt;` opens nothing there: build without them. |
+| links, clipboard | `await g.openExternalUrl(url)`; `g.copyToClipboard(text)`, `await g.getFromClipboard()` |
+| friends | `g.friends.status(id)`, `g.friends.add(id)` (the app asks the player first), `g.friends.list()` (needs `friends:read`), `g.friends.invite(id)` |
+| device and app info, logs | `await g.getDeviceInfo()` (`isDarkMode` is the app's look, not the phone's setting; `languageCode`…), `await g.getAppInfo()`, `g.log(…)` |
+
+## 10. Error codes
+
+```js
+try {
+  await g.room.start();
+} catch (code) {            // a bare string, never an Error
+  if (code === 'host_only') g.showToast({ title: 'بس المضيف يبدي' });
+}
+```
+
+| Code | Meaning |
+| --- | --- |
+| `not_in_room` | A room call outside a room. |
+| `host_only` | A host-only call from someone else. |
+| `state_stale` | `setState` against an old version: read again, then decide. |
+| `no_state` | `setState` in a room whose manifest says `"state": "none"`. |
+| `timeout` | `setState` unanswered for 10 s (a blob over 16 KiB never arrives): read again. Also any platform call the network dropped. |
+| `rate_limited` | Over 30 frames a second. |
+| `scope_required` | The manifest lacks the scope (e.g. `friends.list` without `friends:read`). |
+| `cancelled` | The player closed the app's sheet: say nothing. |
+| `offline` / `failed` | No network / failed without a code. |
+| `in_room`, `not_a_room_game`, `invalid_code`, `in_another_room`, `room_not_found`, `room_full`, `room_closed`, `room_started`, `another_game`, `friends_only`, `kicked`, `not_found` (the game isn't published), `too_few_players`, `not_member` | `room.create`/`join`/`start` and the platform's refusals: put each in your own Arabic words. |
+| `room_not_started`, `invalid_fields` | `room.end` with no round playing / a scores line that names nobody in the room, twice, or ranks below 1; also `room.kick` naming yourself or someone not in the room, and `room.create` with an unknown `visibility`. |
+| `tournament_room`, `not_in_match`, `not_in_tournament` | `room.kick` or `friends.invite` in a match room / a join into a match that isn't yours / `tournament.open()` outside a match room. |
+| `blocked`, `not_found`, `not_friends`, `already_member` | `friends.add` for someone you blocked / nobody by that id / `friends.invite` for someone not a friend / already in the room. (`friends.add` *resolves* `'cancelled'` when the player says no.) |
+| `invalid_orientation`, `unknown_permission`, `not_supported` | A bad orientation word / a permission name outside the list / a call this app doesn't answer yet. |
+| `unknown_action` | No such call (a typo, or an older app). |
+
+## 11. Only if the game has its own server
+
+Most games don't need one. With one: the frame loads `entry?code=cod_…`; the
+code is valid for **one minute, one use**. The page sends it to the server; the
+server trades it at `POST /oauth/token` (`grant_type=authorization_code`, the
+`client_id` = manifest `id`, the `client_secret` kept in the server's
+environment, shown once at registration), then reads
+`GET /v1/bridge/context` with the token. Key data on `player.id`; the phone
+number never appears, and the nickname, handle and avatar only with
+`identity:read`. Renew with `grant_type=refresh_token`: a renewed token is
+`live: false` and carries no room. An `invalid_grant` on renewal means the game
+was removed or suspended: stop, don't loop.
+
+- **Room tickets.** For "this player is in this room", the page sends
+  `g.room.ticket()`. The server MUST verify the ES256 signature against
+  `/.well-known/jwks.json` (the key named by `kid`), then the issuer, the
+  audience (`aud` is a list holding your game id), the expiry (ten minutes),
+  and that `kind` is `room`: the game token is signed with the same key for
+  the same audience, and only `kind` tells them apart.
+- **Results.** With `results:write`, `POST /v1/bridge/results`
+  (`{ room, round?, scores: [{ player, score, rank? }] }`) replaces that
+  round's results whole; a later host `room.end` leaves them as they are, and
+  results posted before the round ends count for a tournament match.
+- **Notifications.** With `notify:send`, `POST /v1/bridge/notifications`
+  (title ≤ 60, body ≤ 160, a `deep_link` path), also pushed to the phone; 10
+  per player per game per hour. An `idempotency_key` keeps one notification
+  per thing (a repeat still counts toward the limit). A `401`
+  (`revoked_token`, `invalid_token`) means stop sending for that player.
+
+The whole of it: https://docs.ga3da.fun/auth, /rooms and /notifications.
+
+## 12. Self-check before you answer
+
+- [ ] `bridgeReady()` is copied as is; `browserStub()` makes the page play in
+      a desktop browser (practice mode).
+- [ ] `room.current() === null` gives a complete, playable game.
+- [ ] In a room every phone renders from `state`; the host alone calls
+      `setState` (authoritative) and `room.end({ scores })`, once.
+- [ ] Every phone calls `celebrate()` once per round with its own outcome.
+- [ ] Every round's scores rank the players (a `rank`, or scores that order
+      them): a round where everyone ties decides nothing in a tournament.
+- [ ] `hideSplash()` runs on success and on failure.
+- [ ] No `alert`/`confirm`/`prompt`, `localStorage`, `navigator.vibrate`,
+      sockets or secrets outside the stub.
+- [ ] RTL with logical properties; nothing under the notch or the home
+      indicator; one phone screen.
+- [ ] Payloads under 16 KiB, at most 30 sends a second.
+- [ ] Rejections handled as bare code strings; every refusal the player can
+      meet has Arabic words.
+- [ ] The manifest validates against section 5 and is served as
+      `200 application/json`.
+</pre>
+          </figure>
+        </div>
+        <div>
+          <h3>A starter prompt</h3>
+          <p class="note">Send it after the brief. Swap in your own game.</p>
+          <figure class="code">
+            <figcaption><span class="file"><span class="ms">smart_toy</span>prompt</span><button class="copy" type="button" data-copy="starter-text"><span class="ms">content_copy</span><span class="lbl">Copy</span></button></figcaption>
+            <pre class="brief" id="starter-text">Use the Gathering minigame brief I pasted above and follow every MUST in it.
+
+Build «سباق الأسئلة», a quiz race for 2–8 players:
+- In a room, the host's phone shows ten multiple-choice questions, one at a time.
+  The first correct answer scores a point; a wrong one locks that player out of
+  that question. Use "host": "authoritative", "pace": "realtime", "state": "blob".
+- Outside a room (practice), one player answers the same ten against a 10-second
+  timer per question.
+- Arabic UI, right to left, dark, made for one phone screen.
+
+Give me index.html, style.css, app.js and .well-known/gathering-game.json in full,
+then the self-check list from the brief with each item ticked or explained.</pre>
+          </figure>
+        </div>
+      </div>
+    </section>
+  </div>
+</main>
+
+<footer>
+  <div class="wrap">
+    <b>گعدة · Gathering</b>
+    <span>The full reference is <a href="https://docs.ga3da.fun/">docs.ga3da.fun</a>: <a href="https://docs.ga3da.fun/manifest">the manifest</a>, <a href="https://docs.ga3da.fun/bridge">the bridge</a>, <a href="https://docs.ga3da.fun/rooms">rooms</a>, <a href="https://docs.ga3da.fun/auth">your server</a>, <a href="https://docs.ga3da.fun/notifications">notifications</a> and <a href="https://docs.ga3da.fun/tournaments">tournaments</a>. Working games: <a href="https://games.ga3da.fun/xo/">إكس أو</a> and <a href="https://games.ga3da.fun/tap/">سباق النقر</a>.</span>
+  </div>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js" data-manual></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  // Highlight the code, when the highlighter loaded; plain text otherwise.
+  try { if (window.Prism) window.Prism.highlightAll(); } catch (e) {}
+
+  // ---- copy keys -----------------------------------------------------------
+  function textFor(button) {
+    var id = button.getAttribute('data-copy');
+    if (id) {
+      var el = document.getElementById(id);
+      return el ? el.textContent : '';
+    }
+    var fig = button.closest('figure');
+    var pre = fig && fig.querySelector('pre');
+    return pre ? pre.textContent : '';
+  }
+  function selectText(el) {
+    try {
+      var range = document.createRange();
+      range.selectNodeContents(el);
+      var sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+    } catch (e) {}
+  }
+  function flash(button, words) {
+    var lbl = button.querySelector('.lbl');
+    var icon = button.querySelector('.ms');
+    if (!lbl) return;
+    var was = button.getAttribute('data-was') || lbl.textContent;
+    var glyph = button.getAttribute('data-glyph') || (icon ? icon.textContent : '');
+    button.setAttribute('data-was', was);
+    button.setAttribute('data-glyph', glyph);
+    lbl.textContent = words;
+    if (icon) icon.textContent = 'check';
+    button.classList.add('done');
+    clearTimeout(button._t);
+    button._t = setTimeout(function () {
+      lbl.textContent = was;
+      if (icon) icon.textContent = glyph;
+      button.classList.remove('done');
+    }, 1800);
+  }
+  document.addEventListener('click', function (e) {
+    var button = e.target.closest('[data-copy]');
+    if (!button) return;
+    var text = textFor(button);
+    var target = document.getElementById(button.getAttribute('data-copy')) ||
+      (button.closest('figure') && button.closest('figure').querySelector('pre'));
+    var fallback = function () {
+      if (target) selectText(target);
+      flash(button, 'Selected: press copy');
+    };
+    try {
+      navigator.clipboard.writeText(text).then(function () { flash(button, 'Copied'); }, fallback);
+    } catch (err) {
+      fallback();
+    }
+  });
+
+  // ---- the HUD turns solid once the page scrolls under it ------------------
+  var hud = document.getElementById('hud');
+  function onScroll() { hud.classList.toggle('scrolled', window.scrollY > 4); }
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+
+  // ---- the chip strip follows the section in view --------------------------
+  var chips = Array.prototype.slice.call(document.querySelectorAll('.strip .chip'));
+  if ('IntersectionObserver' in window) {
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (!entry.isIntersecting) return;
+        var id = entry.target.id;
+        chips.forEach(function (c) { c.classList.toggle('on', c.getAttribute('href') === '#' + id); });
+      });
+    }, { rootMargin: '-35% 0px -55% 0px' });
+    document.querySelectorAll('section.part').forEach(function (s) { io.observe(s); });
+  }
+
+  // ---- the checklist, remembered in this browser --------------------------
+  var KEY = 'gathering-docs-checklist';
+  var boxes = Array.prototype.slice.call(document.querySelectorAll('.checks input[type=checkbox]'));
+  var pips = document.getElementById('pips');
+  var saved = {};
+  try { saved = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { saved = {}; }
+  boxes.forEach(function (b) { b.checked = !!saved[b.id]; });
+  function drawPips() {
+    var done = boxes.filter(function (b) { return b.checked; }).length;
+    pips.innerHTML = boxes.map(function (b) { return '<i class="' + (b.checked ? 'on' : '') + '"></i>'; }).join('') +
+      '<span style="margin-left:4px">' + done + '/' + boxes.length + '</span>';
+  }
+  boxes.forEach(function (b) {
+    b.addEventListener('change', function () {
+      saved[b.id] = b.checked;
+      try { localStorage.setItem(KEY, JSON.stringify(saved)); } catch (e) {}
+      drawPips();
+    });
+  });
+  drawPips();
+
+  // ---- sparks drifting up the stage -----------------------------------------
+  var canvas = document.getElementById('sparks');
+  var ctx = canvas.getContext && canvas.getContext('2d');
+  if (!ctx) return;
+  var still = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var colors = ['255,179,0', '124,77,255', '76,201,240', '61,220,151'];
+  var seed = 7;
+  function rnd() { seed = (seed * 9301 + 49297) % 233280; return seed / 233280; }
+  var sparks = [];
+  for (var i = 0; i < 34; i++) {
+    sparks.push({ x: rnd(), y: rnd(), r: 0.8 + rnd() * 1.8, s: 0.004 + rnd() * 0.01, a: 0.25 + rnd() * 0.45, c: colors[i % colors.length], p: rnd() * 6.28 });
+  }
+  var w = 0, h = 0, dpr = 1;
+  function size() {
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    w = canvas.clientWidth; h = canvas.clientHeight;
+    canvas.width = Math.round(w * dpr); canvas.height = Math.round(h * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  function draw(t) {
+    ctx.clearRect(0, 0, w, h);
+    for (var j = 0; j < sparks.length; j++) {
+      var sp = sparks[j];
+      var y = ((sp.y - (still ? 0 : t * sp.s / 1000)) % 1 + 1) % 1;
+      var x = sp.x + Math.sin(sp.p + t / 3000) * (still ? 0 : 0.01);
+      var flicker = still ? 1 : 0.7 + 0.3 * Math.sin(sp.p + t / 700);
+      ctx.beginPath();
+      ctx.fillStyle = 'rgba(' + sp.c + ',' + (sp.a * flicker).toFixed(3) + ')';
+      ctx.arc(x * w, y * h, sp.r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+  size();
+  window.addEventListener('resize', function () { size(); if (still) draw(0); });
+  if (still) { draw(0); return; }
+  (function loop(t) { draw(t || 0); requestAnimationFrame(loop); })();
+})();
+</script>
+
+</body>
+</html>

@@ -12,7 +12,15 @@ function bridgeReady() {
   if (window.gathering?.__installed) return Promise.resolve(window.gathering)
   if (!window.GatheringBridge) return Promise.resolve(null) // a plain browser, not the app
   return new Promise((resolve) => {
-    window.addEventListener('gatheringready', () => resolve(window.gathering), { once: true })
+    let done = false
+    const finish = () => {
+      if (done) return
+      done = true
+      window.removeEventListener('gatheringready', finish)
+      resolve(window.gathering?.__installed ? window.gathering : null)
+    }
+    window.addEventListener('gatheringready', finish)
+    setTimeout(finish, 10000) // a slow load, not a broken app, gets ten seconds
   })
 }
 ```
@@ -24,7 +32,7 @@ an `Error`, so `catch (code)` and compare it: see [When a call is refused](#when
   Nothing about the player crosses the frame except what the bridge answers. Your page's address
   carries the one-time `code`, which only your server can spend, and the `path` you chose; nothing
   else of ours comes with it. The bridge answers names and pictures (`player.me()`,
-  `room.members()`), never a phone number, a session or a token. What your server learns about the
+  `room.members()`), never a phone number or a session token. What your server learns about the
   player, it learns from us, under the scopes your manifest asks for ([Authentication](/auth)).
 </Note>
 
@@ -35,8 +43,8 @@ an `Error`, so `catch (code)` and compare it: see [When a call is refused](#when
 | `room.current()` | `{ id, code, game, status, round, you: { role, seat }, config, seq, startedAt, tournament }`, or `null` outside a room; `tournament` is `null` unless the room plays a [tournament match](/tournaments#match-rooms) |
 | `room.members()` | `[{ id, nickname, handle, avatar, avatarUrl, role, seat, connected }]`, by seat |
 | `room.send(data, { to? })` | nothing; the message goes to every member, you included, or to one |
-| `room.getState()` / `room.setState(data, version)` | `{ version, data }` / the new version; rejects `state_stale`, `host_only`, `no_state` or `timeout` |
-| `room.start()` / `room.end({ scores })` | host only; `start` begins a round, the first or the next; `end` ends the round, writes its results and puts the room back in its lobby |
+| `room.getState()` / `room.setState(data, version)` | `{ version, data }` / the new version; rejects `state_stale`, `host_only`, `no_state`, `rate_limited` or `timeout` |
+| `room.start()` / `room.end({ scores })` | host only; `start` begins a round, the first or the next; `end` ends the round, writes its `scores` (`[{ player, score, rank? }]`) as its results and puts the room back in its lobby |
 | `room.leave()` / `room.kick(id)` | leave, and the app takes the player back to its hub; remove a member (host only) |
 | `room.invite()` | the app's invite sheet over the room; the ids invited — see [Inviting to the room](#inviting-to-the-room) |
 | `room.create({ visibility? })` / `room.join({ code? })` | outside a room only: make a room of your game, or join one by its code or through the app's Join sheet; `{ id, code }`, and the room's lobby takes your page's place — see [Outside a room](#outside-a-room) |
@@ -67,8 +75,9 @@ read `room.current()` (its `round` says which) and `room.getState()`, and carry 
 the page. `ended` fires once per round, with `{ at, by, reason, round, results }`. `reason` is
 `host` when the host ended the round or closed the room during it, `timeout` when the round ran
 past two hours, `empty` when the last member left, `admin` when Gathering closed the room from
-its console, and `tournament` when the round decided the [tournament](/tournaments) match the room
-was made for; `by` is `null` for `timeout`, `empty` and `admin`. See [Rounds](/rooms#rounds).
+its console, `tournament` when the round decided the [tournament](/tournaments) match the room
+was made for, and `''` when this phone missed how the round ended; `by` is `null` for `timeout`,
+`empty`, `admin` and `''`. See [Rounds](/rooms#rounds).
 
 ```js {{ title: 'round.js' }}
 const room = gathering.room
@@ -95,8 +104,9 @@ so make it from the player's own tap, and expect nothing of your page after the 
 The refusals are [below](#when-a-call-is-refused), and the whole story is in
 [Rooms from inside your game](/rooms#rooms-from-inside-your-game).
 
-The game frame's own menu does the same for any game with a `room` block, on a page outside a
-room: "سوّي غرفة" makes a private room, "انضم لغرفة" opens the Join sheet for your game.
+The game frame's own menu does the same for any game whose rooms seat more than one, on a page
+outside a room: "سوّي غرفة" makes a private room, "انضم لغرفة" opens the Join sheet for your game
+(and "سوّي بطولة" makes a [tournament](/tournaments) of it).
 
 ```js {{ title: 'menu.js' }}
 const room = gathering.room
@@ -157,9 +167,9 @@ the lobby as the room's `members` frames say it is, not as the invites suggest.
 
 | Call | Answers |
 | --- | --- |
-| `player.me()` | `{ id, nickname, handle, avatar, avatarUrl }`, for every game; `null` when nobody is signed in |
+| `player.me()` | `{ id, nickname, handle, avatar, avatarUrl }`, for every game, `avatarUrl` `null` today; `null` when nobody is signed in |
 | `getAuthCode()` | `{ authCode, expiresAt: null }`: the launch's one-time code, for a page that no longer has it in its address; `null` for none |
-| `getDeviceInfo()` | `{ platform, osVersion, locale, languageCode, isDarkMode, screenWidth, screenHeight }` |
+| `getDeviceInfo()` | `{ platform, osVersion, locale, languageCode, isDarkMode, screenWidth, screenHeight }`; `isDarkMode` is the app's look (dark until the player picks another in the app), not the phone's setting |
 | `getAppInfo()` | `{ name, version, build, isDebug, language }`, `language` the app's: `ar` or `en` |
 | `storage.set(key, value)` / `storage.get(key)` / `storage.remove(key)` | a small store on the phone, your game's alone; any JSON value; `get` answers `null` for a key it does not have |
 | `permissions.request(name)` / `permissions.status(name)` | the phone's status: `granted`, `denied`, `permanentlyDenied`, `restricted`, `limited` or `provisional`; `status` answers `prompt` until the player has allowed your game |
@@ -174,8 +184,13 @@ in the app. Keep a best score there; keep anything that matters on your server.
 
 A permission is two questions. The app asks the player first, for your game, in its own sheet
 (`request` answers `denied` at once when they say no), then the phone asks. Names: `camera`,
-`microphone`, `location`, `notification`, `storage`, `contacts`. Those your manifest lists are
-asked for together as the game opens: all allowed, or the game does not open.
+`microphone`, `location`, `notification`, `storage` (the phone always refuses it on Android),
+`contacts`. Those your manifest lists get the app's question together as the game opens: all
+allowed, or the game does not open; the phone's question waits for your `request`.
+
+On Android the frame does not yet hand the camera, the microphone or the location to your page's
+own web APIs (`getUserMedia`, `navigator.geolocation`), whatever `request` answers, and an
+`<input type="file">` opens no picker there.
 
 ## The app's chrome
 
@@ -196,11 +211,16 @@ asked for together as the game opens: all allowed, or the game does not open.
 | `goBack()` / `reload()` / `reloadHome()` | a step back in your page's history, closing the game at its start; reloads the page; loads your `entry` again |
 | `log(...args)` | a line in the app's log |
 
-With the bar hidden your page draws under the phone's status bar: add `viewport-fit=cover` to
-your viewport and pad with `env(safe-area-inset-top)` and `env(safe-area-inset-bottom)`. A game
-with `"splash": true` opens behind the cover; lower it as soon as your first screen is honest, on
-every path, the failed ones too. After twenty seconds the app tells the player it is taking long
-and offers to close.
+With the bar hidden, an iPhone draws your page under the phone's status bar: add
+`viewport-fit=cover` to your viewport and pad with `env(safe-area-inset-top)` and
+`env(safe-area-inset-bottom)`. Android's web view answers `0` for that inset, so there the app
+stops your page under the status bar itself and fills the status bar with your
+`setStatusBarColor` (the app's own colour without one); the same CSS is right on both. (Before
+the app's build 6, Android drew the page under the status bar too.) A game
+with `"splash": true` opens behind the cover, and goes behind it again on `reload()` and
+`reloadHome()`; lower it as soon as your first screen is honest, on every path, the failed ones
+too. After twenty seconds under the cover once the page has loaded, the app tells the player it
+is taking long and offers to close.
 
 ## Frame messages
 
@@ -228,18 +248,20 @@ not with the player, not with a token, not with a code.
 | --- | --- |
 | `not_in_room` | a room call outside a room, or once the player has left it |
 | `in_room` | `room.create()` or `room.join()` on a page that is already in a room |
-| `not_a_room_game` | `room.create()` or `room.join()` for a game whose manifest has no `room` block |
+| `not_a_room_game` | `room.create()` or `room.join()` for a game whose `room.players.max` is 1 |
 | `invalid_code` | `room.join({ code })` with a code that cannot be one |
 | `cancelled` | `room.join()`: the player closed the Join sheet |
-| `another_game`, `in_another_room`, `room_not_found`, `room_closed`, `room_full`, `room_started`, `friends_only`, `kicked`, `not_found` | `room.create()` or `room.join()` refused by Gathering: the room turned the player away, the player is still in another room, or (`not_found`) your game is not published ([Rooms](/rooms#rooms-from-inside-your-game)) |
+| `another_game`, `in_another_room`, `room_not_found`, `room_closed`, `room_full`, `room_started`, `friends_only`, `kicked`, `not_in_match`, `not_found` | `room.create()` or `room.join()` refused by Gathering: the room turned the player away, the player is still in another room, or (`not_found`) your game is not published ([Rooms](/rooms#rooms-from-inside-your-game)) |
 | `host_only` | a call only the room's host may make |
 | `state_stale` | `setState` against a version somebody already moved on: read the state, then decide again |
-| `timeout` | `setState` heard nothing back in ten seconds: read the state again |
+| `timeout` | `setState` heard nothing back in ten seconds (the relay drops a state over 16 KiB, so it ends here too): read the state again. Any other call to Gathering that the network dropped rejects with it too |
+| `rate_limited` | `setState` past the relay's 30 frames a second ([Limits](/rooms#limits)) |
+| `offline`, `failed` | a call that needed Gathering while the phone was offline, or that failed without a code |
 | `no_state` | `setState` in a room whose manifest says `"state": "none"` |
-| `room_started`, `room_not_started`, `room_closed`, `too_few_players`, `not_member`, … | the room refused it: `start` while a round plays, `end` with none playing, … ([Rooms](/rooms)) |
+| `room_started`, `room_not_started`, `room_closed`, `too_few_players`, `not_member`, `tournament_room`, … | the room refused it: `start` while a round plays, `end` with none playing, `room.kick` or `friends.invite` in a [match room](/tournaments#match-rooms), … ([Rooms](/rooms)) |
 | `scope_required` | `friends.list()` without `friends:read` in your manifest's `scopes` |
 | `not_found`, `blocked`, `not_friends`, `already_member` | the friends calls, as [above](#friends) |
-| `invalid_fields` | a call that names no player, or `friends.add` naming the player themselves |
+| `invalid_fields` | a call that names no player, or names the player themselves (`friends.add`, `room.kick`) or somebody not in the room (`room.kick`); `room.end` scores naming somebody never in the room, a player twice or a rank under 1; `room.create` with a `visibility` other than `private` or `friends` |
 | `unknown_permission` | a permission name outside the list |
 | `unknown_action` | a call this app does not have: your page is newer than the app |
 

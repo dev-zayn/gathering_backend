@@ -35,10 +35,10 @@ Every player has one inbox: friend requests, invites to rooms, Gathering's own a
         Up to 160 characters, under the title.
       </Property>
       <Property name="deep_link" type="string">
-        A path inside your game, like `/match/42`, up to 512 characters: the app opens your game with it as the launch's `path`. Empty opens your front page. Never an address: `https://…` and `//host` are refused, so a notification can only ever send a player into your own game.
+        A path inside your game, like `/match/42`, up to 512 bytes: the app opens your game with it as the launch's `path`. Empty opens your front page. Never an address: `https://…` and `//host` are refused, so a notification can only ever send a player into your own game.
       </Property>
       <Property name="idempotency_key" type="string">
-        Up to 64 characters. A key you already used for this player updates that notification instead of adding one — the new words, back at the top, unread — and answers `200` with its id. It is pushed again too, in place of the earlier push on the phone. One key per thing you are telling: `turn:{match}` keeps one line per match however many turns go by, and a retry after a timeout cannot add a second.
+        Up to 64 characters. A key you already used for this player updates that notification instead of adding one — the new words and link, back at the top, unread — and answers `200` with its id. It is pushed again too, in place of the earlier push on the phone. One key per thing you are telling: `turn:{match}` keeps one line per match however many turns go by, and a retry after a timeout cannot add a second.
       </Property>
     </Properties>
 
@@ -111,7 +111,7 @@ Every player has one inbox: friend requests, invites to rooms, Gathering's own a
 
     <Properties>
       <Property name="10 an hour" type="per player, per game">
-        Every call that gets past the field checks counts, a reused key included. The eleventh in the hour is refused with `429 too_many_requests` and `retry_after`, the seconds until the hour that started with your first call is over. Collapse what you send with a key rather than sending more.
+        Every call that gets past the field checks and the shelf counts, a reused key included. The eleventh in the hour is refused with `429 too_many_requests` and `retry_after`, the seconds until the hour that started with your first call is over. Collapse what you send with a key rather than sending more.
       </Property>
       <Property name="90 days" type="kept">
         A notification is kept 90 days from the last time it was raised, read or not, then deleted.
@@ -145,6 +145,9 @@ Every player has one inbox: friend requests, invites to rooms, Gathering's own a
     Asked in this order, so the answer you get is the first thing to fix.
 
     <Properties>
+      <Property name="expired_token" type="401">
+        The game token's hour is up. Renew it ([Authentication](/auth#staying-signed-in)) and send again.
+      </Property>
       <Property name="revoked_token" type="401">
         The game left the player's shelf: they took it off, or an admin suspended it. Stop sending for them.
       </Property>

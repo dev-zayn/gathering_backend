@@ -14,6 +14,10 @@ Two sites come out of one tree. Pages in the "The app" group are the mobile
 team's, built on their own under `/app/`, and nginx keeps them behind
 `DOCS_USER` and `DOCS_PASSWORD`. Everything else is the public developer site.
 
+`guide/` is the minigame guide, served at `/guide/` beside the site: one page
+and the brief for AI models, built in `../../../gathering_docs` (`python3
+build.py` writes them here). Edit them there, never here.
+
 Fences are coloured at build time. `{{ title: 'cURL' }}` after a fence names
 its tab; `{{ tag: 'GET', label: '/v1/…' }}` after a heading draws the route
 above it; `{{ className: 'lead' }}` after a paragraph sets it large.

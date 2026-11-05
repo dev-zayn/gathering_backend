@@ -6,7 +6,7 @@ Players make a tournament of your game from the app, from its store page, or fro
 game, and their friends join it with a code or a link. An official one is made by Gathering and
 listed for everybody. Your game needs nothing new to be played in one: a tournament's matches are
 **match rooms**, ordinary rooms with a few rules of their own, and the results your game already
-sends decide them. A game whose manifest seats two at a table can be played in a tournament.
+sends decide them. A game whose manifest seats two or more at a table can be played in a tournament.
 
 <Note>
   The one thing to get right: **rank every player when a round ends**, the same way you already do
@@ -21,16 +21,19 @@ sends decide them. A game whose manifest seats two at a table can be played in a
   <Col>
     <Properties>
       <Property name="knockout" type="format">
-        Duels in a bracket. Every match is two players; the winner goes on, the loser is out, and
-        the final's winner is the champion. A match is one round, or the best of 3 or of 5. A
-        round's winner is the player ranked strictly better than the other; equal ranks are a
+        Duels in a bracket of 2 to 64 players (eight by default), drawn at random; when they do not
+        fill it, some go through the first stage on a bye. Every match is two players; the winner
+        goes on, the loser is out, and the final's winner is the champion. A match is one round, or
+        the best of 3 or of 5. A round's winner is the player ranked strictly better than the
+        other, or the one ranked when the other is missing from the results; equal ranks are a
         draw, which wins nobody anything, so the pair plays another round. Needs a game that seats
         two (`room.players.min` of 2 or less).
       </Property>
       <Property name="league" type="format">
-        Everybody at one table, for 1 to 20 rounds. Every round gives each ranked player a point for
-        every ranked player they beat; the most points after the last round wins, then the most
-        first places. Made for party games: up to your manifest's `room.players.max`.
+        Everybody at one table, for 1 to 20 rounds (five by default). Every round gives each ranked
+        player a point for every ranked player they beat; the most points after the last round wins,
+        then the most first places, then the draw's order. Made for party games: up to your
+        manifest's `room.players.max`.
       </Property>
     </Properties>
   </Col>
@@ -57,18 +60,24 @@ round. What is different:
 
 - **Only the match's players come in**: the two of a knockout match, or every entrant still in a
   league. Anybody else typing the room's code is refused `not_in_match`.
-- **No kicks, no invites**: `room.kick()` and `room.invite()` reject `tournament_room`. The host
+- **No kicks, no invites**: `room.kick()` and `friends.invite()` reject `tournament_room`;
+  `room.invite()` opens the app's invite sheet, where the platform refuses every invite, and
+  resolves `[]` once it is closed. The host
   still starts each round, and anybody may leave.
 - **The table is set by the match**: a knockout match room seats exactly two and starts only with
-  both; a league's seats every entrant still in it.
+  both; a league's seats every entrant still in it, and starts with two of them (or your
+  `room.players.min`, if more).
 - **Every round counts.** Whenever a round ends with results, it is counted for the match: by the
-  host's `room.end({ scores })`, by your server's results posted before the round ends, or when
-  the round runs past its time limit with your server's results in. Results your server rewrites
-  after the round has ended do not count again.
+  host's `room.end({ scores })`, by your server's results posted before the round ends, when
+  the round runs past its time limit with your server's results in, or when the room closes
+  during the round (its host closed it, everybody left, Gathering closed it). Results your server
+  posts after the round has ended do not count.
 - **The round that decides the match closes the room.** Your page hears `ended` for that round
-  with `reason: "tournament"`, and the app takes the players to the tournament. A match room
-  that closes for any other reason (its host closed it, everybody left) leaves the match as it
-  was: its tally is the match's, not the room's, and the next room carries on from it.
+  with `reason: "tournament"`, and the app shows the players the round's results, with the way to
+  the tournament. A match decided away from the table (a walkover, an award) or a tournament
+  called off closes its open room with the same reason. A match room that closes for any other
+  reason (its host closed it, everybody left) keeps what was counted: its tally is the match's,
+  not the room's, and the next room carries on from it.
 
 ### Knowing you are in one
 
@@ -91,8 +100,8 @@ Use it to say what is at stake: the stage (the last of `stages` is the final), t
 and, for a knockout, how many round wins take the match (`need`). Nothing about the match changes
 during a round, so reading it when your page opens is enough.
 
-Your own server sees the same block in the [bridge context](/auth): `room.tournament`, with player
-ids and numbers, no names.
+Your own server sees the same block in the [bridge context](/auth): `room.tournament`, in snake
+case (`best_of`), its tally lines `{ player, wins, points }`: player ids and numbers, no names.
 
 ## From inside your game
 
@@ -101,12 +110,12 @@ ids and numbers, no names.
 | `tournament.current()` | the match your page's room plays, as `room.current().tournament`: `{ id, name, format, match, stage, stages, bestOf, need, rounds, played, tally }`, each tally line `{ player, nickname, wins, points }`; `null` elsewhere |
 | `tournament.open()` | the app shows the tournament over your page: its bracket or its table. Rejects `not_in_tournament` outside a match room |
 | `tournament.list()` | the player's tournaments of your game that are still on, and the official ones: `[{ id, code, name, format, status, entrants, size, official, yourMatchReady }]` |
-| `tournament.create({ format? })` | outside a room: the app's own sheet to make a tournament of your game (`knockout` or `league` picked for the player when you say). `{ id, code }` once it is made, then the tournament takes your page's place. Rejects `in_room`, `not_a_room_game`, `cancelled` |
-| `tournament.join({ code? })` | with a code, joins that tournament of your game (`another_game` for another game's); without one, the app's join sheet. `{ id, code }`, then the tournament takes your page's place |
+| `tournament.create({ format? })` | outside a room: the app's own sheet to make a tournament of your game (`knockout` or `league` picked for the player when you say). `{ id, code }` once it is made, then the tournament takes your page's place. Rejects `in_room`, `not_a_room_game`, `invalid_fields` (a `format` that is neither), `cancelled` |
+| `tournament.join({ code? })` | with a code, joins that tournament of your game (`another_game` for another game's); without one, the app's join sheet. `{ id, code }`, then the tournament takes your page's place. Rejects `in_room`, `not_a_room_game`, `invalid_code`, `cancelled`, or the platform's code (`tournament_full`, `tournament_started`…) |
 
 A good place for "make a tournament" is next to your "play with a friend" key on your first
-screen, the one that calls `room.create()`. The app's own menu on your frame offers it too, for
-every game that seats two.
+screen, the one that calls `room.create()`. The app's own menu on your frame offers it too, on a
+page outside a room, for every game that seats two or more.
 
 ```js {{ title: 'menu.js' }}
 document.querySelector('#tournament').addEventListener('click', async () => {
@@ -114,7 +123,7 @@ document.querySelector('#tournament').addEventListener('click', async () => {
     await gathering.tournament.create()
     // The tournament's page takes yours: nothing more to do here.
   } catch (code) {
-    if (code !== 'cancelled') gathering.showToast({ message: 'ما صارت البطولة', type: 'error' })
+    if (code !== 'cancelled') gathering.showToast({ title: 'ما صارت البطولة' })
   }
 })
 ```
@@ -124,4 +133,6 @@ document.querySelector('#tournament').addEventListener('click', async () => {
 The app keeps the tournament: its code, link and QR while it takes entrants, the draw, the
 bracket by stage or the league's table, each player's next match with its "play" key, and the
 champion. Players hear when it starts, when their match is ready and when it ends, in the app and
-on their phone. You never draw a bracket; draw the match in front of you.
+on their phone. A tournament's link, `/t/{code}` beside a room's [invite link](/rooms#invite-links),
+opens the app where it is installed, and elsewhere a page with its name, its game and its code
+while it is open or running. You never draw a bracket; draw the match in front of you.

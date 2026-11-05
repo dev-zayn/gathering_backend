@@ -5,3 +5,17 @@ The API behind the app a player opens: what it is, how calls are made, and the o
 This section is the mobile team's. Every route under `/v1/` the app calls, the token it holds,
 the limits it meets and the refusals it has to word are written here, one page per area, as each
 area is built.
+
+## Calls
+
+Bodies are JSON both ways, and a time in an answer is UTC to the second: `2026-11-04T09:30:00Z`.
+A signed-in call carries the session's token as `Authorization: Bearer <token>`
+([Sign-in and sessions](/app/signin)).
+
+A refusal is a status and one body, `{ "error": "<code>" }`; the code is what the app words.
+`invalid_fields` adds `fields`, each field with what is wrong with it; `429 too_many_requests`
+adds `retry_after`, in seconds. A `500` says only `internal_error`.
+
+The token is checked before the route runs: `401 missing_token`, `401 invalid_token`,
+`401 expired_token` (refresh, then call again), `401 revoked_token` (the session was ended: sign
+in again), `403 wrong_token` (an otp or signup token where a session is wanted).

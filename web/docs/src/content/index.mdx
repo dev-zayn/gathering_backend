@@ -5,10 +5,10 @@ import { Hero, Guides, Player } from '@/components/blocks'
 ## What Gathering is
 
 Gathering (گعدة) is an app where friends open a **private room** and play a small game together,
-online or sitting next to each other on the same Wi-Fi. A game is an HTML page you host. The app
+online, whether they are far apart or sitting side by side. A game is an HTML page you host. The app
 loads it in a frame, puts the room's players in front of it, relays every message between them,
 and keeps a shared state if the game wants one. Your page never opens a socket and never holds a
-token: `window.gathering` is the whole of what it needs, and nothing about the player crosses the
+session token: `window.gathering` is the whole of what it needs, and nothing about the player crosses the
 frame except what [the bridge](/bridge) answers.
 
 ## What you build
@@ -19,6 +19,10 @@ frame except what [the bridge](/bridge) answers.
 - Optionally, a server of your own: it verifies players through a [room ticket](/rooms#the-ticket),
   posts a round's [results](/rooms#results), and tells players things through their
   [inbox](/notifications).
+
+New to it? [The minigame guide](/guide/) builds a whole game on one page, from the files to the
+checklist, and carries [a brief to hand an AI model](/guide/MINIGAME_AI_BRIEF.md) that builds one
+the same way.
 
 <Guides
   title="Guides"

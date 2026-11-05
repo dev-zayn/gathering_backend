@@ -19,13 +19,13 @@ From a published manifest to a tile a player can open. Four steps, one of which 
       <Property name="Public" type="no auth">
         We fetch it before you are listed. A login in front of it is the most common reason a registration fails.
       </Property>
-      <Property name="application/json" type="content-type">
-        A catch-all route that serves your index page instead is the second. It returns `200`, which is why it looks fine until somebody parses it.
+      <Property name="JSON" type="body">
+        A catch-all route that serves your index page instead is the second. It returns `200`, which is why it looks fine until somebody parses it: `manifest: not_json`. We parse the body; the content type is not read.
       </Property>
     </Properties>
 
     <Note>
-      Two limits, rarely met: the document must be under 256 KB, and we give up on a fetch
+      Two limits, rarely met: the document must be at most 256 KB, and we give up on a fetch
       after ten seconds. A private or localhost address is refused outright.
     </Note>
 
@@ -116,19 +116,19 @@ From a published manifest to a tile a player can open. Four steps, one of which 
 
     <Properties>
       <Property name="tagline" type="string, required">
-        The line under your name on the tile, in the language your players read.
+        The line under your name on the tile, in the language your players read, up to 160 characters.
       </Property>
       <Property name="icon" type="file, required">
         The tile picture, a PNG or JPEG up to 2 MB, uploaded by the admin and kept by Gathering. Without it you cannot be published.
       </Property>
       <Property name="description" type="string">
-        Shown on your page in the store, not on the tile.
+        Shown on your page in the store, not on the tile, up to 4,000 characters.
       </Property>
       <Property name="category" type="one of a list">
         How the store groups you. One of `speed`, `brain`, `words`, `luck`, `guess`, `draw`, `party`, `other`. A new game waits in `other` until an admin files it.
       </Property>
       <Property name="screenshots" type="file[]">
-        Optional, up to six, uploaded by the admin. The page reads fine without them.
+        Optional, up to six, each a PNG or JPEG up to 2 MB, uploaded by the admin. The page reads fine without them.
       </Property>
       <Property name="featured" type="switch">
         A featured game leads the store, whatever its tier. An admin's call.
@@ -208,7 +208,7 @@ From a published manifest to a tile a player can open. Four steps, one of which 
 <Row>
   <Col>
 
-    Change your manifest and ask us to re-fetch it — or change it and wait, because we re-read every manifest about once a day anyway. What happens next depends on what changed.
+    Change your manifest and ask us to re-fetch it — or change it and wait, because we re-read every manifest about once a day anyway. A game never published is saved as read, whatever changed; for any other, what happens next depends on what changed.
 
     <Properties>
       <Property name="version, entry, name" type="saved as read">
@@ -226,7 +226,8 @@ From a published manifest to a tile a player can open. Four steps, one of which 
     </Properties>
 
     <Note>
-      No player is ever asked. A published game holds whatever its accepted manifest asks
+      No player is ever asked about a scope; a permission newly accepted, the app asks for
+      as the game next opens. A published game holds whatever its accepted manifest asks
       for, so the only tail to design for is tokens minted before an acceptance: they carry
       the old list until they renew.
     </Note>

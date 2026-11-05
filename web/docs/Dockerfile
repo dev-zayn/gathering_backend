@@ -16,6 +16,8 @@ FROM nginx:1.30-alpine
 RUN apk add --no-cache openssl
 COPY --from=build /w/dist /usr/share/nginx/html
 COPY --from=build /w/dist-app /usr/share/nginx/private/app
+# The minigame guide, a page of its own built in ../../../gathering_docs.
+COPY guide /usr/share/nginx/html/guide
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 COPY docker/docs-auth.sh /docker-entrypoint.d/40-docs-auth.sh
 RUN chmod +x /docker-entrypoint.d/40-docs-auth.sh

@@ -25,13 +25,13 @@ reconnecting by itself — and hands your page every frame through `window.gathe
 
     <Properties>
       <Property name="lobby" type="status">
-        Players join by code and take the lowest free seat, 0-based; the host sits in seat 0. The lobby is the app's: your game opens when a round starts. Between rounds the room waits here again, with the same code, seats and connections.
+        Players join by code and take the lowest free seat, 0-based; the room's maker, its first host, sits in seat 0. The lobby is the app's: your game opens when a round starts. Between rounds the room waits here again, with the same code, seats and connections.
       </Property>
       <Property name="playing" type="status">
         A round. The host started it, with at least `room.players.min` members. Nobody new joins; a member who left comes back only when your manifest says `"rejoin": true`. In the lobby after the round, anybody who left may come back; nobody kicked ever does.
       </Property>
       <Property name="ended" type="status">
-        For good. The host closed the room, the last member left, the lobby sat idle with nobody connected for ten minutes, or Gathering closed it from its console. Every member hears `ended`, and the connections close. A round that runs past two hours is not ended: it is finished for you, and the room goes back to its lobby.
+        For good. The host closed the room, the last member left, the lobby sat idle with nobody connected for ten minutes, Gathering closed it from its console, or the [tournament](/tournaments) match it was made for was decided. Every member hears `ended`, and the connections close. A round that runs past two hours is not ended: it is finished for you, and the room goes back to its lobby.
       </Property>
     </Properties>
 
@@ -105,15 +105,16 @@ reconnecting by itself — and hands your page every frame through `window.gathe
     | Code | When |
     | --- | --- |
     | `in_room` | your page is already in a room |
-    | `not_a_room_game` | your manifest has no `room` block |
+    | `not_a_room_game` | your manifest's room seats one (`room.players.max` of 1) |
+    | `invalid_fields` | `room.create()` with a `visibility` that is neither |
     | `invalid_code` | a code that cannot be one |
     | `cancelled` | the player closed the Join sheet |
     | `in_another_room` | the player is still in another open room; the app offers the way back to it |
     | `another_game` | the code is another game's room |
-    | `room_not_found`, `room_closed`, `room_full`, `room_started`, `friends_only`, `kicked` | the room turned the player away, as it would a code typed in the app |
+    | `room_not_found`, `room_closed`, `room_full`, `room_started`, `friends_only`, `kicked`, `not_in_match` | the room turned the player away, as it would a code typed in the app |
     | `not_found` | your game is not published |
 
-    The game frame's own menu offers the same without a line of yours. On a page outside a room, a game with a `room` block gets two entries: "سوّي غرفة", a private room as `room.create()` makes it, and "انضم لغرفة", the Join sheet for your game.
+    The game frame's own menu offers the same without a line of yours. On a page outside a room, a game whose room seats two or more gets two entries: "سوّي غرفة", a private room as `room.create()` makes it, and "انضم لغرفة", the Join sheet for your game (then "سوّي بطولة", for a [tournament](/tournaments)).
 
   </Col>
   <Col sticky>
@@ -176,7 +177,7 @@ reconnecting by itself — and hands your page every frame through `window.gathe
 
     **One page load is one round.** When the host starts the next round, the app opens your game again, fresh, on every phone, with the state back at version 0. A page from a finished round is replaced, not reused. So start every round from nothing: read `room.current()` and the state as on a first load, and keep nothing in the page from the round before. Anything that lasts across rounds, like a running tally, belongs on your server.
 
-    Your page hears `ended` once per round: when the round is over, whether the host finished it or the room closed while it was under way. To your game, the game is over either way; the room's own life is the app's business.
+    Your page hears `ended` once per round: when the round is over, whether the host finished it, it ran past its time limit, or the room closed while it was under way. To your game, the game is over either way; the room's own life is the app's business.
 
   </Col>
   <Col sticky>
@@ -210,7 +211,7 @@ reconnecting by itself — and hands your page every frame through `window.gathe
 <Row>
   <Col>
 
-    Every frame is a JSON object with a type, `t`. The ones that are part of the room's history carry a `seq`: one counter per room, the order every member sees. Your page receives each as a DOM event, `gathering:room:<event>`, with the frame's fields as `detail` — or through `room.on(event, fn)`.
+    Every frame is a JSON object with a type, `t`. The ones that are part of the room's history carry a `seq`: one counter per room, the order every member sees. The numbers your page sees can skip: the app's own chat and a message meant for another member count too. Your page receives each as a DOM event, `gathering:room:<event>`, with the frame's fields as `detail` — or through `room.on(event, fn)`.
 
     | Event | Frame | Fields | When |
     | --- | --- | --- | --- |
@@ -221,12 +222,12 @@ reconnecting by itself — and hands your page every frame through `window.gathe
     | `members` | `members` | the list itself, every member | after any join, leave, kick, new host, connect or disconnect |
     | `started` | `started` | `seq`, `at`, `by`, `round` | the host started a round; the state went back to version 0 with it |
     | `ended` | `finished`, or `ended` during a round | `seq`, `at`, `by` (null when nobody did), `reason`, `round`, `results` | your round is over: once per round |
-    | `host` | `host` | `seq`, `player`, `by` (null when the old host left) | the host changed |
+    | `host` | `host` | `seq`, `player`, `by` (null when the old host left) | the host changed: handed over, or the old host left and the lowest seat took it |
     | `kicked` | `kicked` | `seq`, `player`, `by` | the host removed somebody; `left` follows |
 
     A member is `{ id, nickname, handle, avatar, avatarUrl, role, seat, connected }`, as `room.members()` answers: `avatar` a bundled avatar's id, or `avatarUrl` a link to an uploaded picture. `connected` says the member's app has the room's connection open right now — a phone that lost its signal shows as disconnected until it is back.
 
-    The relay has two frames for an ending. `finished` is a round over: `reason` `host`, or `timeout` when the round ran past two hours (with `by` null), and the room goes back to its lobby; no connection closes. `ended` is the room closing for good, with `reason` `host`, `empty`, `idle`, `admin` (Gathering closed it from its console, with `by` null) or `tournament` (the round decided the [tournament](/tournaments) match the room was made for), and `round`, the latest round started (0 when none); every connection closes after it. Both carry `round` and `results`: the round's scores with their ranks, in the order the host sent them, or, when your server posted that round's [results](#results) first, yours, ranked. Your page hears either as one `ended` event, once per round. A room that closes in its lobby, between rounds, has no round to end, and your page hears nothing.
+    The relay has two frames for an ending. `finished` is a round over: `reason` `host`, or `timeout` when the round ran past two hours (with `by` null), and the room goes back to its lobby; no connection closes. `ended` is the room closing for good, with `reason` `host`, `empty`, `idle`, `admin` (Gathering closed it from its console, with `by` null) or `tournament` (the [tournament](/tournaments) match the room was made for was decided, by its round or away from the table, or the tournament was called off), and `round`, the latest round started (0 when none); every connection closes after it. Both carry `round` and `results`: the round's scores with their ranks, in the order the host sent them, or, when your server posted that round's [results](#results) first, yours, ranked. Your page hears either as one `ended` event, once per round. A phone that missed the frame (away too long) still hears its round's `ended`, built from the room, with no `seq` and `reason` possibly empty: never score by the reason. A room that closes in its lobby, between rounds, has no round to end, and your page hears nothing.
 
   </Col>
   <Col sticky>
@@ -281,7 +282,7 @@ reconnecting by itself — and hands your page every frame through `window.gathe
       </Property>
     </Properties>
 
-    Every frame is safe to apply twice. When the app reconnects it asks for what it missed, and the room it gets back may already include a change whose frame follows. So: replace the member list with each `members` frame, ignore a `state` whose `version` is not above the one you have, and drop any frame whose `seq` you have already seen.
+    Every frame is safe to apply twice. When the app reconnects it asks for what it missed, and the room it gets back may already include a change whose frame follows. The relay keeps a room's last 200 frames for that; a phone away for longer gets the room and the state as they stand, without the messages in between. So: replace the member list with each `members` frame, ignore a `state` whose `version` is not above the one you have, and drop any frame whose `seq` you have already seen.
 
   </Col>
   <Col sticky>
@@ -366,7 +367,7 @@ reconnecting by itself — and hands your page every frame through `window.gathe
 <Row>
   <Col>
 
-    The relay's only rules are about size and pace. A refused frame is answered on the sender's phone alone; the connection stays open. On your page a refused `setState` rejects with the code, and a refused `send` is dropped.
+    The relay's only rules are about size and pace. A refused frame is answered on the sender's phone alone; the connection stays open. On your page a refused `setState` rejects with the code (one over the size limit, whose frame the relay drops unread, with `timeout`), and a refused `send` is dropped.
 
     <Properties>
       <Property name="too_large" type="16 KiB">
@@ -422,7 +423,7 @@ reconnecting by itself — and hands your page every frame through `window.gathe
         The room's id.
       </Property>
       <Property name="role, seat" type="string, number">
-        `host` or `player`, and the seat, from 0. Always present: the host's seat is 0.
+        `host` or `player`, and the seat, from 0. Always present, 0 included.
       </Property>
       <Property name="round" type="number">
         The room's round when the ticket was issued: the one playing, or the one just finished, 0 before the first. Always present.
@@ -511,7 +512,9 @@ reconnecting by itself — and hands your page every frame through `window.gathe
       "round": 2,
       "scope": "room",
       "kind": "room",
+      "jti": "tok_9d2m8q1x4b6n7f3k",
       "iat": 1792573806,
+      "nbf": 1792573806,
       "exp": 1792574406
     }
     ```
@@ -532,7 +535,7 @@ reconnecting by itself — and hands your page every frame through `window.gathe
 
     <Properties>
       <Property name="room" type="object | null">
-        `{ id, code, status, round, role, seat, members }`, the members as `{ id, nickname, role, seat }` by seat — the nicknames with `identity:read` only. `round` is the round playing, or the one just finished. `null` for a game opened outside a room, and once the player has left it.
+        `{ id, code, status, round, role, seat, members, tournament }`, the members as `{ id, nickname, role, seat }` by seat — the nicknames with `identity:read` only. `round` is the round playing, or the one just finished. `null` for a game opened outside a room, and once the player has left it. Its `tournament` is the [tournament](/tournaments) match the room plays, `null` in any other room.
       </Property>
     </Properties>
 
@@ -556,7 +559,8 @@ reconnecting by itself — and hands your page every frame through `window.gathe
         "members": [
           { "id": "ply_7f3k9d2m8q1x4b6n", "nickname": "زين", "role": "host", "seat": 0 },
           { "id": "ply_4kx8dmzq7v2urybe", "nickname": "مريم", "role": "player", "seat": 1 }
-        ]
+        ],
+        "tournament": null
       },
       "scope": ["identity:read", "results:write"],
       "live": true
@@ -575,7 +579,7 @@ reconnecting by itself — and hands your page every frame through `window.gathe
 <Row>
   <Col>
 
-    Results are kept for good, **one set per round**: every player's history lists a line for each round they played, and the app's results page reads a round at a time (`GET /v1/rooms/{room}/results?round=N`, which also lists the room's `rounds`), long after the room itself is gone. They come from one of two places. The host's `room.end({ scores })` writes them as the round ends — enough for a game every phone plays out in the open. When your server is the one that knows who won, post them from there: **your server's word is the stronger.** What it posts replaces that round's results whole, and a host's end that comes later leaves them as they are and carries them to every phone.
+    Results are kept for good, **one set per round**: every player's history lists a line for each round they have a result in, and the app's results page reads a round at a time (`GET /v1/rooms/{room}/results?round=N`, which also lists the room's `rounds`), long after the room itself is gone. They come from one of two places. The host's `room.end({ scores })` writes them as the round ends — enough for a game every phone plays out in the open. When your server is the one that knows who won, post them from there: **your server's word is the stronger.** What it posts replaces that round's results whole, and a host's end that comes later leaves them as they are and carries them to every phone.
 
     Post with a game token that carries `results:write` — ask for it in your manifest's `scopes`. It need not be the token minted into the room: any of your game's tokens for a player who was in it will do.
 
@@ -731,17 +735,17 @@ reconnecting by itself — and hands your page every frame through `window.gathe
         The room's game and its code, large, with a copy key, and a key for each store. Nothing else about the room: not the host, not who is in it, not who may join, so a friends-only room's page looks like any other. **200** while the room is open — in its lobby, during a round and between rounds — and **404**, the page's "not found" form, once it has ended or for a code no room holds. The code is read like a typed one: case, spaces and dashes do not count. Arabic, or English when the browser prefers it. Never cached, and never the API's error body.
       </Property>
       <Property name="/.well-known/assetlinks.json" type="Android">
-        The app's package and its signing certificates' fingerprints, so Android opens `/r/` links in the app without asking. `[]` until the fingerprints are configured.
+        The app's package and its signing certificates' fingerprints, so Android opens `/r/` and `/t/` links in the app without asking. `[]` until the fingerprints are configured.
       </Property>
       <Property name="/.well-known/apple-app-site-association" type="iOS">
-        The app's id and the one path it takes, `/r/*`. No details until the team id is configured.
+        The app's id and the two paths it takes, `/r/*` and a tournament's `/t/*`. No details until the team id is configured.
       </Property>
     </Properties>
 
     Both documents are JSON, cached for an hour, and served as they are: the phones read them before they let the app catch a link, and refuse one behind a redirect.
 
     <Note>
-      Deploying: the links live on their own host, `LINK_PUBLIC_URL`, which serves nothing of its own. It routes `/r/*` and `/.well-known/*` to the api, as a proxy and never a redirect. On a laptop the api is the link host.
+      Deploying: the links live on their own host, `LINK_PUBLIC_URL`. It routes `/r/*`, `/t/*` and `/.well-known/*` to the api, as a proxy and never a redirect. On a laptop the api is the link host.
     </Note>
 
   </Col>
@@ -784,7 +788,7 @@ reconnecting by itself — and hands your page every frame through `window.gathe
       "applinks": {
         "details": [{
           "appIDs": ["ABCDE12345.app.gathering.jamaa"],
-          "components": [{ "/": "/r/*" }]
+          "components": [{ "/": "/r/*" }, { "/": "/t/*" }]
         }]
       }
     }
