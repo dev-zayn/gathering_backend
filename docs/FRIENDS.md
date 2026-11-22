@@ -95,7 +95,7 @@ deleted by the housekeeping job.
 | `friend-accept` | `POST /v1/friends/requests/{player}/accept` | | 200 `{friendship: friends}` | 404 `request_not_found` |
 | `friend-decline` | `POST /v1/friends/requests/{player}/decline` | | 204 | 404 `request_not_found` |
 | `friend-remove` | `DELETE /v1/friends/{player}` | | 204 | 404 `not_friends` |
-| `friends-blocked` | `GET /v1/friends/blocked` | | 200 `{blocked: [id]}`: who the caller has blocked; a room's chat hides what they say | |
+| `friends-blocked` | `GET /v1/friends/blocked` | | 200 `{blocked: [id], players: [Blocked]}`: who the caller has blocked; a room's chat hides what they say, and the app lists them to unblock | |
 | `player-block` / `player-unblock` | `POST` / `DELETE /v1/players/{player}/block` | | 204 | 404 `not_found`, 422 `player: is_you` |
 | `player` (M1, extended) | `GET /v1/players/{ref}` | | 200 Card | 404 `not_found` (also when they blocked the caller and the caller has not blocked them) |
 | `game-leaderboard` | `GET /v1/games/{game}/leaderboard?scope=friends` | | 200 `{game, entries: [Entry]}` | 404 `not_found`, 422 `scope: friends_only` |
@@ -127,6 +127,15 @@ deleted by the housekeeping job.
   requests, mutual friends, the leaderboard) and is `not_found` to the card,
   a request and a block; a row with them can still be cancelled, declined
   or removed.
+- **The blocked list** (2026-11-22; the app's Me tab lists the players
+  blocked, each with an unblock). `blocked` stays every blocked id, as
+  before, for the chat. `players` is the same players to show, newest block
+  first: a Blocked is a Card (`id`, `nickname`, `handle`, `avatar`,
+  `avatar_url`) and `blocked_at`. A switched-off player is in `blocked` and
+  left out of `players`, since unblocking them is `not_found` like any other
+  route that names them. Not paged: a player blocks few. An older app reads
+  `blocked` alone. An admin can lift a block too (docs/CONSOLE.md, "A
+  player's blocks").
 
 ```json
 Card (the M1 card, extended):

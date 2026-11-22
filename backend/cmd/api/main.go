@@ -318,6 +318,7 @@ func main() {
 	friendRules := friends.New(pg, playerStore, notifications)
 	friendRules.Presence = presence
 	friendRules.Files, friendRules.AvatarTTL = bucket, cfg.Files.AvatarTTL
+	friendRules.Audit = playersAudit
 
 	// The rooms, and the relay that carries their frames. Each needs the
 	// other: the rules publish through the hub, and the hub asks the rules

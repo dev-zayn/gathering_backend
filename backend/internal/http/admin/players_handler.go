@@ -7,6 +7,7 @@ import (
 
 	"github.com/danielgtaylor/huma/v2"
 
+	"github.com/jamaa/gathering/backend/internal/biz/friends"
 	"github.com/jamaa/gathering/backend/internal/data/model"
 	"github.com/jamaa/gathering/backend/internal/http/authn"
 	"github.com/jamaa/gathering/backend/internal/pkg/caller"
@@ -67,6 +68,18 @@ type playerResponse struct {
 	Body playerDetailJSON
 }
 
+type playerBlockPath struct {
+	Player  string `path:"player" maxLength:"24" example:"ply_7f3k9d2m8q1x4b6n"`
+	Blocked string `path:"blocked" maxLength:"24" example:"ply_2k8d1m4q7x9b3n6f"`
+}
+
+type playerBlocksResponse struct {
+	Body struct {
+		Blocked   []friends.BlockRow `json:"blocked" doc:"Who this player blocked, newest first."`
+		BlockedBy []friends.BlockRow `json:"blocked_by" doc:"Who blocked this player, newest first."`
+	}
+}
+
 func (h *Handler) registerPlayers(api huma.API) {
 	admin := map[string]any{authn.ScopeKey: caller.ScopeAdmin}
 	write := map[string]any{authn.ScopeKey: caller.ScopeAdmin, authn.RoleKey: "admin"}
@@ -84,6 +97,20 @@ func (h *Handler) registerPlayers(api huma.API) {
 		Description: "The list's row, with their friends, the rounds they have played and the open room they are in.",
 		Tags:        []string{"admin"}, Metadata: admin,
 	}, h.player)
+
+	huma.Register(api, huma.Operation{
+		OperationID: "admin-player-blocks", Method: http.MethodGet, Path: "/v1/admin/players/{player}/blocks",
+		Summary:     "A player's blocks",
+		Description: "Who they blocked and who blocked them, newest first; switched-off players in both, marked. 404 not_found for nobody or a deleted account.",
+		Tags:        []string{"admin"}, Metadata: admin,
+	}, h.playerBlocks)
+
+	huma.Register(api, huma.Operation{
+		OperationID: "admin-player-unblock", Method: http.MethodDelete, Path: "/v1/admin/players/{player}/blocks/{blocked}",
+		Summary:     "Lift a player's block",
+		Description: "Lifts {player}'s block of {blocked}, as their own unblock does: nothing restored, nobody told. 204 also when there was no such block; the audit line block.lifted only when one went. 404 not_found when {player} is nobody or a deleted account.",
+		Tags:        []string{"admin"}, Metadata: write, DefaultStatus: http.StatusNoContent,
+	}, h.liftBlock)
 
 	huma.Register(api, huma.Operation{
 		OperationID: "admin-player-disable", Method: http.MethodPost, Path: "/v1/admin/players/{player}/disable",
@@ -155,6 +182,20 @@ func (h *Handler) player(ctx context.Context, in *playerPath) (*playerResponse, 
 		out.Body.Room = &playerRoomJSON{ID: tally.Room.ID, Code: tally.Room.Code}
 	}
 	return out, nil
+}
+
+func (h *Handler) playerBlocks(ctx context.Context, in *playerPath) (*playerBlocksResponse, error) {
+	blocked, by, err := h.Friends.Blocks(ctx, in.Player)
+	if err != nil {
+		return nil, err
+	}
+	out := &playerBlocksResponse{}
+	out.Body.Blocked, out.Body.BlockedBy = blocked, by
+	return out, nil
+}
+
+func (h *Handler) liftBlock(ctx context.Context, in *playerBlockPath) (*noContent, error) {
+	return nil, h.Friends.Lift(ctx, actor(ctx), in.Player, in.Blocked)
 }
 
 func (h *Handler) disable(ctx context.Context, in *playerPath) (*noContent, error) {

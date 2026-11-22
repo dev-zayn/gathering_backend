@@ -158,6 +158,7 @@ func Mount(api huma.API, d Deps) {
 
 		Tournaments: d.Tournaments,
 		Reports:     d.Reports,
+		Friends:     d.Friends,
 	}).Register(api)
 
 	(&guest.Handler{

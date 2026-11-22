@@ -415,3 +415,18 @@ and `JWT_PRIVATE_KEY` (`make keys`); the sweep then signs in with that code.
   `BUILD_COMMIT` a build arg in both Dockerfiles and `compose.yml`, set by
   `deploy.sh` and by the "alone" commands in `deploy/hetzner/README.md`
   ("Which build is live").
+- Blocks, read and lifted (2026-11-22, the user's ask), to
+  `docs/FRIENDS.md` "The blocked list" and `docs/CONSOLE.md` "A player's
+  blocks" (written first): `friends-blocked` also answers `players` (each a
+  Card with `blocked_at`, newest first, the switched-off left out; `blocked`
+  unchanged for older apps); `admin-player-blocks` (`GET
+  /v1/admin/players/{player}/blocks`: `blocked` and `blocked_by`) and
+  `admin-player-unblock` (`DELETE /v1/admin/players/{player}/blocks/{blocked}`,
+  role admin, audit `block.lifted` when a block went); `biz/friends`
+  `BlockedPlayers`, `Blocks`, `Lift` (its `Audit` is the players' area); the
+  console's player record lists both ways with "Unblock" (disabled without
+  the admin role). Tests `biz/friends/blocklist_test.go`; the e2e
+  `TestBlockedLists`, run with `TestFriends` against an api on the new code
+  on :8097. No migration. Live on ga3da.fun the same day (backend and
+  web/console sent alone, then `build api console` and `up -d --no-deps api
+  console`, BUILD_COMMIT c644cad+).

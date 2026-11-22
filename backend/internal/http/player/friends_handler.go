@@ -23,7 +23,8 @@ type friendsResponse struct {
 
 type blockedResponse struct {
 	Body struct {
-		Blocked []string `json:"blocked" doc:"The ids of the players the caller has blocked."`
+		Blocked []string                `json:"blocked" doc:"The ids of the players the caller has blocked: a room's chat hides what they say."`
+		Players []friends.BlockedPlayer `json:"players" doc:"The same players to list, newest block first, the switched-off left out."`
 	}
 }
 
@@ -118,7 +119,7 @@ func (h *Handler) registerFriends(api huma.API) {
 	huma.Register(api, huma.Operation{
 		OperationID: "friends-blocked", Method: http.MethodGet, Path: "/v1/friends/blocked",
 		Summary:     "Who the player has blocked",
-		Description: "The app hides what they say in a room's chat.",
+		Description: "The ids, by which the app hides what they say in a room's chat, and the players, which the app lists to unblock.",
 		Tags:        []string{"friends"}, Metadata: session,
 	}, h.blocked)
 
@@ -210,12 +211,17 @@ func (h *Handler) removeFriend(ctx context.Context, in *playerPath) (*noContent,
 }
 
 func (h *Handler) blocked(ctx context.Context, _ *struct{}) (*blockedResponse, error) {
-	list, err := h.Friends.Blocked(ctx, caller.FromContext(ctx).Subject)
+	me := caller.FromContext(ctx).Subject
+	list, err := h.Friends.Blocked(ctx, me)
+	if err != nil {
+		return nil, err
+	}
+	shown, err := h.Friends.BlockedPlayers(ctx, me)
 	if err != nil {
 		return nil, err
 	}
 	out := &blockedResponse{}
-	out.Body.Blocked = list
+	out.Body.Blocked, out.Body.Players = list, shown
 	return out, nil
 }
 

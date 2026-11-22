@@ -190,6 +190,27 @@ tokens until they expired).
   through the JWKS) lives out its ten minutes (`TOKEN_ROOM_TTL`): the
   platform cannot reach it.
 
+### A player's blocks
+
+2026-11-22 (docs/FRIENDS.md has what a block does). Many players blocking
+one is worth an admin's look; a block made by mistake, or by someone who has
+no app any more, is an admin's to lift.
+
+- `admin-player-blocks`, `GET /v1/admin/players/{player}/blocks`, scope
+  `admin`: 200 `{blocked: [BlockRow], blocked_by: [BlockRow]}`, both newest
+  first: who this player blocked, and who blocked them. A BlockRow is
+  `{id, nickname, handle, avatar, disabled, blocked_at}`; switched-off
+  players are in both lists, marked. 404 `not_found` for nobody or a deleted
+  account (whose blocks went with it).
+- `admin-player-unblock`, `DELETE /v1/admin/players/{player}/blocks/{blocked}`,
+  role `admin`: lifts `{player}`'s block of `{blocked}`, as the player's own
+  unblock does (nothing restored, nobody told). 204, also when there was no
+  such block (as the player's own unblock). 404 `not_found` when `{player}`
+  is nobody or a deleted account. The audit line `block.lifted` in area
+  `players` (actor the admin, subject `{player}`, detail `{blocked}`), only
+  when a block went. To lift a block made against a player, the console
+  calls it with the two the other way round.
+
 ## Signing in with the console's password
 
 For a team with no identity provider (2026-10-25):
@@ -225,7 +246,10 @@ works at a laptop's width and at a phone's.
   game to open), a preview of the row as the app draws it, a confirmation
   that names the reach (from `dry_run`) before sending; under it, the
   announcements sent.
-- **Dashboard** and **Players** show the new numbers.
+- **Dashboard** and **Players** show the new numbers. A player's record
+  shows "Blocked" and "Blocked by" (their counts, then each player with the
+  date, a switched-off one marked) and "Unblock" on each row behind a
+  confirmation that names the two players.
 - **Tournaments** (`/tournaments`, 2026-10-22, docs/TOURNAMENTS.md "The
   console"): every tournament with filters (status, game); "New official
   tournament" (public, no organizer, an optional start time); a row opens

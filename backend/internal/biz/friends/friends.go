@@ -8,6 +8,7 @@ import (
 
 	"gorm.io/gorm"
 
+	"github.com/jamaa/gathering/backend/internal/biz/audit"
 	"github.com/jamaa/gathering/backend/internal/biz/identity"
 	"github.com/jamaa/gathering/backend/internal/biz/inbox"
 	"github.com/jamaa/gathering/backend/internal/biz/players"
@@ -35,6 +36,9 @@ type Service struct {
 	// is how long an avatar's link lives.
 	Files     files.Files
 	AvatarTTL time.Duration
+
+	// Audit is where an admin lifting a block is written. Nil writes nothing.
+	Audit audit.Log
 }
 
 // New is the rules over one database, the stores they read and the inbox

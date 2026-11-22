@@ -64,6 +64,10 @@ const (
 	ActionReportFiled    = "report.filed"
 	ActionReportResolved = "report.resolved"
 
+	// An admin lifting one player's block of another (docs/CONSOLE.md, "A
+	// player's blocks").
+	ActionBlockLifted = "block.lifted"
+
 	// Who may open the console is the identity provider's to say, and it keeps
 	// that record. Ours notes the first time somebody did, so a new name in the
 	// log has a beginning.

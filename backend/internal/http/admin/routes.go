@@ -7,6 +7,7 @@ import (
 
 	"github.com/jamaa/gathering/backend/internal/biz"
 	"github.com/jamaa/gathering/backend/internal/biz/audit"
+	"github.com/jamaa/gathering/backend/internal/biz/friends"
 	"github.com/jamaa/gathering/backend/internal/biz/games"
 	"github.com/jamaa/gathering/backend/internal/biz/identity"
 	"github.com/jamaa/gathering/backend/internal/biz/inbox"
@@ -47,6 +48,10 @@ type Handler struct {
 
 	// Reports is what players reported (docs/REPORTS.md).
 	Reports *reports.Service
+
+	// Friends is a player's blocks, and an admin lifting one
+	// (docs/CONSOLE.md, "A player's blocks").
+	Friends *friends.Service
 }
 
 func (h *Handler) Register(api huma.API) {

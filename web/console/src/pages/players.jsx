@@ -7,12 +7,13 @@ import Dialog from '../components/dialog.jsx'
 import { Fact } from '../components/game-bits.jsx'
 import { Code } from '../components/room-bits.jsx'
 import { when } from '../lib/games.js'
+import { useMe } from '../lib/me.js'
 
 const presenceTone = { online: 'text-good', in_room: 'text-info', offline: 'text-ink-3' }
 const presenceLabel = { online: 'online', in_room: 'in a room', offline: 'offline' }
 
 // Players: find by handle, open one's record (friends, rounds played, the
-// room they are in), switch one off or on.
+// room they are in, their blocks both ways), switch one off or on.
 export default function Players() {
   // A report links here with the player's handle already typed.
   const [params] = useSearchParams()
@@ -179,9 +180,97 @@ function Record({ id, onClose, flip }) {
               {r.id}
             </Fact>
           </div>
+          <Blocks player={r} />
         </div>
       )}
     </Dialog>
+  )
+}
+
+// A player's blocks both ways (docs/CONSOLE.md, "A player's blocks"): who
+// they blocked and who blocked them, each one liftable behind a question.
+function Blocks({ player }) {
+  const me = useMe()
+  const canLift = Boolean(me?.roles?.includes('admin'))
+  const queries = useQueryClient()
+  const blocks = useQuery({
+    queryKey: ['player-blocks', player.id],
+    queryFn: () => api.get(`/v1/admin/players/${player.id}/blocks`),
+  })
+  const lift = useMutation({
+    mutationFn: ({ blocker, blocked }) => api.del(`/v1/admin/players/${blocker}/blocks/${blocked}`),
+    onSuccess: () => queries.invalidateQueries({ queryKey: ['player-blocks'] }),
+  })
+  const ask = (blocker, blocked) => {
+    if (
+      confirm(
+        `Lift ${blocker.nickname}'s block of ${blocked.nickname}? Neither is told, and nothing the block ended comes back.`
+      )
+    )
+      lift.mutate({ blocker: blocker.id, blocked: blocked.id })
+  }
+
+  if (blocks.isLoading) return <p className="text-ink-3 text-sm">Loading blocks…</p>
+  if (blocks.isError) return <p className="text-bad text-sm">{blocks.error.message}</p>
+  const b = blocks.data
+  return (
+    <div className="grid gap-3 sm:grid-cols-2">
+      <BlockList
+        label="Blocked"
+        empty="Has blocked nobody."
+        rows={b.blocked}
+        busy={lift.isPending}
+        canLift={canLift}
+        onLift={(row) => ask(player, row)}
+      />
+      <BlockList
+        label="Blocked by"
+        empty="Nobody has blocked them."
+        rows={b.blocked_by}
+        busy={lift.isPending}
+        canLift={canLift}
+        onLift={(row) => ask(row, player)}
+      />
+      {lift.isError && <p className="text-bad text-sm sm:col-span-2">{lift.error.message}</p>}
+    </div>
+  )
+}
+
+function BlockList({ label, empty, rows, busy, canLift, onLift }) {
+  return (
+    <div className="bg-surface-2 rounded-lg p-3">
+      <div className="label">
+        {label} <span className="tabular-nums">· {rows.length}</span>
+      </div>
+      {rows.length === 0 ? (
+        <p className="text-ink-3 mt-1 text-sm">{empty}</p>
+      ) : (
+        <ul className="mt-2 grid gap-2">
+          {rows.map((row) => (
+            <li key={row.id} className="flex items-center justify-between gap-2 text-sm">
+              <div className="min-w-0">
+                <div className="truncate font-semibold">
+                  {row.nickname}
+                  {row.disabled && <span className="text-bad ms-2 text-xs font-normal">switched off</span>}
+                </div>
+                <div className="text-ink-3 truncate text-xs">
+                  <span className="font-mono">@{row.handle}</span> · {when(row.blocked_at)}
+                </div>
+              </div>
+              <button
+                type="button"
+                className="btn btn-secondary h-8 shrink-0 px-3 text-xs"
+                disabled={busy || !canLift}
+                title={canLift ? undefined : 'Only the admin role can lift a block.'}
+                onClick={() => onLift(row)}
+              >
+                Unblock
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
   )
 }
 
