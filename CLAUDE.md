@@ -352,8 +352,10 @@ and `JWT_PRIVATE_KEY` (`make keys`); the sweep then signs in with that code.
   presence, an uploaded picture and `player.deleted`), the docs' Sign-in
   page, the e2e `TestDeletingAnAccount` (run against an api on the new code
   beside the shared one). Hetzner's compose now defaults `APPLE_TEAM_ID` to
-  97YS86UB59 and `APP_LINKS_SHA256` to Play's two signing keys and the
-  upload key.
+  ADX36X2G34 (the iraqflutter account that holds the App ID, from
+  2026-11-21, live that day: compose.yml sent and only the api recreated;
+  97YS86UB59 before) and `APP_LINKS_SHA256` to Play's two
+  signing keys and the upload key.
 - Reporting a player (platform side) done 2026-11-01, to `docs/REPORTS.md`
   (written first; the App Store asks for it): migration 00015 (`reports`, one
   open per reporter and player, `rpt_` ids), `enum.ReportReason` and
