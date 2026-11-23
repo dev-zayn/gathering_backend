@@ -6,6 +6,7 @@
 <title>گعدة · ألعاب السهرة ويا الربع</title>
 <meta name="description" content="گعدة تطبيق ألعاب جماعية: سوّوا غرفة، شاركوا الرمز، والعبوا برا السالفة والمافيا ومثّلها وغيرها، على نفس الواي فاي أو كل واحد من بيته.">
 <meta name="theme-color" content="#0F1222">
+<meta name="apple-itunes-app" content="app-id=6837319887">
 <meta name="color-scheme" content="dark">
 <link rel="icon" href="/app-icon.png">
 <link rel="apple-touch-icon" href="/app-icon.png">
@@ -173,18 +174,52 @@
   .door.amber p { color: #4A3600; }
   .door.amber .chip { background: rgba(26, 19, 0, .12); color: var(--on-amber); }
 
-  /* Coming to the stores */
-  #download { padding: 24px 0 96px; }
+  /* In the stores */
+  #download { padding: 24px 0 72px; }
   .call { position: relative; overflow: hidden; border-radius: 36px; padding: 56px; display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 32px; background: linear-gradient(150deg, var(--violet) 0%, var(--violet-deep) 65%, #2B1192 100%); box-shadow: 0 8px 0 var(--violet-lip), 0 40px 80px rgba(46, 18, 145, .35), inset 0 1px 0 rgba(255, 255, 255, .2); }
   .call::after { content: ""; position: absolute; inset: auto -10% -60% auto; width: 60%; aspect-ratio: 1; border-radius: 50%; background: radial-gradient(closest-side, rgba(255, 179, 0, .28), transparent); pointer-events: none; }
   .call h2 { font-size: clamp(38px, 4.6vw, 58px); }
   .call p { color: #E4DCFF; margin-top: 12px; font-size: 18px; max-width: 40ch; }
   .stores { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 30px; }
-  .store { display: inline-flex; align-items: center; gap: 12px; min-height: 60px; padding: 0 20px 0 22px; border-radius: var(--r-key); background: rgba(11, 14, 28, .55); border: 1px solid rgba(255, 255, 255, .16); }
+  .store { display: inline-flex; align-items: center; gap: 12px; min-height: 60px; padding: 0 20px 0 22px; border-radius: var(--r-key); background: rgba(11, 14, 28, .55); border: 1px solid rgba(255, 255, 255, .16); color: #fff; text-decoration: none; box-shadow: 0 4px 0 rgba(11, 14, 28, .55); transition: transform .14s var(--ease-out), box-shadow .14s var(--ease-out), background-color .2s; }
+  .store:hover { background: rgba(11, 14, 28, .78); }
+  .store:active { transform: translateY(3px); box-shadow: 0 1px 0 rgba(11, 14, 28, .55); }
   .store svg { width: 26px; height: 26px; fill: #fff; flex: none; }
   .store .name { font: 600 17px/1.2 var(--body); }
   .store .when { display: block; font: 400 13px/1.3 var(--body); color: #CFC2FF; }
   .call .pose { position: relative; z-index: 1; width: 280px; margin: -20px 0 -76px; filter: drop-shadow(0 24px 30px rgba(20, 8, 70, .5)); }
+
+  /* For developers: the way from a web page to the store, beside the file
+     a game starts from and the tester's code it is tried with. */
+  #dev { padding: 24px 0 96px; }
+  .studio { display: grid; grid-template-columns: 1.05fr .95fr; align-items: center; gap: 56px; padding: 56px; border-radius: 36px; background: var(--tile); border: 1px solid var(--line); }
+  .studio > * { min-width: 0; }
+  .eyebrow { display: inline-flex; align-items: center; gap: 8px; color: var(--amber); font-weight: 600; font-size: 16px; margin-bottom: 12px; }
+  .eyebrow .icon { width: 20px; height: 20px; }
+  .studio h2 { font-size: clamp(36px, 4.4vw, 54px); }
+  .studio .lede { color: var(--muted); margin-top: 14px; font-size: 18px; max-width: 46ch; }
+  .path { list-style: none; margin: 30px 0 0; padding: 0; display: grid; gap: 18px; }
+  .path li { display: flex; align-items: flex-start; gap: 16px; }
+  .path .n { flex: none; width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; background: rgba(255, 179, 0, .14); color: var(--amber); font: 400 22px/1 var(--display); }
+  .path h3 { font-size: 24px; }
+  .path p { color: var(--muted); font-size: 16px; margin-top: 2px; }
+  .studio .keys { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 34px; }
+  .studio .ask { color: var(--dim); font-size: 15px; margin-top: 18px; }
+  .studio .ask a { color: var(--amber-light); text-underline-offset: 4px; }
+  .art-code { position: relative; padding-bottom: 34px; }
+  .code { margin: 0; direction: ltr; border-radius: 22px; overflow: hidden; background: var(--well); border: 1px solid var(--line-strong); box-shadow: 0 30px 60px rgba(4, 6, 18, .5); }
+  .code .top { display: flex; align-items: center; gap: 7px; padding: 14px 18px; border-bottom: 1px solid var(--line); }
+  .code .top i { width: 10px; height: 10px; border-radius: 50%; background: var(--line-strong); }
+  .code .top span { margin-left: 8px; color: var(--dim); font: 400 13px/1 ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
+  .code pre { margin: 0; padding: 20px 22px 30px; overflow-x: auto; color: var(--ink); font: 400 14.5px/1.8 ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
+  .code .k { color: #B9A2FF; }
+  .code .s { color: var(--amber-light); }
+  .code .p { color: var(--dim); }
+  .code .ar { font-family: var(--body); } /* Arabic joins only in its own font */
+  .ticket { position: absolute; bottom: 0; inset-inline-start: 28px; display: flex; align-items: center; gap: 14px; padding: 14px 20px; border-radius: 18px; background: linear-gradient(160deg, var(--violet), var(--violet-deep)); box-shadow: 0 6px 0 var(--violet-lip), 0 20px 40px rgba(46, 18, 145, .4); transform: rotate(-2deg); }
+  .ticket .icon { width: 26px; height: 26px; color: var(--amber); }
+  .ticket small { display: block; color: #E4DCFF; font-size: 13px; line-height: 1.4; }
+  .ticket b { display: block; font: 600 20px/1.3 ui-monospace, "SF Mono", Menlo, Consolas, monospace; letter-spacing: .06em; }
 
   footer { border-top: 1px solid var(--line); padding: 36px 0 44px; color: var(--dim); font-size: 15px; }
   footer .wrap { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 18px 32px; }
@@ -219,6 +254,7 @@
     .boxes { grid-template-columns: repeat(2, 1fr); }
     .door.wide, .door.narrow { grid-column: span 6; }
     .call { padding: 44px 36px; }
+    .studio { grid-template-columns: 1fr; gap: 44px; padding: 44px 36px; }
   }
   @media (max-width: 767px) {
     body { font-size: 16px; }
@@ -246,6 +282,11 @@
     .door.wide .pose, .door .pose { width: 150px; margin: 12px 0 0; translate: 0 14px; }
     .call { grid-template-columns: 1fr; padding: 36px 24px 0; border-radius: 30px; }
     .call .pose { width: 210px; margin: 0 auto -40px; }
+    #dev { padding-bottom: 64px; }
+    .studio { gap: 36px; padding: 32px 22px; border-radius: 30px; }
+    .studio .keys .key { flex: 1 1 auto; }
+    .code pre { padding: 16px 16px 28px; font-size: 12.5px; }
+    .ticket { inset-inline-start: 14px; padding: 12px 16px; }
     footer .wrap { flex-direction: column; align-items: flex-start; }
     footer .dev { flex-basis: auto; align-self: stretch; }
     footer .dev .label { flex-basis: 100%; }
@@ -264,6 +305,7 @@
       <a href="#games">الألعاب</a>
       <a href="#how">شلون تلعبون؟</a>
       <a href="#ways">قريبين لو بعاد</a>
+      <a href="#dev">للمطوّرين</a>
     </nav>
     <a class="key key-amber key-small" href="#download">حمّل گعدة</a>
   </div>
@@ -417,20 +459,59 @@
     <div class="wrap">
       <div class="call reveal">
         <div>
-          <h2>گعدة قريباً بتلفونك</h2>
-          <p>دا نجهّز التطبيق لـ <span class="ltr">Google&nbsp;Play</span> و<span class="ltr">App&nbsp;Store</span>. أول ما ينزل، تلگون الرابط هنا.</p>
+          <h2>گعدة صارت بتلفونك</h2>
+          <p>نزّلوها من <span class="ltr">Google&nbsp;Play</span> أو <span class="ltr">App&nbsp;Store</span>، وسوّوا أول غرفة الليلة.</p>
           <div class="stores">
-            <div class="store" role="img" aria-label="Google Play، قريباً">
+            <a class="store" href="https://play.google.com/store/apps/details?id=app.gathering.jamaa" target="_blank" rel="noopener">
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M22.018 13.298l-3.919 2.218-3.515-3.493 3.543-3.521 3.891 2.202a1.49 1.49 0 0 1 0 2.594zM1.337.924a1.486 1.486 0 0 0-.112.568v21.017c0 .217.045.419.124.6l11.155-11.087L1.337.924zm12.207 10.065l3.258-3.238L3.45.195a1.466 1.466 0 0 0-.946-.179l11.04 10.973zm0 2.067l-11 10.933c.298.036.612-.016.906-.183l13.324-7.54-3.23-3.21z"/></svg>
-              <span><span class="when">قريباً على</span><span class="name ltr">Google Play</span></span>
-            </div>
-            <div class="store" role="img" aria-label="App Store، قريباً">
+              <span><span class="when">حمّلها من</span><span class="name ltr">Google Play</span></span>
+            </a>
+            <a class="store" href="https://apps.apple.com/us/app/ga3da-party-games/id6837319887" target="_blank" rel="noopener">
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701"/></svg>
-              <span><span class="when">قريباً على</span><span class="name ltr">App Store</span></span>
-            </div>
+              <span><span class="when">حمّلها من</span><span class="name ltr">App Store</span></span>
+            </a>
           </div>
         </div>
         <img class="pose" src="/img/die-cheer.webp" width="480" height="475" loading="lazy" alt="">
+      </div>
+    </div>
+  </section>
+
+  <section id="dev">
+    <div class="wrap">
+      <div class="studio reveal">
+        <div>
+          <p class="eyebrow"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m8 7-5 5 5 5M16 7l5 5-5 5M13.5 4.5l-3 15"/></svg>للمطوّرين والاستوديوهات</p>
+          <h2>عندك لعبة؟ خلّي الگعدة تلعبها</h2>
+          <p class="lede">لعبتك صفحة ويب، وگعدة تعطيها الباقي: الغرف واللاعبين والأصدقاء والنتائج. جرّبها ويا ناس تختارهم، ومن تنقبل بالمراجعة تنشرها لكل اللاعبين.</p>
+          <ol class="path">
+            <li><span class="n ltr">1</span><div><h3>سجّل لعبتك</h3><p>حط رابطها بلوحة المطوّرين، وگعدة تقرا اسمها وإعداداتها من ملف الـ<span class="ltr">manifest</span>.</p></div></li>
+            <li><span class="n ltr">2</span><div><h3>جرّبها ويا اللي تختارهم</h3><p>سوّي رمز دعوة، واللي يكتبه بالتطبيق يلعب نسختك التجريبية قبل الكل.</p></div></li>
+            <li><span class="n ltr">3</span><div><h3>دزّها للمراجعة وانشرها</h3><p>فريق گعدة يراجعها، ومن تنقبل تنشرها بدگة وحدة.</p></div></li>
+          </ol>
+          <div class="keys">
+            <a class="key key-amber" href="https://docs.ga3da.fun/listing">ابدأ من الوثائق</a>
+            <a class="key key-dark" href="https://console.ga3da.fun/">لوحة المطوّرين</a>
+          </div>
+          <p class="ask">حساب المطوّر نسوّيه إلك: راسلنا على <a class="ltr" href="mailto:ga3da.fun@gmail.com">ga3da.fun@gmail.com</a> باسم الاستوديو مالتك.</p>
+        </div>
+        <div class="art-code">
+          <figure class="code" aria-label="ملف الـ manifest للعبة">
+            <div class="top"><i></i><i></i><i></i><span>.well-known/gathering-game.json</span></div>
+<pre><span class="p">{</span>
+  <span class="k">"id"</span><span class="p">:</span> <span class="s">"mystudio.dice"</span><span class="p">,</span>
+  <span class="k">"name"</span><span class="p">:</span> <span class="s">"<span class="ar">نرد</span>"</span><span class="p">,</span>
+  <span class="k">"version"</span><span class="p">:</span> <span class="s">"1.0.0"</span><span class="p">,</span>
+  <span class="k">"mode"</span><span class="p">:</span> <span class="s">"embedded"</span><span class="p">,</span>
+  <span class="k">"entry"</span><span class="p">:</span> <span class="s">"https://dice.example/"</span><span class="p">,</span>
+  <span class="k">"room"</span><span class="p">: { … }</span>
+<span class="p">}</span></pre>
+          </figure>
+          <div class="ticket">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3h6M10 3v6.5L4.6 18.4A1.7 1.7 0 0 0 6 21h12a1.7 1.7 0 0 0 1.4-2.6L14 9.5V3"/><path d="M7.5 15h9"/></svg>
+            <span><small>رمز المختبرين</small><b class="ltr">K7M2-QX4P</b></span>
+          </div>
+        </div>
       </div>
     </div>
   </section>

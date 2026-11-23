@@ -1,5 +1,6 @@
 import { useState } from 'react'
 
+import { docsUrl, listingGuide, siteUrl } from '../lib/links.js'
 import { builtAt, versionLabel } from '../lib/version.js'
 import { devAdmin, devSignIn, passwordSignIn, passwordSignInWith, publisherSignIn, signIn, ssoConfigured } from '../sso.js'
 
@@ -173,6 +174,17 @@ export default function SignIn({ note, onSignedIn }) {
                 {busy ? 'Signing in…' : 'Sign in'}
               </button>
               <p className="text-ink-3 text-xs">Forgot the password? Ask the گعدة team for a new sign-in link.</p>
+              <p className="text-ink-2 border-line border-t pt-4 text-sm">
+                New to گعدة?{' '}
+                <a href={listingGuide} target="_blank" rel="noopener noreferrer" className="text-accent-text font-semibold hover:underline">
+                  Read how a game gets listed
+                </a>
+                , then ask us for a studio account at{' '}
+                <a href="mailto:ga3da.fun@gmail.com" className="font-semibold hover:underline">
+                  ga3da.fun@gmail.com
+                </a>
+                .
+              </p>
             </form>
           )}
 
@@ -236,7 +248,15 @@ export default function SignIn({ note, onSignedIn }) {
               {error}
             </p>
           )}
-          <p className="text-ink-3 mt-10 font-mono text-[11px]" title={builtAt}>
+          <nav aria-label="Elsewhere" className="text-ink-2 mt-10 flex flex-wrap gap-x-5 gap-y-1 text-xs font-semibold">
+            <a href={docsUrl} target="_blank" rel="noopener noreferrer" className="hover:text-ink hover:underline">
+              Developer docs
+            </a>
+            <a href={siteUrl} target="_blank" rel="noopener noreferrer" className="hover:text-ink hover:underline">
+              ga3da.fun
+            </a>
+          </nav>
+          <p className="text-ink-3 mt-3 font-mono text-[11px]" title={builtAt}>
             Console {versionLabel}
           </p>
         </div>

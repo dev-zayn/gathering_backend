@@ -1,7 +1,9 @@
 import { useState } from 'react'
 import { NavLink, Outlet } from 'react-router-dom'
 import {
+  ArrowUpRight,
   Bell,
+  BookOpen,
   Building2,
   ClipboardCheck,
   DoorOpen,
@@ -20,6 +22,7 @@ import {
   X,
 } from 'lucide-react'
 
+import { docsUrl } from '../lib/links.js'
 import { useMe } from '../lib/me.js'
 import { applyTheme, nextTheme, savedTheme } from '../lib/theme.js'
 import { builtAt, versionLabel } from '../lib/version.js'
@@ -53,8 +56,9 @@ function Wordmark({ className = '' }) {
 }
 
 // The shell is the admin's by default; a publisher's passes its own rail,
-// the area's name under the wordmark and the way it signs out.
-export default function Shell({ groups = adminGroups, area = 'Console', onSignOut = signOut }) {
+// the area's name under the wordmark, the way it signs out, and where its
+// docs link opens (the publisher's guide rather than the docs' front page).
+export default function Shell({ groups = adminGroups, area = 'Console', onSignOut = signOut, docs = docsUrl }) {
   const [open, setOpen] = useState(false)
   const close = () => setOpen(false)
 
@@ -106,6 +110,14 @@ export default function Shell({ groups = adminGroups, area = 'Console', onSignOu
               ))}
             </div>
           ))}
+          <div className="border-rail-line mt-3 flex flex-col gap-1 border-t pt-3">
+            <a href={docs} target="_blank" rel="noopener noreferrer" className="navkey" onClick={close}>
+              <BookOpen className="size-[18px]" strokeWidth={1.75} />
+              Developer docs
+              <ArrowUpRight className="ms-auto size-3.5 opacity-60" aria-hidden="true" />
+              <span className="sr-only">(opens a new tab)</span>
+            </a>
+          </div>
         </nav>
 
         <Account onSignOut={onSignOut} />

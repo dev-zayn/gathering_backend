@@ -3,6 +3,7 @@ import { Link, NavLink, useNavigate } from 'react-router-dom'
 import {
   ArrowLeftIcon,
   ArrowRightIcon,
+  ArrowUpRightIcon,
   ChevronRightIcon,
   MenuIcon,
   SearchIcon,
@@ -12,6 +13,7 @@ import {
 import BrandMark from '@/components/brand-mark.jsx'
 import { Search } from '@/components/search'
 import { GROUPS, HOME, PAGES, SECTION } from '@/pages.js'
+import { consoleUrl, ELSEWHERE } from '@/lib/links'
 import { cn } from '@/lib/utils'
 import { builtAt, versionLabel } from '@/lib/version'
 
@@ -97,6 +99,16 @@ export function Shell({ page, sections, children }) {
                   <span className="kbd hidden sm:inline-flex">/</span>
                 </button>
                 {page && <Paging page={page} />}
+                <a
+                  href={consoleUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="skeu-btn skeu-btn-ghost hidden h-9 shrink-0 items-center gap-1.5 rounded-md px-3 text-[13px] font-semibold text-ink-2 hover:text-ink md:inline-flex"
+                  title="The console, where studios register and ship their games"
+                >
+                  Console
+                  <ArrowUpRightIcon className="size-3.5" aria-hidden="true" />
+                </a>
                 {SECTION === 'developer' && (
                   <Link
                     to="/manifest"
@@ -123,6 +135,17 @@ export function Shell({ page, sections, children }) {
                 <span className="font-mono" title={builtAt}>
                   {versionLabel}
                 </span>
+                {ELSEWHERE.map((l) => (
+                  <a
+                    key={l.href}
+                    href={l.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hover:text-ink hover:underline"
+                  >
+                    {l.label}
+                  </a>
+                ))}
               </span>
               <span className="inline-flex items-center gap-2">
                 <span className="kbd">←</span>
@@ -338,6 +361,24 @@ function Rail({ className, onClose }) {
               </ul>
             </div>
           ))}
+          <div className="mt-6 border-t border-line pt-3">
+            <div className="text-label px-2 pb-1.5">Elsewhere</div>
+            <ul className="flex flex-col gap-0.5">
+              {ELSEWHERE.map((l) => (
+                <li key={l.href}>
+                  <a
+                    href={l.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="skeu-navkey flex h-8 items-center gap-2.5 rounded-lg px-2 text-[13px] font-semibold text-ink-2"
+                  >
+                    <span className="truncate">{l.label}</span>
+                    <ArrowUpRightIcon className="ms-auto size-3.5 shrink-0 text-ink-3" aria-hidden="true" />
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
       </div>
     </nav>

@@ -5,6 +5,7 @@ import { api, SIGNED_OUT } from './api.js'
 import { Me } from './lib/me.js'
 import { finish, publisherSignOut, signIn, ssoConfigured } from './sso.js'
 import Shell from './components/shell.jsx'
+import { listingGuide } from './lib/links.js'
 import { studioGroups } from './lib/rails.js'
 import SignIn from './components/signin.jsx'
 import Setup from './pages/setup.jsx'
@@ -134,7 +135,7 @@ export default function App() {
       <Me.Provider value={state.me}>
         <BrowserRouter>
           <Routes>
-            <Route element={<Shell groups={studioGroups} area="Publisher" onSignOut={publisherSignOut} />}>
+            <Route element={<Shell groups={studioGroups} area="Publisher" onSignOut={publisherSignOut} docs={listingGuide} />}>
               <Route index element={<StudioGames />} />
               <Route path="games/:id" element={<StudioGame />} />
               <Route path="account" element={<StudioAccount />} />

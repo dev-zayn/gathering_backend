@@ -1,12 +1,13 @@
 import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useNavigate } from 'react-router-dom'
-import { Plus, Users } from 'lucide-react'
+import { ArrowUpRight, Plus, Users } from 'lucide-react'
 
 import { api } from '../../api.js'
 import Dialog from '../../components/dialog.jsx'
 import { BuildBadge } from '../../components/build-bits.jsx'
 import { ListingBadge, SecretOnce, Tile } from '../../components/game-bits.jsx'
+import { listingGuide } from '../../lib/links.js'
 import { useMe } from '../../lib/me.js'
 
 // A publisher's games (docs/PUBLISHERS.md): each with what is live and where
@@ -77,17 +78,25 @@ function FirstSteps() {
     ['Send it to review', 'Add a tagline and an icon, then send it. Once approved, you publish it.'],
   ]
   return (
-    <ol className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-      {steps.map(([title, text], i) => (
-        <li key={title} className="card p-4">
-          <span className="bg-accent text-accent-ink inline-flex size-6 items-center justify-center rounded-full font-mono text-xs font-bold">
-            {i + 1}
-          </span>
-          <div className="mt-2 text-sm font-semibold">{title}</div>
-          <p className="text-ink-2 mt-1 text-xs">{text}</p>
-        </li>
-      ))}
-    </ol>
+    <>
+      <ol className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        {steps.map(([title, text], i) => (
+          <li key={title} className="card p-4">
+            <span className="bg-accent text-accent-ink inline-flex size-6 items-center justify-center rounded-full font-mono text-xs font-bold">
+              {i + 1}
+            </span>
+            <div className="mt-2 text-sm font-semibold">{title}</div>
+            <p className="text-ink-2 mt-1 text-xs">{text}</p>
+          </li>
+        ))}
+      </ol>
+      <p className="text-ink-2 mt-4 text-sm">
+        Every step in full, with the manifest’s fields and the bridge your game calls:{' '}
+        <a href={listingGuide} target="_blank" rel="noopener noreferrer" className="text-accent-text inline-flex items-center gap-1 font-semibold hover:underline">
+          the developer docs <ArrowUpRight className="size-3.5" aria-hidden="true" />
+        </a>
+      </p>
+    </>
   )
 }
 

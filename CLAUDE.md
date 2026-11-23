@@ -460,5 +460,22 @@ and `JWT_PRIVATE_KEY` (`make keys`); the sweep then signs in with that code.
   Review and build pages; the docs site's "Getting listed" rewritten for
   publishers. Tests: `biz/games/studio_test.go`,
   `biz/identity/publishers_test.go`, `biz/rooms/testers_test.go` (which
-  found the room insert dropping `build_id`). Not deployed, not run against
-  a live api or the console in a browser (the user tests it).
+  found the room insert dropping `build_id`). Live on ga3da.fun 2026-11-23
+  (`deploy.sh`, BUILD_COMMIT 37ac386, the database dumped first to
+  `/opt/ga3da/backups/`); the app's side (Me → Beta games) needs the app's
+  next store build. The SSH session streaming the build froze after the
+  server had finished: the stack was up and Caddy reloaded, and `games.sh`
+  was run again by hand.
+- The site, the console and the docs linked together (2026-11-23, the
+  user's ask, once the app was in both stores): the landing page's store
+  badges link to Google Play and the App Store (and iOS Safari's banner
+  through `apple-itunes-app`), a "للمطوّرين" section says studios can make
+  games for گعدة (register, test with codes, review, publish) and links the
+  docs' "Getting listed" and the console; the console links the docs from
+  its rail (a publisher's to "Getting listed") and its sign-in card
+  (`src/lib/links.js`, `VITE_DOCS_URL`, `VITE_SITE_URL`); the docs link the
+  console in their bar, and the console, the site and both stores in the
+  rail's "Elsewhere" and the footer (`src/lib/links.js`,
+  `VITE_CONSOLE_URL`, `VITE_SITE_URL`). `compose.yml` defaults
+  `APP_STORE_URL` and `PLAY_STORE_URL` to the listings, so an invite link's
+  page offers both stores.
