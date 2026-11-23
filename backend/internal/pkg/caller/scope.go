@@ -20,4 +20,8 @@ const (
 	// ScopeRoom is a room ticket: one player, in one room, for one game to
 	// verify. It opens nothing on this API; it is for the game's own server.
 	ScopeRoom = "room"
+	// ScopePublisher is a studio signed in to the console with its own
+	// email and password (docs/PUBLISHERS.md): its own games, and nothing an
+	// admin's or a player's token opens.
+	ScopePublisher = "publisher"
 )

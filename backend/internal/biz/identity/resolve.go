@@ -76,9 +76,10 @@ func (i *Identities) Of(ctx context.Context, authorization string) (Answer, erro
 	}
 
 	// A console session ends when it sits unused, so asking about it also
-	// moves it on. One with no roles is not one we minted.
-	if kind == caller.ScopeAdmin {
-		if len(claims.Roles) == 0 {
+	// moves it on. An admin's with no roles is not one we minted. A
+	// publisher's lives the same way (docs/PUBLISHERS.md).
+	if kind == caller.ScopeAdmin || kind == caller.ScopePublisher {
+		if kind == caller.ScopeAdmin && len(claims.Roles) == 0 {
 			return Answer{Reason: "invalid_token"}, nil
 		}
 		live, err := i.Whitelist.Touch(ctx, claims.ID, i.AdminIdle)

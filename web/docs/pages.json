@@ -19,7 +19,7 @@
     "href": "/listing",
     "file": "listing",
     "title": "Getting listed",
-    "description": "From a published manifest to a tile in the store: registration by URL, the store copy, publishing, and what a new version means.",
+    "description": "From a published manifest to a tile in the store: registering it in the console, testers with codes, review, publishing, and every version after.",
     "group": "Getting started",
     "icon": "Store"
   },

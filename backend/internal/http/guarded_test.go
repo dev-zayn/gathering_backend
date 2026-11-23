@@ -24,6 +24,10 @@ var publicOperations = map[string]string{
 	"admin-session-open":     "trades a provider token for a console session",
 	"admin-session-dev":      "a laptop's sign-in; refused outright unless DEBUG and DEV_ADMIN",
 	"admin-session-password": "the console's password sign-in; not found unless CONSOLE_PASSWORD_HASH",
+	// A studio's email and password, or the one-time link an admin made for it,
+	// are the credential, in the body (docs/PUBLISHERS.md).
+	"publisher-session-open": "a publisher's email and password sign-in to the console",
+	"publisher-setup":        "a publisher choosing its password with the one-time link's token",
 
 	// The game's own server proves who it is with its client secret, in the
 	// form body; there is no token of ours to hold before this answers.

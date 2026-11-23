@@ -256,6 +256,21 @@ works at a laptop's width and at a phone's.
   the tournament: its entrants, its bracket by stage or its league's table,
   and, behind confirmations, start, cancel, finish (a league) and award (a
   ready match). Its audit area is `tournaments`.
+- **Publishers and Review** (2026-11-23, docs/PUBLISHERS.md): "Publishers"
+  (`/publishers`) lists the studios' accounts; "Add a publisher" answers a
+  one-time sign-in link to copy and send (`/setup#<token>`, made from the
+  console's own address); a publisher's page has its games, edit, a new
+  link, and switching it off. "Review" (`/review`) is the queue, the
+  oldest waiting first, with filters; a build's page (`/builds/{build}`)
+  shows what its manifest asks for beside the live game, the store copy and
+  pictures it would carry, the publisher's notes, the game's codes and "A
+  code for me", and approve or ask for changes. The Games list and a game's
+  page name a publisher's game's owner and its version on the way, and a
+  publisher's unpublished game has no "Publish to the store" here: it is
+  published by its studio once approved.
+- **The publisher's side**: the same console, signed in on the card's
+  "Publisher" switch with an email and a password, shows "My games" and
+  "Account" only (docs/PUBLISHERS.md "The publisher's routes").
 
 ## The app
 

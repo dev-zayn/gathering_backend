@@ -25,6 +25,9 @@ func (f *fakeMinter) MintSession(string, string, bool, time.Duration) (string, s
 func (f *fakeMinter) MintAdmin(string, []string, time.Duration) (string, string, error) {
 	return "admin", "jti-admin", nil
 }
+func (f *fakeMinter) MintPublisher(string, time.Duration) (string, string, error) {
+	return "publisher", "jti-publisher", nil
+}
 func (f *fakeMinter) MintRoom(identity.RoomClaims, time.Duration) (string, string, error) {
 	return "room", "jti-room", nil
 }

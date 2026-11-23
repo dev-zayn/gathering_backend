@@ -62,6 +62,17 @@ type registryGameJSON struct {
 	// The store copy in full: the table shows the tagline, the form edits it
 	// with the description and the screenshots.
 	Store storeJSON `json:"store"`
+
+	// Owner is the publisher account whose game it is, null for a game made
+	// before publishers; Build its open build (docs/PUBLISHERS.md).
+	Owner *reviewOwnerJSON `json:"owner"`
+	Build *openBuildJSON   `json:"build"`
+}
+
+type openBuildJSON struct {
+	ID      string `json:"id"`
+	Status  string `json:"status" enum:"testing,in_review,approved,rejected"`
+	Version string `json:"version"`
 }
 
 type heldJSON struct {
@@ -400,12 +411,37 @@ func (h *Handler) listRegistry(ctx context.Context, in *registryListRequest) (*r
 		return nil, err
 	}
 
+	owners, err := h.owners(ctx)
+	if err != nil {
+		return nil, err
+	}
 	out := &registryListResponse{}
 	out.Body.Games = make([]registryGameJSON, 0, len(rows))
 	for i := range rows {
-		out.Body.Games = append(out.Body.Games, h.registryGameOf(ctx, &rows[i]))
+		j := h.registryGameOf(ctx, &rows[i])
+		withOwner(&j, owners)
+		out.Body.Games = append(out.Body.Games, j)
 	}
 	return out, nil
+}
+
+// owners is every game's publisher and open build; none without a review.
+func (h *Handler) owners(ctx context.Context) (map[string]games.Owner, error) {
+	if h.Review == nil {
+		return map[string]games.Owner{}, nil
+	}
+	return h.Review.Owners(ctx)
+}
+
+func withOwner(j *registryGameJSON, owners map[string]games.Owner) {
+	o, ok := owners[j.ID]
+	if !ok {
+		return
+	}
+	j.Owner = ownerOf(o.Publisher)
+	if o.Build != nil {
+		j.Build = &openBuildJSON{ID: o.Build.ID, Status: string(o.Build.Status), Version: o.Build.Version}
+	}
 }
 
 func (h *Handler) getGame(ctx context.Context, in *gamePath) (*registryGameResponse, error) {
@@ -517,7 +553,13 @@ func (h *Handler) registryGame(ctx context.Context) func(*model.Game, error) (*r
 		if err != nil {
 			return nil, err
 		}
-		return &registryGameResponse{Body: h.registryGameOf(ctx, g)}, nil
+		j := h.registryGameOf(ctx, g)
+		owners, err := h.owners(ctx)
+		if err != nil {
+			return nil, err
+		}
+		withOwner(&j, owners)
+		return &registryGameResponse{Body: j}, nil
 	}
 }
 

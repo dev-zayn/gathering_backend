@@ -174,10 +174,10 @@ func lowestFreeSeat(rows []memberRow) int {
 // insert, so the transaction survives a collision and draws again.
 func insertRoom(ctx context.Context, db *gorm.DB, r *model.Room) (bool, error) {
 	res := data.Conn(ctx, db).Exec(`
-		INSERT INTO rooms (id, code, game_id, host_id, status, visibility, lan, config, match_id, state_version, created_at, active_at)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?)
+		INSERT INTO rooms (id, code, game_id, host_id, status, visibility, lan, config, match_id, build_id, state_version, created_at, active_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?)
 		ON CONFLICT (code) WHERE status <> 'ended' DO NOTHING`,
-		r.ID, r.Code, r.GameID, r.HostID, r.Status, r.Visibility, r.LAN, r.Config, r.MatchID, r.CreatedAt, r.ActiveAt)
+		r.ID, r.Code, r.GameID, r.HostID, r.Status, r.Visibility, r.LAN, r.Config, r.MatchID, r.BuildID, r.CreatedAt, r.ActiveAt)
 	return res.RowsAffected == 1, res.Error
 }
 

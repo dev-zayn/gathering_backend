@@ -65,7 +65,7 @@ export function Note({ tone = 'wait', children }) {
 
 // The client secret, shown once and never again. Copying it is the whole
 // point, so the button is the biggest thing on it.
-export function SecretOnce({ secret }) {
+export function SecretOnce({ secret, hint = 'Send it to the studio now. It cannot be read back, only rolled again.' }) {
   const [copied, setCopied] = useState(false)
   async function copy() {
     try {
@@ -87,7 +87,7 @@ export function SecretOnce({ secret }) {
           {copied ? 'Copied' : 'Copy'}
         </button>
       </div>
-      <p className="text-ink-2 mt-2 text-xs">Send it to the studio now. It cannot be read back, only rolled again.</p>
+      <p className="text-ink-2 mt-2 text-xs">{hint}</p>
     </Note>
   )
 }

@@ -125,3 +125,23 @@ export async function signOut() {
   }
   location.assign('/')
 }
+
+// A publisher's way in (docs/PUBLISHERS.md): its own email and password, or
+// the one-time link an admin made, which chooses the password and signs in.
+// The API answers with the same cookie an admin's session travels in.
+export async function publisherSignIn(email, password) {
+  await api.post('/v1/publisher/session', { email, password }, { auth: true, quiet: true })
+}
+
+export async function publisherSetup(token, password) {
+  await api.post('/v1/publisher/setup', { token, password }, { auth: true, quiet: true })
+}
+
+export async function publisherSignOut() {
+  try {
+    await api.del('/v1/publisher/session')
+  } catch {
+    /* already gone */
+  }
+  location.assign('/')
+}

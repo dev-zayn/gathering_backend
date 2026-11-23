@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/jamaa/gathering/backend/internal/biz/games"
 	"github.com/jamaa/gathering/backend/internal/biz/inbox"
 	"github.com/jamaa/gathering/backend/internal/data/enum"
 	"github.com/jamaa/gathering/backend/internal/pkg/errors"
@@ -108,6 +109,14 @@ func (s *Service) Invite(ctx context.Context, playerID, roomID string, invitees 
 			return nil, asError(err)
 		}
 	}
+	// A test room's door lets testers alone in: an invite anybody else could
+	// not use is refused for them here (docs/PUBLISHERS.md, "Rooms").
+	testers := map[string]bool{}
+	if r.BuildID != nil {
+		if testers, err = games.Testers(ctx, s.db, r.GameID, unique); err != nil {
+			return nil, errors.Internal(err)
+		}
+	}
 	bad := map[string]string{}
 	for _, id := range unique {
 		field := fmt.Sprintf("players.%d", first[id])
@@ -115,6 +124,8 @@ func (s *Service) Invite(ctx context.Context, playerID, roomID string, invitees 
 			bad[field] = "already_member"
 		} else if !friends[id] {
 			bad[field] = "not_friends"
+		} else if r.BuildID != nil && !testers[id] {
+			bad[field] = "not_testers"
 		}
 	}
 	if len(bad) > 0 {

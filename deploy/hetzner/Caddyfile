@@ -24,9 +24,10 @@
 }
 
 # The console's routes are not answered here: only the console's host reaches
-# them, where its own sign-in screen asks for the password.
+# them, where its own sign-in screen asks for the password. A publisher's are
+# the console's too (docs/PUBLISHERS.md).
 api.{$DOMAIN} {
-	@console path /v1/admin/*
+	@console path /v1/admin/* /v1/publisher/*
 	respond @console 404
 	reverse_proxy api:8080
 }

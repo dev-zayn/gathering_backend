@@ -303,6 +303,22 @@ func main() {
 		log.Warn("ALLOW_PRIVATE_HOSTS is on: a manifest may be fetched from a private address")
 	}
 
+	// The studios (docs/PUBLISHERS.md): their accounts and console sessions,
+	// which live as an admin's do; their games, builds and testers; and the
+	// review of what they send. Invite codes come from the rooms' alphabet.
+	publishers := &identity.Publishers{
+		DB:        pg,
+		Minter:    minter,
+		Whitelist: whitelist,
+		Limiter:   identity.NewLimiter(rdb),
+		Audit:     adminAudit,
+		TTL:       cfg.Token.AdminTTL,
+		Idle:      cfg.Token.AdminIdle,
+	}
+	studio := games.NewStudio(registry, cfg.Rooms.Alphabet)
+	studio.Limiter = identity.NewLimiter(rdb)
+	review := games.NewReview(studio)
+
 	// The inbox, and the friends: a request and an accept raise their
 	// notifications in the same transaction as the answer itself. The
 	// console's announcements go on the record with the players. Every
@@ -440,6 +456,11 @@ func main() {
 
 		Friends: friendRules,
 		Inbox:   notifications,
+
+		Publishers: publishers,
+		Studio:     studio,
+		Review:     review,
+		AvatarTTL:  cfg.Files.AvatarTTL,
 
 		Files:      bucket,
 		LocalFiles: localFiles,

@@ -29,6 +29,7 @@ type Room struct {
 	EndReason    *string     `json:"end_reason" nullable:"true" enum:"host,empty,idle,timeout,admin,tournament" doc:"Why the room ended: its host, the last member leaving, an idle lobby, a round past its limit, an admin from the console, or its tournament match decided."`
 	Results      []Result    `json:"results" doc:"The results of round round, ranked, ties in seat order: the host's finish or end, or the game's own server. Empty until there are any."`
 	Tournament   *MatchBrief `json:"tournament" doc:"The tournament match this room plays (docs/TOURNAMENTS.md), with its tally as it stands; null for every other room."`
+	Testing      bool        `json:"testing" doc:"A test room: it plays a build under test, and only the game's testers come in (docs/PUBLISHERS.md)."`
 	CreatedAt    string      `json:"created_at"`
 	StartedAt    *string     `json:"started_at" nullable:"true" doc:"The current round's start, or the last one's."`
 	EndedAt      *string     `json:"ended_at" nullable:"true" doc:"The room's own end."`
@@ -89,6 +90,17 @@ func (s *Service) view(ctx context.Context, r *model.Room, viewer string) (*Room
 	if err != nil {
 		return nil, errors.Internal(err)
 	}
+	// A test room draws its build: the name and the tile its testers see.
+	if r.BuildID != nil && g != nil {
+		b, err := games.BuildByID(ctx, s.db, *r.BuildID)
+		if err != nil {
+			return nil, errors.Internal(err)
+		}
+		if b != nil {
+			over := b.Over(*g)
+			g = &over
+		}
+	}
 	members, err := s.members(ctx, r.ID)
 	if err != nil {
 		return nil, err
@@ -117,6 +129,7 @@ func (s *Service) view(ctx context.Context, r *model.Room, viewer string) (*Room
 		Link:         s.cfg.LinkURL + "/r/" + r.Code,
 		Results:      results,
 		Tournament:   s.matchOf(ctx, r),
+		Testing:      r.BuildID != nil,
 		CreatedAt:    stamp(r.CreatedAt),
 	}
 	if m != nil && m.Current() {

@@ -107,6 +107,7 @@ func (d *Deletion) Do(ctx context.Context, playerID string) error {
 			"game_tokens":   "player_id = ?",
 			"oauth_codes":   "player_id = ?",
 			"reports":       "reporter_id = ? OR player_id = ?",
+			"game_testers":  "player_id = ?",
 		} {
 			args := make([]any, strings.Count(where, "?"))
 			for i := range args {

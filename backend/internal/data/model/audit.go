@@ -109,6 +109,36 @@ const (
 	ActionTournamentCancelled = "tournament.cancelled"
 	ActionTournamentFinished  = "tournament.finished"
 	ActionMatchAwarded        = "match.awarded"
+
+	// Publisher accounts (docs/PUBLISHERS.md), in the admin area: made,
+	// edited, given a one-time link, switched off and on, and the first
+	// sign-in.
+	ActionPublisherCreated   = "publisher.created"
+	ActionPublisherEdited    = "publisher.edited"
+	ActionPublisherSetup     = "publisher.setup_issued"
+	ActionPublisherDisabled  = "publisher.disabled"
+	ActionPublisherEnabled   = "publisher.enabled"
+	ActionPublisherFirstSeen = "publisher.first_seen"
+
+	// A build on its way to players, in the games area: the publisher's
+	// steps and the reviewer's two answers.
+	ActionBuildCreated   = "build.created"
+	ActionBuildRefreshed = "build.refreshed"
+	ActionBuildEdited    = "build.edited"
+	ActionBuildSubmitted = "build.submitted"
+	ActionBuildCancelled = "build.cancelled"
+	ActionBuildApproved  = "build.approved"
+	ActionBuildRejected  = "build.rejected"
+	ActionBuildPublished = "build.published"
+	ActionBuildWithdrawn = "build.withdrawn"
+
+	// Testers: a code made and revoked, a player joining by one, leaving,
+	// and taken off by the publisher.
+	ActionInviteCreated = "invite.created"
+	ActionInviteRevoked = "invite.revoked"
+	ActionTesterJoined  = "tester.joined"
+	ActionTesterLeft    = "tester.left"
+	ActionTesterRemoved = "tester.removed"
 )
 
 // ActorWorker is written where a decision had nobody behind it. "The clock did"

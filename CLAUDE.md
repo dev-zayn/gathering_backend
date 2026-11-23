@@ -430,3 +430,35 @@ and `JWT_PRIVATE_KEY` (`make keys`); the sweep then signs in with that code.
   on :8097. No migration. Live on ga3da.fun the same day (backend and
   web/console sent alone, then `build api console` and `up -d --no-deps api
   console`, BUILD_COMMIT c644cad+).
+- Publishers (2026-11-23, the user's ask: a publisher user type that makes a
+  game, tests it with invite codes, sends it to review, then publishes it),
+  to `docs/PUBLISHERS.md` (written first; ROOMS.md, ACCOUNTS.md and
+  CONSOLE.md amended): migration 00016 (`publishers` with `pub_` ids, a
+  bcrypt password chosen through a one-time link whose sha256 is kept;
+  `games.publisher_id`; `game_builds` with `bld_` ids and one open build per
+  game by a partial unique index; `game_testers`; `tester_invites`, eight
+  symbols of the rooms' alphabet; `rooms.build_id`), `caller.ScopePublisher`
+  (the console's cookie with a token of its own kind, idle and revoked like
+  an admin's), `identity.Publishers` (accounts, setup links, sign-in with a
+  dummy bcrypt for unknown emails, switching off ends every session),
+  `biz/games` `version.go` (the one decision of which version a player
+  gets: `SeenBy` outside a room, `SeenIn` for a room's build), `studio.go`
+  and `studio_pictures.go` (the publisher's games and builds; a build's own
+  pictures under `games/<id>/builds/<build>/`), `testers.go` (codes,
+  testers, the player's join/list/leave), `review.go` (queue, approve,
+  reject, a reviewer's code, `Changes` against the live game), `views.go`
+  (one JSON shape for both audiences); the catalogue, the launch
+  (`OpenIn`/`GrantIn`, `CheckLaunch` answering the room's build), rooms (a
+  tester's room is a test room, `testers_only` at the door and in invites,
+  `testing` on the Room) and the deletion follow it; a publisher's game is
+  never re-read by the clock. Routes `http/publisher` (new package),
+  `admin-publisher*`, `admin-review`, `admin-build*`, `admin-game-builds`,
+  `test-join`, `my-tests`, `test-leave`; registry JSON gains `owner` and
+  `build`. Caddy refuses `/v1/publisher/*` on the api host. The console's
+  publisher side (sign-in switch, `/setup`, My games, a game's page with
+  its version, testers and history, Account) and the admin's Publishers,
+  Review and build pages; the docs site's "Getting listed" rewritten for
+  publishers. Tests: `biz/games/studio_test.go`,
+  `biz/identity/publishers_test.go`, `biz/rooms/testers_test.go` (which
+  found the room insert dropping `build_id`). Not deployed, not run against
+  a live api or the console in a browser (the user tests it).

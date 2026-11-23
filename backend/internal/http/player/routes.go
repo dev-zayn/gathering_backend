@@ -49,6 +49,10 @@ type Handler struct {
 
 	// Reports is a player reporting another (docs/REPORTS.md).
 	Reports *reports.Service
+
+	// Studio is the testers' side of a publisher's games: joining by a code,
+	// the list, leaving (docs/PUBLISHERS.md).
+	Studio *games.Studio
 }
 
 func (h *Handler) Register(api huma.API) {
@@ -65,4 +69,5 @@ func (h *Handler) Register(api huma.API) {
 	h.registerFriends(api)
 	h.registerNotifications(api)
 	h.registerTournaments(api)
+	h.registerTests(api)
 }

@@ -88,6 +88,11 @@ type Game struct {
 	// means any path on the entry's origin.
 	RedirectURIs Strings `gorm:"column:redirect_uris"`
 
+	// PublisherID is the studio whose game it is (docs/PUBLISHERS.md); nil
+	// for a game made before publishers, ours included, which the console
+	// runs alone.
+	PublisherID *string
+
 	CreatedAt time.Time
 	UpdatedAt time.Time
 }

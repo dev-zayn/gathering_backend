@@ -5,7 +5,6 @@ import (
 	goerrors "errors"
 
 	"github.com/jamaa/gathering/backend/internal/data"
-	"github.com/jamaa/gathering/backend/internal/data/enum"
 	"github.com/jamaa/gathering/backend/internal/data/model"
 	"github.com/jamaa/gathering/backend/internal/pkg/errors"
 	applog "github.com/jamaa/gathering/backend/internal/pkg/log"
@@ -14,16 +13,43 @@ import (
 // Open is the tap. There is no consent screen: a published game is a
 // player's to play, and the first time they open it the row is written so the
 // tile stays on their shelf. Every open after that moves last_played_at and
-// counts one more play.
+// counts one more play. A tester's game under test is theirs to open the
+// same way, published or not (docs/PUBLISHERS.md).
 func (c *Catalogue) Open(ctx context.Context, playerID, gameID string) (*model.Library, error) {
-	g, err := publishedGame(ctx, c.db, gameID)
+	seen, err := SeenBy(ctx, c.db, playerID, gameID)
 	if err != nil {
 		return nil, errors.Internal(err)
 	}
-	if g == nil {
+	if seen == nil {
 		return nil, errNotFound
 	}
+	return c.shelve(ctx, playerID, &seen.Game)
+}
 
+// OpenIn is the tap inside a room, which plays the version it was made with:
+// buildID is the room's build, "" for the live game. A test room's game
+// opened by somebody who no longer tests it is testers_only.
+func (c *Catalogue) OpenIn(ctx context.Context, playerID, gameID, buildID string) (*model.Library, error) {
+	seen, ok, err := SeenIn(ctx, c.db, playerID, gameID, buildID)
+	if err != nil {
+		return nil, errors.Internal(err)
+	}
+	if !ok {
+		return nil, ErrTestersOnly
+	}
+	if seen == nil {
+		return nil, errNotFound
+	}
+	return c.shelve(ctx, playerID, &seen.Game)
+}
+
+// ErrTestersOnly is a test room, or its game, asked for by a player who does
+// not test the game (docs/PUBLISHERS.md, "Rooms").
+var ErrTestersOnly = errors.Forbidden("testers_only")
+
+// shelve is the first open's row, or every later open's play.
+func (c *Catalogue) shelve(ctx context.Context, playerID string, g *model.Game) (*model.Library, error) {
+	gameID := g.ID
 	now := data.Now()
 	existing, err := libraryRow(ctx, c.db, playerID, gameID)
 	if err != nil {
@@ -79,8 +105,9 @@ func (c *Catalogue) Remove(ctx context.Context, playerID, gameID string) error {
 }
 
 // Grant is what must be true before a credential is minted: the game is
-// real, published, and on this player's shelf. The scopes are the manifest's,
-// as it stands today.
+// real, the player's to see — published, or a build they test — and on this
+// player's shelf. The scopes are the manifest's of the version they get, as
+// it stands today.
 func (c *Catalogue) Grant(ctx context.Context, playerID, gameID string) (*model.Grant, error) {
 	g, err := anyGame(ctx, c.db, gameID)
 	if err != nil {
@@ -90,13 +117,44 @@ func (c *Catalogue) Grant(ctx context.Context, playerID, gameID string) (*model.
 		return nil, errNotFound
 	}
 
-	out := &model.Grant{Game: *g}
-
 	// A suspended game is on nobody's shelf as far as anything downstream is
 	// concerned: the kill switch has to reach live tokens, not just tiles.
-	if g.Listing != enum.Published {
+	seen, err := SeenBy(ctx, c.db, playerID, gameID)
+	if err != nil {
+		return nil, errors.Internal(err)
+	}
+	return c.granted(ctx, playerID, g, seen)
+}
+
+// GrantIn is Grant for a launch into a room: the version the room plays.
+func (c *Catalogue) GrantIn(ctx context.Context, playerID, gameID, buildID string) (*model.Grant, error) {
+	g, err := anyGame(ctx, c.db, gameID)
+	if err != nil {
+		return nil, errors.Internal(err)
+	}
+	if g == nil {
+		return nil, errNotFound
+	}
+	seen, ok, err := SeenIn(ctx, c.db, playerID, gameID, buildID)
+	if err != nil {
+		return nil, errors.Internal(err)
+	}
+	if !ok {
+		return nil, ErrTestersOnly
+	}
+	return c.granted(ctx, playerID, g, seen)
+}
+
+// granted is the grant for the version seen, nil when the game is not the
+// player's to see.
+func (c *Catalogue) granted(ctx context.Context, playerID string, g *model.Game, seen *Seen) (*model.Grant, error) {
+	out := &model.Grant{Game: *g}
+	if seen == nil {
 		return out, nil
 	}
+	out.Game = seen.Game
+	g = &out.Game
+	gameID := g.ID
 
 	row, err := libraryRow(ctx, c.db, playerID, gameID)
 	if err != nil {

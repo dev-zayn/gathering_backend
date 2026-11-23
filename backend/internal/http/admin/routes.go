@@ -52,6 +52,11 @@ type Handler struct {
 	// Friends is a player's blocks, and an admin lifting one
 	// (docs/CONSOLE.md, "A player's blocks").
 	Friends *friends.Service
+
+	// Publishers is the studios' accounts; Review the builds they send
+	// (docs/PUBLISHERS.md).
+	Publishers *identity.Publishers
+	Review     *games.Review
 }
 
 func (h *Handler) Register(api huma.API) {
@@ -65,4 +70,6 @@ func (h *Handler) Register(api huma.API) {
 	h.registerAnnouncements(api)
 	h.registerTournaments(api)
 	h.registerReports(api)
+	h.registerPublishers(api)
+	h.registerReview(api)
 }

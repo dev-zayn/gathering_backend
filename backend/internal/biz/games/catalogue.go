@@ -38,9 +38,11 @@ func NewCatalogue(db *gorm.DB, revoker *Revoker, audit audit.Log) *Catalogue {
 
 // Listed is one row of the registry seen by one player. The store and the
 // shelf are the same rows, differing by whether the player has each.
+// Testing says the row is a build the player tests (docs/PUBLISHERS.md).
 type Listed struct {
 	Game      model.Game
 	InLibrary bool
+	Testing   bool
 }
 
 // Detail is the game's page in the store, and whether this player has it.
@@ -49,11 +51,16 @@ type Detail struct {
 
 	// Library is nil when the player has not opened the game yet.
 	Library *model.Library
+
+	// Build is the build the player tests, nil for the live game: its notes
+	// are the page's words for testers.
+	Build *model.GameBuild
 }
 
 // List is the store: every published game, the featured ones first, then
 // ours, then the rest by id, each marked with whether the player has it.
-// A category narrows it.
+// A tester's games under test come first, each as its build
+// (docs/PUBLISHERS.md). A category narrows it.
 func (c *Catalogue) List(ctx context.Context, playerID, category string) ([]Listed, error) {
 	if category != "" && !enum.GameCategory(category).Valid() {
 		return nil, errors.Invalid(map[string]string{"category": "unknown"})
@@ -67,21 +74,66 @@ func (c *Catalogue) List(ctx context.Context, playerID, category string) ([]List
 	if err != nil {
 		return nil, errors.Internal(err)
 	}
+	tested, under, err := c.testedGames(ctx, playerID, category)
+	if err != nil {
+		return nil, errors.Internal(err)
+	}
 
-	out := make([]Listed, 0, len(games))
+	out := make([]Listed, 0, len(games)+len(tested))
+	for _, g := range tested {
+		_, has := held[g.ID]
+		out = append(out, Listed{Game: g, InLibrary: has, Testing: true})
+	}
 	for _, g := range games {
+		// A tester gets the build, whichever category it is in: the live
+		// row is not theirs to see beside it.
+		if under[g.ID] {
+			continue
+		}
 		_, has := held[g.ID]
 		out = append(out, Listed{Game: g, InLibrary: has})
 	}
 	return out, nil
 }
 
+// testedGames is every game playerID tests that has an open build, each as
+// its build laid over it, in category when one is asked for, by name; and
+// under, the ids of all of them whatever their category. A suspended game is
+// nobody's, testers included.
+func (c *Catalogue) testedGames(ctx context.Context, playerID, category string) (rows []model.Game, under map[string]bool, err error) {
+	builds, err := testedBuilds(ctx, c.db, playerID)
+	if err != nil || len(builds) == 0 {
+		return nil, nil, err
+	}
+	ids := make([]string, 0, len(builds))
+	for id := range builds {
+		ids = append(ids, id)
+	}
+	var games []model.Game
+	err = c.db.WithContext(ctx).Where("id IN ? AND listing <> ?", ids, enum.Suspended).
+		Order("name, id").Find(&games).Error
+	if err != nil {
+		return nil, nil, err
+	}
+	under = make(map[string]bool, len(games))
+	for _, g := range games {
+		b := builds[g.ID]
+		over := b.Over(g)
+		under[g.ID] = true
+		if category != "" && string(over.Category) != category {
+			continue
+		}
+		rows = append(rows, over)
+	}
+	return rows, under, nil
+}
+
 func (c *Catalogue) Detail(ctx context.Context, playerID, gameID string) (*Detail, error) {
-	g, err := publishedGame(ctx, c.db, gameID)
+	seen, err := SeenBy(ctx, c.db, playerID, gameID)
 	if err != nil {
 		return nil, errors.Internal(err)
 	}
-	if g == nil {
+	if seen == nil {
 		return nil, errNotFound
 	}
 
@@ -89,7 +141,7 @@ func (c *Catalogue) Detail(ctx context.Context, playerID, gameID string) (*Detai
 	if err != nil {
 		return nil, errors.Internal(err)
 	}
-	return &Detail{Game: *g, Library: row}, nil
+	return &Detail{Game: seen.Game, Library: row, Build: seen.Build}, nil
 }
 
 func (c *Catalogue) heldSet(ctx context.Context, playerID string) (map[string]model.Library, error) {
@@ -129,20 +181,6 @@ func publishedGames(ctx context.Context, db *gorm.DB, category string) ([]model.
 		q = q.Where("category = ?", category)
 	}
 	return findGames(q.Order("featured DESC, first_party DESC, id"))
-}
-
-func publishedGame(ctx context.Context, db *gorm.DB, id string) (*model.Game, error) {
-	var row model.Game
-	err := db.WithContext(ctx).
-		Where("id = ? AND listing = ?", id, enum.Published).Take(&row).Error
-	if stderrors.Is(err, gorm.ErrRecordNotFound) {
-		return nil, nil
-	}
-	if err != nil {
-		return nil, err
-	}
-	g := row
-	return &g, nil
 }
 
 // scopesFor keeps the order the manifest asked in, so a token's scope string
@@ -348,6 +386,7 @@ func upsertGame(ctx context.Context, db *gorm.DB, g *model.Game) error {
 		Room:         g.Room,
 		SecretHash:   g.SecretHash,
 		RedirectURIs: g.RedirectURIs,
+		PublisherID:  g.PublisherID,
 		CreatedAt:    now,
 		UpdatedAt:    now,
 	}).Error
@@ -397,12 +436,15 @@ func setFeatured(ctx context.Context, db *gorm.DB, id string, on bool) error {
 }
 
 // staleGames orders nulls first, so one whose first read failed comes before
-// games merely a day old. No manifest URL means nothing to re-read.
+// games merely a day old. No manifest URL means nothing to re-read. A
+// publisher's game is never re-read by the clock: its live manifest changes
+// only through a build that was reviewed and published (docs/PUBLISHERS.md).
 func staleGames(ctx context.Context, db *gorm.DB, before time.Time, limit int) ([]string, error) {
 	var ids []string
 	err := db.WithContext(ctx).
 		Model(&model.Game{}).
 		Where("manifest_url <> ''").
+		Where("publisher_id IS NULL").
 		Where("fetched_at IS NULL OR fetched_at < ?", before).
 		Order("fetched_at ASC NULLS FIRST").
 		Limit(limit).

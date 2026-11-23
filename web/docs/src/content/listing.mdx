@@ -2,7 +2,7 @@ import { Guides } from '@/components/blocks'
 
 # Getting listed
 
-From a published manifest to a tile a player can open. Four steps, one of which is us reading your document and one of which is a person at Gathering looking at it. {{ className: 'lead' }}
+From a published manifest to a tile a player can open: you register it, your testers play it, a person at Gathering reviews it, and you publish it. {{ className: 'lead' }}
 
 ---
 
@@ -11,7 +11,7 @@ From a published manifest to a tile a player can open. Four steps, one of which 
 <Row>
   <Col>
 
-    At `/.well-known/gathering-game.json` on your game's origin, reachable without authentication. Nothing happens until somebody at Gathering has the address.
+    At `/.well-known/gathering-game.json` on your game's origin (or any address you give us), reachable without authentication. Nothing happens until you register the address.
 
     Check it from outside your own network before you send it. Two things go wrong here more than anything else, and both are invisible from inside.
 
@@ -54,19 +54,21 @@ From a published manifest to a tile a player can open. Four steps, one of which 
 
 ---
 
-## 2. You send us the address
+## 2. You register it in the console
 
 <Row>
   <Col>
 
-    Send it to your Gathering contact — the origin is enough. An admin registers it in the console, which makes us fetch and validate the document there and then.
+    Your studio signs in to the Gathering console as a **publisher**. Ask the Gathering team for an account: they send a one-time link, and you choose your password there. The console shows your own games and nothing else.
 
-    If anything is wrong you get the whole list back at once and nothing is created. Fix and resend; there is no partial state to clean up.
+    **My games → Register a game** takes the address. We fetch and validate the document there and then; if anything is wrong you get the whole list back at once and nothing is created. Fix it and try again.
+
+    The game's id is the manifest's, for good. Its tier is `partner` whatever the document says, and the name on its tile is your studio's account name.
 
     <Note>
       You are handed a client secret, **once**. It is shown at the moment of registration
-      and never again — it cannot be read back, only rolled, which breaks your server until
-      you have the new one. Store it before you close the window.
+      and never again: it cannot be read back, only rolled (from the game's page), which
+      breaks your server until it has the new one. Store it before you close the window.
     </Note>
 
   </Col>
@@ -76,9 +78,11 @@ From a published manifest to a tile a player can open. Four steps, one of which 
 
     ```json
     {
-      "id": "yourstudio.game",
-      "version": "1.0.0",
-      "listing": "unpublished",
+      "game": {
+        "id": "yourstudio.game",
+        "listing": "unpublished",
+        "build": { "version": "1.0.0", "status": "testing" }
+      },
       "client_secret": "sec_9f2k…shown_once"
     }
     ```
@@ -105,55 +109,33 @@ From a published manifest to a tile a player can open. Four steps, one of which 
 
 ---
 
-## 3. Gathering writes the store copy
+## 3. Your testers play it first
 
 <Row>
   <Col>
 
-    An admin writes your tagline, sets your icon and picks your category. Publishing is refused until a tagline and an icon exist: a row with neither is a broken tile in every player's store.
+    What you registered is your game's first **version**, under test. Nobody sees it yet but its testers.
 
-    This is the part you do not control, and it is deliberate. Say what you want it to read and an admin will usually write that — but the words are Gathering's, so that every tile in the store reads the same way.
+    On the game's page, make a **tester's code**: eight symbols, with a label you know it by, an optional limit on how many may join with it, and 1 to 90 days. A player types it in the app under **Me → Beta games** and tests your game from then on: its tile wears "Beta", and they open, play and make rooms in the version under test.
 
     <Properties>
-      <Property name="tagline" type="string, required">
-        The line under your name on the tile, in the language your players read, up to 160 characters.
+      <Property name="Test rooms" type="testers only">
+        A room a tester makes plays the version under test, and only your testers can join it. A tester who joins a room of the live game plays the live game.
       </Property>
-      <Property name="icon" type="file, required">
-        The tile picture, a PNG or JPEG up to 2 MB, uploaded by the admin and kept by Gathering. Without it you cannot be published.
+      <Property name="Testers" type="up to 500">
+        Kept per game, version after version, until they leave or you take them off. Up to 20 live codes at a time.
       </Property>
-      <Property name="description" type="string">
-        Shown on your page in the store, not on the tile, up to 4,000 characters.
-      </Property>
-      <Property name="category" type="one of a list">
-        How the store groups you. One of `speed`, `brain`, `words`, `luck`, `guess`, `draw`, `party`, `other`. A new game waits in `other` until an admin files it.
-      </Property>
-      <Property name="screenshots" type="file[]">
-        Optional, up to six, each a PNG or JPEG up to 2 MB, uploaded by the admin. The page reads fine without them.
-      </Property>
-      <Property name="featured" type="switch">
-        A featured game leads the store, whatever its tier. An admin's call.
+      <Property name="Notes" type="text">
+        What is new and what to try: testers read them on the game's page in the app, and so does the reviewer.
       </Property>
     </Properties>
 
   </Col>
   <Col sticky>
 
-    <CodeGroup title="What the store holds, not your manifest">
-
-    ```json
-    {
-      "tagline": "إكس أو، لكن مع صديقك",
-      "category": "brain",
-      "featured": false,
-      "screenshots": []
-    }
-    ```
-
-    </CodeGroup>
-
     <Note>
-      None of this is in your manifest, and none of it can be — see
-      [what is not in it](/manifest#what-is-not-in-it).
+      Changed your manifest? **Read it again** on the version's card. Your page's own files
+      are yours: testers load whatever your entry serves, the moment you deploy it.
     </Note>
 
   </Col>
@@ -161,24 +143,73 @@ From a published manifest to a tile a player can open. Four steps, one of which 
 
 ---
 
-## 4. An admin publishes it
+## 4. You send it to review
 
 <Row>
   <Col>
 
-    Your game becomes visible in the store and players can open it.
+    The store copy is yours to write, on the version: it goes to review with everything else, so what players read is what a person at Gathering read.
 
-    Until then it exists, has a client secret, and is a `404` to every player — not a `403`, because a game they cannot see should not be something they can detect.
+    <Properties>
+      <Property name="tagline" type="string, required">
+        The line under your name on the tile, in the language your players read, up to 160 characters.
+      </Property>
+      <Property name="icon" type="file, required">
+        The tile picture, a square PNG or JPEG up to 2 MB, kept by Gathering.
+      </Property>
+      <Property name="description" type="string">
+        Shown on your page in the store, not on the tile, up to 4,000 characters.
+      </Property>
+      <Property name="category" type="one of a list">
+        How the store groups you. One of `speed`, `brain`, `words`, `luck`, `guess`, `draw`, `party`, `other`.
+      </Property>
+      <Property name="screenshots" type="file[]">
+        Optional, up to six, each a PNG or JPEG up to 2 MB.
+      </Property>
+    </Properties>
+
+    **Send to review** freezes the version until a reviewer answers; take it back to change it. The reviewer plays it in the app with a code of their own and either **approves** it or **asks for changes**, with the reason. Asked for changes, you fix what they said and send it again. Featuring a game in the store stays Gathering's call.
+
+  </Col>
+  <Col sticky>
+
+    <CodeGroup title="Where a version stands">
+
+    ```text
+    testing → in_review → approved → published
+                   ↘ rejected (changes asked) → in_review …
+    ```
+
+    </CodeGroup>
+
+    <Note>
+      Changing an approved version's store copy, pictures or manifest takes the approval
+      back: it was for what the reviewer saw.
+    </Note>
+
+  </Col>
+</Row>
+
+---
+
+## 5. You publish it
+
+<Row>
+  <Col>
+
+    Approved, the version waits for you. **Publish** makes it the live game: its manifest, its store copy, and, the first time, its place in the store. Every player gets it from their next open; rooms already open keep the version they started with.
+
+    Until its first publish your game exists, has a client secret, and is a `404` to every player who is not a tester — not a `403`, because a game they cannot see should not be something they can detect.
 
     <Properties>
       <Property name="unpublished" type="404">
-        Exists, has credentials, invisible. Opening it is indistinguishable from opening a game that was never registered.
+        Exists, has credentials, invisible but to its testers. Opening it is indistinguishable from opening a game that was never registered.
       </Property>
       <Property name="published" type="200">
         In the store. Players can open it, and the launch flow works.
       </Property>
       <Property name="suspended" type="404">
-        Was published, is not now. Live tokens stop immediately.
+        Was published, is not now. Live tokens stop immediately, testers' too.
       </Property>
     </Properties>
 
@@ -208,28 +239,26 @@ From a published manifest to a tile a player can open. Four steps, one of which 
 <Row>
   <Col>
 
-    Change your manifest and ask us to re-fetch it — or change it and wait, because we re-read every manifest about once a day anyway. A game never published is saved as read, whatever changed; for any other, what happens next depends on what changed.
+    Bump the version in a manifest and start **the next version** on your game's page. It goes the same way as the first: your testers get it at once, then review, then you publish it. Players keep the live game the whole time; one version is on its way at a time.
+
+    Your live manifest changes only through a published version: we do not re-read a publisher's game on our own.
 
     <Properties>
-      <Property name="version, entry, name" type="saved as read">
-        Whatever else you changed, players carry on. A scope you drop is gone for everyone on their next token.
+      <Property name="A test address" type="recommended">
+        Players load whatever your live entry serves. Host the next version at an address of its own — say `/beta/`, with its own manifest — so testers try it without anybody else getting it.
       </Property>
-      <Property name="scopes wider" type="held">
-        Nothing changes yet. The document waits for an admin to read the new list and accept it; until then every player carries on with the manifest we had.
+      <Property name="version" type="must change">
+        A next version at the live version is refused: `version: same_as_live`.
       </Property>
-      <Property name="permissions changed" type="held">
-        The same. What the app asks a player's phone for is read by a person first.
-      </Property>
-      <Property name="room changed" type="held">
-        The same. Every room for your game is made under the block an admin accepted, so a new shape waits too.
+      <Property name="scopes, permissions, room" type="reviewed">
+        The reviewer sees what your version asks for beside what the live game asks for. A wider list reaches players only once it is published.
       </Property>
     </Properties>
 
     <Note>
-      No player is ever asked about a scope; a permission newly accepted, the app asks for
-      as the game next opens. A published game holds whatever its accepted manifest asks
-      for, so the only tail to design for is tokens minted before an acceptance: they carry
-      the old list until they renew.
+      No player is ever asked about a scope; a permission newly published, the app asks for
+      as the game next opens. Tokens minted before a publish carry the old list until they
+      renew.
     </Note>
 
   </Col>
@@ -238,7 +267,7 @@ From a published manifest to a tile a player can open. Four steps, one of which 
     <CodeGroup title="What that means in your code">
 
     ```js
-    // A token minted before the re-read carries the old
+    // A token minted before a publish carries the old
     // list until it renews. Read scope; do not assume it.
     const { scope } = await bridgeContext(token)
 

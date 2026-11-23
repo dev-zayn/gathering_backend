@@ -49,6 +49,10 @@ type Minter interface {
 	// MintAdmin is the console's session: ours, made once the identity provider
 	// has said who the person is and which of our roles they hold.
 	MintAdmin(adminID string, roles []string, ttl time.Duration) (token, jti string, err error)
+
+	// MintPublisher is a studio's console session (docs/PUBLISHERS.md): the
+	// same cookie an admin's travels in, of a kind no admin route opens.
+	MintPublisher(publisherID string, ttl time.Duration) (token, jti string, err error)
 }
 
 type jwtMinter struct{ s *token.Signer }
@@ -124,5 +128,13 @@ func (m *jwtMinter) MintRoom(in RoomClaims, ttl time.Duration) (string, string, 
 func (m *jwtMinter) MintAdmin(adminID string, roles []string, ttl time.Duration) (string, string, error) {
 	c := token.Claims{Scope: caller.ScopeAdmin, Roles: roles}
 	c.Subject = adminID
+	return m.s.Mint(c, ttl)
+}
+
+// MintPublisher returns the token and its id, which the whitelist keys on as
+// it does an admin's.
+func (m *jwtMinter) MintPublisher(publisherID string, ttl time.Duration) (string, string, error) {
+	c := token.Claims{Scope: caller.ScopePublisher}
+	c.Subject = publisherID
 	return m.s.Mint(c, ttl)
 }

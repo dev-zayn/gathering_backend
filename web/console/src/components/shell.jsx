@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { NavLink, Outlet } from 'react-router-dom'
 import {
   Bell,
+  Building2,
+  ClipboardCheck,
   DoorOpen,
   Flag,
   Gamepad2,
@@ -27,10 +29,11 @@ import { signOut } from '../sso.js'
 // wordmark at its head and who is signed in at its foot, then which build
 // this is. On a phone the rail
 // is a drawer behind the bar's menu key.
-const groups = [
+const adminGroups = [
   [
     { to: '/', label: 'Dashboard', icon: LayoutDashboard, end: true },
     { to: '/games', label: 'Games', icon: Gamepad2 },
+    { to: '/review', label: 'Review', icon: ClipboardCheck },
     { to: '/players', label: 'Players', icon: Users },
     { to: '/reports', label: 'Reports', icon: Flag },
     { to: '/rooms', label: 'Rooms', icon: DoorOpen },
@@ -38,6 +41,7 @@ const groups = [
     { to: '/notifications', label: 'Notifications', icon: Bell },
   ],
   [
+    { to: '/publishers', label: 'Publishers', icon: Building2 },
     { to: '/activity', label: 'Activity', icon: ScrollText },
     { to: '/admins', label: 'Admins', icon: ShieldCheck },
   ],
@@ -48,7 +52,9 @@ function Wordmark({ className = '' }) {
   return <img src="/brand/wordmark-amber.svg" alt="گعدة" className={`h-[46px] w-auto ${className}`} />
 }
 
-export default function Shell() {
+// The shell is the admin's by default; a publisher's passes its own rail,
+// the area's name under the wordmark and the way it signs out.
+export default function Shell({ groups = adminGroups, area = 'Console', onSignOut = signOut }) {
   const [open, setOpen] = useState(false)
   const close = () => setOpen(false)
 
@@ -77,7 +83,7 @@ export default function Shell() {
         <div className="flex items-center justify-between px-3">
           <div className="flex items-end gap-2.5">
             <Wordmark />
-            <span className="text-rail-ink-2 mb-1.5 text-xs font-semibold">Console</span>
+            <span className="text-rail-ink-2 mb-1.5 text-xs font-semibold">{area}</span>
           </div>
           <button
             type="button"
@@ -102,7 +108,7 @@ export default function Shell() {
           ))}
         </nav>
 
-        <Account />
+        <Account onSignOut={onSignOut} />
         <p className="text-rail-ink-2 mx-3 mt-3 font-mono text-[11px]" title={builtAt}>
           Console {versionLabel}
         </p>
@@ -121,12 +127,19 @@ const themeIcon = { system: Monitor, light: Sun, dark: Moon }
 const themeName = { system: 'the system’s', light: 'light', dark: 'dark' }
 
 // Who is signed in, the theme switch, and the way out.
-function Account() {
+function Account({ onSignOut }) {
   const me = useMe()
   const [theme, setTheme] = useState(savedTheme)
   const ThemeIcon = themeIcon[theme]
   const name = me?.name || me?.id || 'Admin'
-  const role = me?.roles?.includes('admin') ? 'Admin' : me?.roles?.[0] ? me.roles[0] : 'Signed in'
+  const role =
+    me?.kind === 'publisher'
+      ? 'Publisher'
+      : me?.roles?.includes('admin')
+        ? 'Admin'
+        : me?.roles?.[0]
+          ? me.roles[0]
+          : 'Signed in'
 
   function cycle() {
     const next = nextTheme[theme]
@@ -157,7 +170,7 @@ function Account() {
         className="text-rail-ink-2 hover:text-rail-ink inline-flex size-8 items-center justify-center rounded-lg hover:bg-white/5"
         title="Sign out"
         aria-label="Sign out"
-        onClick={signOut}
+        onClick={onSignOut}
       >
         <LogOut className="size-4" />
       </button>

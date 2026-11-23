@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/jamaa/gathering/backend/internal/biz/games"
 	"github.com/jamaa/gathering/backend/internal/biz/identity"
 	"github.com/jamaa/gathering/backend/internal/data"
 	"github.com/jamaa/gathering/backend/internal/data/enum"
@@ -67,13 +68,16 @@ func (s *Service) Create(ctx context.Context, playerID string, in CreateRequest)
 		return nil, errors.Invalid(map[string]string{"visibility": "unknown"})
 	}
 
-	g, err := gameRow(ctx, s.db, in.Game)
+	// The version the host gets is the version the room plays: a tester's
+	// room is a test room, its block the build's (docs/PUBLISHERS.md).
+	seen, err := games.SeenBy(ctx, s.db, playerID, in.Game)
 	if err != nil {
 		return nil, errors.Internal(err)
 	}
-	if g == nil || g.Listing != enum.Published {
+	if seen == nil {
 		return nil, errNotFound
 	}
+	g := &seen.Game
 	if in.LAN && !g.Room.LAN {
 		return nil, errors.Invalid(map[string]string{"lan": "not_allowed"})
 	}
@@ -93,6 +97,10 @@ func (s *Service) Create(ctx context.Context, playerID string, in CreateRequest)
 	room := &model.Room{
 		GameID: g.ID, HostID: playerID, Status: enum.RoomLobby, Visibility: visibility,
 		LAN: in.LAN, Config: config, CreatedAt: now, ActiveAt: now,
+	}
+	if seen.Testing() {
+		build := seen.BuildID()
+		room.BuildID = &build
 	}
 	err = s.tx.Do(ctx, func(ctx context.Context) error {
 		if err := lockPlayer(ctx, s.db, playerID); err != nil {
@@ -186,6 +194,17 @@ func (s *Service) Join(ctx context.Context, playerID, typed, game string) (*Room
 		}
 		if m != nil && m.Kicked {
 			return errKicked
+		}
+		// A test room is the game's testers' alone, whatever else its door
+		// says (docs/PUBLISHERS.md, "Rooms").
+		if r.BuildID != nil {
+			ok, err := games.IsTester(ctx, s.db, r.GameID, playerID)
+			if err != nil {
+				return err
+			}
+			if !ok {
+				return games.ErrTestersOnly
+			}
 		}
 		// A match room's door is the match (docs/TOURNAMENTS.md): only its
 		// players, whatever the room's visibility says.

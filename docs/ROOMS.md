@@ -115,6 +115,9 @@ most once a minute on pings. The sweeper reads it.
   member of it. A player who is already a current member gets the room back
   (200, idempotent). Otherwise, in this order:
   - a kicked player is refused with `kicked`, for good;
+  - a test room (`testing`, a tester's room of a game under test,
+    docs/PUBLISHERS.md "Rooms") refuses anybody who does not test the game
+    with `testers_only`;
   - a friends-only room refuses anybody who is not the current host's
     friend, or is either side of a block with the host, with
     `friends_only` (M6, docs/FRIENDS.md);
@@ -181,7 +184,7 @@ adds `"room"`, the room the player is still in (a new `Room` field on
 | `room-create` | `POST /v1/rooms` | `{game, lan?, visibility?}` | 201 Room | 404 `not_found` (game not published), 409 `in_another_room`, 422 `invalid_fields` (`lan: not_allowed`) |
 | `rooms-mine` | `GET /v1/rooms/mine` | | 200 `{rooms: [Room]}` (zero or one) | |
 | `room` | `GET /v1/rooms/{room}` | | 200 Room | 404 `not_found` (no such room, or the caller was never a member) |
-| `room-join` | `POST /v1/rooms/join` | `{code, game?}` | 200 Room | 422 `invalid_fields` (`code: must_be_6_symbols`), 404 `room_not_found`, 409 `room_closed` / `another_game` / `in_another_room` / `room_started` / `room_full`, 403 `kicked` / `friends_only` |
+| `room-join` | `POST /v1/rooms/join` | `{code, game?}` | 200 Room | 422 `invalid_fields` (`code: must_be_6_symbols`), 404 `room_not_found`, 409 `room_closed` / `another_game` / `in_another_room` / `room_started` / `room_full`, 403 `kicked` / `testers_only` / `friends_only` |
 | `room-leave` | `POST /v1/rooms/{room}/leave` | | 204 | 403 `not_member` |
 | `room-kick` | `POST /v1/rooms/{room}/kick` | `{player}` | 204 | 403 `not_member` / `host_only`, 409 `room_closed`, 422 `invalid_fields` (`player: not_a_member` / `is_you`) |
 | `room-start` | `POST /v1/rooms/{room}/start` | | 200 Room | 403 `not_member` / `host_only`, 409 `room_started` / `room_closed` / `too_few_players` |

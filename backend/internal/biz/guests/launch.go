@@ -38,8 +38,9 @@ type Launch struct {
 // one.
 type Rooms interface {
 	// CheckLaunch is the rule on opening a game into a room: open, the caller
-	// in it, and the game's own.
-	CheckLaunch(ctx context.Context, roomID, playerID, gameID string) error
+	// in it, and the game's own. It answers the build the room plays, "" for
+	// the live game (docs/PUBLISHERS.md, "Rooms").
+	CheckLaunch(ctx context.Context, roomID, playerID, gameID string) (string, error)
 	// Brief is the room a game token names, while its player is still a
 	// current member of it; nil otherwise.
 	Brief(ctx context.Context, roomID, playerID string) (*rooms.Brief, error)
@@ -89,22 +90,35 @@ func (l *Launch) Open(ctx context.Context, by Launcher, gameID, roomID, path str
 
 	// A room rides on the code into the game's token, so it has to be one the
 	// player is in, still open, and this game's: room_closed, not_member,
-	// room: another_game. Asked before the shelf is touched.
+	// room: another_game. Asked before the shelf is touched. The room decides
+	// the version too: the build it was made with, or the live game, whatever
+	// the player would get outside it (docs/PUBLISHERS.md, "Rooms").
+	var grant *model.Grant
 	if roomID != "" {
 		if l.Rooms == nil {
 			return nil, errors.Forbidden("not_member")
 		}
-		if err := l.Rooms.CheckLaunch(ctx, roomID, by.PlayerID, gameID); err != nil {
+		build, err := l.Rooms.CheckLaunch(ctx, roomID, by.PlayerID, gameID)
+		if err != nil {
 			return nil, err
 		}
-	}
-
-	if _, err := l.Games.Open(ctx, by.PlayerID, gameID); err != nil {
-		return nil, err
-	}
-	grant, err := l.eligible(ctx, by.PlayerID, gameID)
-	if err != nil {
-		return nil, err
+		if _, err := l.Games.OpenIn(ctx, by.PlayerID, gameID, build); err != nil {
+			return nil, err
+		}
+		if grant, err = l.Games.GrantIn(ctx, by.PlayerID, gameID, build); err != nil {
+			return nil, err
+		}
+		if err := l.check(grant); err != nil {
+			return nil, err
+		}
+	} else {
+		if _, err := l.Games.Open(ctx, by.PlayerID, gameID); err != nil {
+			return nil, err
+		}
+		var err error
+		if grant, err = l.eligible(ctx, by.PlayerID, gameID); err != nil {
+			return nil, err
+		}
 	}
 
 	code, err := l.mintCode(ctx, by, grant, roomID, "", "")

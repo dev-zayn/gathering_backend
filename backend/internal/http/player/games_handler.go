@@ -52,6 +52,7 @@ type gameJSON struct {
 	Version     string          `json:"version"`
 	Publisher   string          `json:"publisher"`
 	Permissions []string        `json:"permissions" doc:"What the app asks the phone for on the game's behalf. On the row as well as the page, because a tile opens the game and the app asks for these before it does."`
+	Testing     bool            `json:"testing" doc:"The row is a build under test this player tests, in place of the live game (docs/PUBLISHERS.md)."`
 }
 
 type gamesListResponse struct {
@@ -84,6 +85,8 @@ type gameDetailJSON struct {
 	Version     string   `json:"version"`
 	Publisher   string   `json:"publisher"`
 	Tier        string   `json:"tier" enum:"first-party,partner"`
+	Testing     bool     `json:"testing" doc:"The page is a build under test this player tests (docs/PUBLISHERS.md)."`
+	TestNotes   string   `json:"test_notes" doc:"The publisher's notes for testers: what is new, what to try. Empty for the live game."`
 }
 
 type gameDetailResponse struct{ Body gameDetailJSON }
@@ -129,7 +132,9 @@ func (h *Handler) listGames(ctx context.Context, in *gamesListRequest) (*gamesLi
 	out := &gamesListResponse{}
 	out.Body.Games = make([]gameJSON, 0, len(rows))
 	for i := range rows {
-		out.Body.Games = append(out.Body.Games, h.gameRow(ctx, &rows[i].Game, rows[i].InLibrary))
+		row := h.gameRow(ctx, &rows[i].Game, rows[i].InLibrary)
+		row.Testing = rows[i].Testing
+		out.Body.Games = append(out.Body.Games, row)
 	}
 	return out, nil
 }
@@ -190,7 +195,11 @@ func (h *Handler) game(ctx context.Context, in *gamePath) (*gameDetailResponse, 
 		Version:   g.Version,
 		Publisher: g.Publisher,
 		Tier:      string(g.Tier),
+		Testing:   d.Build != nil,
 	}}
+	if d.Build != nil {
+		out.Body.TestNotes = d.Build.Notes
+	}
 	if d.Library != nil {
 		out.Body.Plays = d.Library.Plays
 		if d.Library.LastPlayedAt != nil {

@@ -5,6 +5,7 @@ import { ArrowLeft, Ban, KeyRound, RefreshCw, Sparkles, Upload, X } from 'lucide
 
 import { api } from '../api.js'
 import Dialog from '../components/dialog.jsx'
+import { BuildBadge } from '../components/build-bits.jsx'
 import { Fact, ListingBadge, Note, SecretOnce, Tag, Tile } from '../components/game-bits.jsx'
 import { categoryLabel, needs, overdue, roomFacts, tierLabel, when } from '../lib/games.js'
 
@@ -72,7 +73,7 @@ export default function Game() {
               </div>
             </div>
           </div>
-          {g.listing !== 'published' && (
+          {g.listing !== 'published' && !(g.owner && g.listing === 'unpublished') && (
             <button
               type="button"
               className="btn btn-primary"
@@ -103,7 +104,8 @@ export default function Game() {
       {g.listing === 'suspended' && (
         <Note tone="bad">Out of every store and shelf, tokens stopped. Shelves were kept, so publishing puts it back.</Note>
       )}
-      {g.listing === 'unpublished' && (
+      {g.owner && <Owned game={g} />}
+      {g.listing === 'unpublished' && !g.owner && (
         <Note tone="wait">{missing ? `${missing} before it can be published.` : 'A 404 to every player until somebody publishes it.'}</Note>
       )}
       {g.held && <Held game={g} busy={busy} onAccept={() => act('accept', `Version ${g.held.version} is live`, () => api.post(`/v1/admin/games/${id}/accept`))} />}
@@ -120,7 +122,58 @@ export default function Game() {
       </div>
 
       <Pictures game={g} onChanged={changed} />
+      {g.owner && <Versions game={g} />}
     </div>
+  )
+}
+
+// A publisher's game (docs/PUBLISHERS.md): whose it is, and where its next
+// version stands. Its versions reach players through review, not through
+// this page's publish.
+function Owned({ game: g }) {
+  return (
+    <Note tone="wait">
+      <span className="flex flex-wrap items-center gap-2">
+        A game of{' '}
+        <Link to={`/publishers/${g.owner.id}`} className="font-semibold hover:underline">
+          {g.owner.name}
+        </Link>
+        . Its versions come through review.
+        {g.build && (
+          <Link to={`/builds/${g.build.id}`} className="inline-flex items-center gap-1.5 hover:underline">
+            Version <span className="font-mono">{g.build.version}</span> <BuildBadge status={g.build.status} />
+          </Link>
+        )}
+      </span>
+      {g.listing === 'unpublished' && (
+        <span className="text-ink-2 mt-1 block text-xs">
+          Unpublished: only its testers see it, until an approved version is published by the studio.
+        </span>
+      )}
+    </Note>
+  )
+}
+
+// Every version the studio sent its way, with the reviewer's words on each.
+function Versions({ game: g }) {
+  const list = useQuery({ queryKey: ['game', g.id, 'builds'], queryFn: () => api.get(`/v1/admin/games/${g.id}/builds`) })
+  const rows = list.data?.builds ?? []
+  return (
+    <Section title="Versions">
+      {list.isError && <p className="text-bad text-sm">{list.error.message}</p>}
+      {list.data && rows.length === 0 && <p className="text-ink-3 text-sm">None.</p>}
+      <ul className="grid gap-2">
+        {rows.map((b) => (
+          <li key={b.id} className="border-line flex flex-wrap items-center justify-between gap-2 rounded-lg border px-3 py-2">
+            <Link to={`/builds/${b.id}`} className="flex items-center gap-2 hover:underline">
+              <span className="font-mono text-sm font-semibold">{b.version}</span>
+              <BuildBadge status={b.status} />
+            </Link>
+            <span className="text-ink-2 text-xs">{b.note ? `“${b.note.slice(0, 80)}”` : when(b.created_at)}</span>
+          </li>
+        ))}
+      </ul>
+    </Section>
   )
 }
 

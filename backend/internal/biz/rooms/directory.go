@@ -170,28 +170,32 @@ func (s *Service) Brief(ctx context.Context, roomID, playerID string) (*Brief, e
 var errAnotherGame = errors.Invalid(map[string]string{"room": "another_game"})
 
 // CheckLaunch is the room rule on opening a game into a room: the room is
-// open, the caller is in it, and it is this game's.
-func (s *Service) CheckLaunch(ctx context.Context, roomID, playerID, gameID string) error {
+// open, the caller is in it, and it is this game's. It answers the build the
+// room plays, "" for the live game (docs/PUBLISHERS.md, "Rooms").
+func (s *Service) CheckLaunch(ctx context.Context, roomID, playerID, gameID string) (string, error) {
 	r, err := roomByID(ctx, s.db, roomID)
 	if err != nil {
-		return errors.Internal(err)
+		return "", errors.Internal(err)
 	}
 	if r == nil {
-		return errNotMember
+		return "", errNotMember
 	}
 	m, err := membership(ctx, s.db, r.ID, playerID)
 	if err != nil {
-		return errors.Internal(err)
+		return "", errors.Internal(err)
 	}
 	switch {
 	case m == nil:
-		return errNotMember
+		return "", errNotMember
 	case !r.Open():
-		return errRoomClosed
+		return "", errRoomClosed
 	case !m.Current():
-		return errNotMember
+		return "", errNotMember
 	case r.GameID != gameID:
-		return errAnotherGame
+		return "", errAnotherGame
 	}
-	return nil
+	if r.BuildID != nil {
+		return *r.BuildID, nil
+	}
+	return "", nil
 }

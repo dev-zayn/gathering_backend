@@ -5,6 +5,7 @@ import { Plus } from 'lucide-react'
 
 import { api } from '../api.js'
 import Dialog from '../components/dialog.jsx'
+import { BuildBadge } from '../components/build-bits.jsx'
 import { Fact, ListingBadge, SecretOnce, Tag, Tile } from '../components/game-bits.jsx'
 import { LISTINGS, needs, tierLabel, when } from '../lib/games.js'
 
@@ -28,7 +29,8 @@ export default function Games() {
         !term ||
         g.name.toLowerCase().includes(term) ||
         g.id.toLowerCase().includes(term) ||
-        (g.publisher ?? '').toLowerCase().includes(term),
+        (g.publisher ?? '').toLowerCase().includes(term) ||
+        (g.owner?.name ?? '').toLowerCase().includes(term),
     )
 
   return (
@@ -111,18 +113,35 @@ export default function Games() {
                     </Link>
                   </td>
                   <td className="px-4 py-2">
-                    <span className="block">{g.publisher || '—'}</span>
-                    <span className="text-ink-2 block text-xs">{tierLabel[g.tier] ?? g.tier}</span>
+                    {g.owner ? (
+                      <Link to={`/publishers/${g.owner.id}`} className="block hover:underline">
+                        {g.owner.name}
+                      </Link>
+                    ) : (
+                      <span className="block">{g.publisher || '—'}</span>
+                    )}
+                    <span className="text-ink-2 block text-xs">{g.owner ? 'A publisher’s' : (tierLabel[g.tier] ?? g.tier)}</span>
                   </td>
                   <td className="px-4 py-2">
-                    <span className="flex items-center gap-1.5">
+                    <span className="flex flex-wrap items-center gap-1.5">
                       <ListingBadge listing={g.listing} />
                       {g.featured && <Tag tone="bg-accent/15 text-accent-text">Featured</Tag>}
                       {g.held && <Tag tone="bg-warn/10 text-warn">Held</Tag>}
+                      {g.build && (
+                        <Link to={`/builds/${g.build.id}`} className="hover:underline">
+                          <BuildBadge status={g.build.status} />
+                        </Link>
+                      )}
                     </span>
                   </td>
                   <td className="px-4 py-2 text-xs">
-                    {missing ? <span className="text-warn font-semibold">{missing}</span> : <span className="text-ink-2">Written</span>}
+                    {g.owner && g.listing === 'unpublished' ? (
+                      <span className="text-ink-2">On its version</span>
+                    ) : missing ? (
+                      <span className="text-warn font-semibold">{missing}</span>
+                    ) : (
+                      <span className="text-ink-2">Written</span>
+                    )}
                   </td>
                   <td className="px-4 py-2 text-right tabular-nums">{shelves[g.id] ?? 0}</td>
                   <td className="px-4 py-2 font-mono text-xs">{g.version}</td>

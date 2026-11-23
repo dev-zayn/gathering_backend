@@ -25,6 +25,8 @@ const (
 	Tournament   = "trn"
 	Match        = "trm"
 	Report       = "rpt"
+	Publisher    = "pub"
+	Build        = "bld"
 )
 
 var enc = base32.NewEncoding("abcdefghijklmnopqrstuvwxyz234567").WithPadding(base32.NoPadding)

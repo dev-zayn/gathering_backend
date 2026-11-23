@@ -3,6 +3,7 @@ package http
 import (
 	"context"
 	stdhttp "net/http"
+	"time"
 
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/danielgtaylor/huma/v2/adapters/humachi"
@@ -23,6 +24,7 @@ import (
 	"github.com/jamaa/gathering/backend/internal/http/authn"
 	"github.com/jamaa/gathering/backend/internal/http/guest"
 	"github.com/jamaa/gathering/backend/internal/http/player"
+	"github.com/jamaa/gathering/backend/internal/http/publisher"
 	"github.com/jamaa/gathering/backend/internal/http/ws"
 	"github.com/jamaa/gathering/backend/internal/pkg/caller"
 	"github.com/jamaa/gathering/backend/internal/pkg/files"
@@ -75,6 +77,14 @@ type Deps struct {
 
 	// Reports is a player reporting another, and the console reading them.
 	Reports *reports.Service
+
+	// Publishers is the studios' accounts and sessions; Studio their games,
+	// builds and testers, and the testers' own routes; Review the admin's
+	// side of the builds they send (docs/PUBLISHERS.md).
+	Publishers *identity.Publishers
+	Studio     *games.Studio
+	Review     *games.Review
+	AvatarTTL  time.Duration
 
 	// AppLinks is how the phones claim a room's invite link as the app's,
 	// and the stores its page sends a phone without the app to.
@@ -140,6 +150,7 @@ func Mount(api huma.API, d Deps) {
 
 		Tournaments: d.Tournaments,
 		Reports:     d.Reports,
+		Studio:      d.Studio,
 	}).Register(api)
 
 	(&admin.Handler{
@@ -159,6 +170,16 @@ func Mount(api huma.API, d Deps) {
 		Tournaments: d.Tournaments,
 		Reports:     d.Reports,
 		Friends:     d.Friends,
+		Publishers:  d.Publishers,
+		Review:      d.Review,
+	}).Register(api)
+
+	(&publisher.Handler{
+		Publishers: d.Publishers,
+		Cookie:     d.AdminCookie,
+		Studio:     d.Studio,
+		Files:      d.Files,
+		AvatarTTL:  d.AvatarTTL,
 	}).Register(api)
 
 	(&guest.Handler{

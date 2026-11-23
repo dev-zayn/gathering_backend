@@ -23,6 +23,20 @@ const sentences = {
   nothing_played: 'No round has been counted yet. Call it off instead.',
   match_waiting: 'That match is still waiting for a side.',
   match_decided: 'That match is already decided.',
+  // Publishers (docs/PUBLISHERS.md).
+  wrong_token: 'This page is for another kind of account. Sign out and sign in again.',
+  publisher_disabled: 'This studio’s account is switched off.',
+  invalid_setup: 'This link has been used or has expired. Ask for a new one.',
+  email_taken: 'Another publisher signs in with that email.',
+  already_registered: 'A game with that id is already registered.',
+  build_open: 'A version is already on its way. Publish or discard it first.',
+  suspended: 'The game is suspended.',
+  in_review: 'It is in review: take it back to change it.',
+  not_open: 'That version is already published or discarded.',
+  not_submittable: 'That version is already in review or approved.',
+  not_in_review: 'That version is not in review any more.',
+  not_approved: 'Only an approved version can be published.',
+  testers_only: 'Only the game’s testers can do that.',
 }
 
 // A field's problem, said in words. The key is `field:problem` as the API
@@ -51,6 +65,25 @@ const fieldSentences = {
   'size:out_of_range': 'That many entrants will not fit: a knockout takes 2 to 64, a league the game’s table.',
   'starts_at:in_the_past': 'Pick a start time in the future.',
   'player:not_in_match': 'That player is not in this match.',
+  'email:required': 'Write the email.',
+  'email:invalid': 'That is not an email address.',
+  'email:too_long': 'The email is at most 254 characters.',
+  'password:required': 'Write the password.',
+  'password:too_short': 'The password needs at least 10 characters.',
+  'password:too_long': 'The password is at most 72 bytes.',
+  'url:must be an http or https URL': 'Give the manifest’s full address, starting with https://.',
+  'id:another_game': 'That manifest names another game.',
+  'version:same_as_live': 'That manifest is at the live version: bump its version first.',
+  'tagline:too_long': 'The tagline is at most 160 characters.',
+  'description:too_long': 'The description is at most 4000 characters.',
+  'category:unknown': 'Pick a category from the list.',
+  'notes:too_long': 'The notes are at most 2000 characters.',
+  'note:required': 'Say what to fix.',
+  'note:too_long': 'The note is at most 2000 characters.',
+  'label:too_long': 'The label is at most 60 characters.',
+  'max_uses:1_to_1000': 'A code takes 1 to 1000 testers, or no limit.',
+  'days:1_to_90': 'A code works 1 to 90 days.',
+  'invites:too_many': 'This game has 20 live codes. Stop one first.',
 }
 
 export function fieldSentence(field, problem) {

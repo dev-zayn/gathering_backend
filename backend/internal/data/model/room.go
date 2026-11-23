@@ -33,6 +33,10 @@ type Room struct {
 	// players come in, and its rounds are the match's.
 	MatchID *string
 
+	// BuildID is the build under test this room plays, when a tester made it
+	// (docs/PUBLISHERS.md); nil for the live game. Only testers come in.
+	BuildID *string
+
 	// Config is the game's room block at creation: bounds, host mode, pace,
 	// state mode, rejoin. Copied, never read back from the game.
 	Config RoomBlock
