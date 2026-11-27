@@ -1,8 +1,9 @@
-import { useContext } from 'react'
+import { useContext, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowRightIcon, InfoIcon, LinkIcon } from 'lucide-react'
+import { ArrowRightIcon, CheckIcon, CopyIcon, FileTextIcon, InfoIcon, LinkIcon } from 'lucide-react'
 
-import { PAGES, known } from '@/pages.js'
+import { PAGES, SECTION, known } from '@/pages.js'
+import { markdownFile } from '@/section.js'
 import { Code, CodeGroup, Pre, Tag } from '@/components/code'
 import { PageContext } from '@/components/shell'
 import { cn } from '@/lib/utils'
@@ -47,6 +48,7 @@ function Title({ children }) {
           )}
           <h1 className="text-[34px] leading-[1.15] font-extrabold text-ink">{children}</h1>
         </div>
+        {page && <AsMarkdown page={page} />}
       </div>
       {sections.length > 1 && (
         <ul className="mt-5 flex flex-wrap gap-1.5">
@@ -70,6 +72,72 @@ function Title({ children }) {
 }
 
 export const h1 = Title
+
+// The page as Markdown, for an AI model: copied whole, or opened as the file
+// the build writes beside it (mdx/llms.mjs, which also writes llms.txt).
+function AsMarkdown({ page }) {
+  const [done, setDone] = useState(false)
+  useEffect(() => {
+    if (!done) return undefined
+    const t = setTimeout(() => setDone(false), 1400)
+    return () => clearTimeout(t)
+  }, [done])
+  const href = import.meta.env.BASE_URL + markdownFile(page, SECTION)
+  const copy = () => {
+    const text = fetch(href).then((r) => {
+      if (!r.ok) throw new Error(`${href}: ${r.status}`)
+      return r.text()
+    })
+    // Safari keeps the clipboard for the tap's own turn, so the write starts
+    // now and the text arrives in it; a browser without that writes it after.
+    const write =
+      typeof ClipboardItem === 'undefined'
+        ? Promise.reject(new Error('no ClipboardItem'))
+        : navigator.clipboard.write([
+            new ClipboardItem({ 'text/plain': text.then((t) => new Blob([t], { type: 'text/plain' })) }),
+          ])
+    write
+      .catch(() => text.then((t) => navigator.clipboard.writeText(t)))
+      .then(() => setDone(true), () => {})
+  }
+  const key =
+    'skeu-btn skeu-btn-ghost inline-flex h-8 items-center gap-1.5 rounded-md px-2.5 text-xs font-semibold text-ink-2 hover:text-ink'
+  return (
+    <div className="ms-auto mt-1 flex shrink-0 items-center gap-1.5">
+      <button
+        type="button"
+        onClick={copy}
+        aria-live="polite"
+        className={key}
+        title="Copy this page as Markdown, to paste into an AI model"
+      >
+        {done ? (
+          <span className="inline-flex items-center gap-1.5 text-good">
+            <CheckIcon className="size-3.5" aria-hidden="true" />
+            Copied
+          </span>
+        ) : (
+          <>
+            <CopyIcon className="size-3.5" aria-hidden="true" />
+            <span className="hidden sm:inline">Copy page</span>
+            <span className="sr-only sm:hidden">Copy page as Markdown</span>
+          </>
+        )}
+      </button>
+      <a
+        href={href}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={key}
+        title="This page as Markdown. Every page for a model: llms.txt"
+      >
+        <FileTextIcon className="size-3.5" aria-hidden="true" />
+        <span className="hidden sm:inline">Markdown</span>
+        <span className="sr-only sm:hidden">This page as Markdown</span>
+      </a>
+    </div>
+  )
+}
 
 // An h2 can carry the route it documents, and a link to itself for the
 // reader who wants to send it on.

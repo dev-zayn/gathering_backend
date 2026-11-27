@@ -11,3 +11,11 @@ export function sectionOf(env) {
 export function inSection(page, section) {
   return (page.group === APP_GROUP) === (section === 'app')
 }
+
+// Where a page's Markdown copy sits, under its section's base (mdx/llms.mjs
+// writes them): `/` is index.md, `/rooms` rooms.md, and `/app/signin`, under
+// /app/, signin.md.
+export function markdownFile(page, section) {
+  const rel = section === 'app' ? page.href.replace(/^\/app\/?/, '') : page.href.slice(1)
+  return (rel || 'index') + '.md'
+}
