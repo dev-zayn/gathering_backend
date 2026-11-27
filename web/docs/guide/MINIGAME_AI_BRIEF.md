@@ -7,7 +7,9 @@ rule. When the request you were given conflicts with one, keep the rule and
 say which one and why.
 
 The full human reference is https://docs.ga3da.fun (the manifest, the bridge,
-rooms, your own server, notifications, tournaments). Two working games are
+rooms, your own server, notifications, tournaments, getting listed); the same
+pages as Markdown for you are listed at https://docs.ga3da.fun/llms.txt, and
+https://docs.ga3da.fun/llms-full.txt is all of them in one file. Two working games are
 plain pages whose source you can read: https://games.ga3da.fun/xo/
 (turn-based, authoritative host) and https://games.ga3da.fun/tap/ (real-time
 peers), each with its manifest at `.well-known/gathering-game.json`. This brief
@@ -32,8 +34,11 @@ is the part you need to build a game.
   one. Any framework is allowed; plain HTML/CSS/JS is preferred.
 - Every asset comes from the game's own origin. No CDNs, analytics or
   trackers.
-- After the files, the **self-check list** (section 12), each item ticked or
+- After the files, the **self-check list** (section 13), each item ticked or
   explained.
+- When asked for the store copy, a tagline (up to 160 characters) and a
+  description (up to 4,000), in the players' language, and a category
+  (section 12).
 
 ## 3. MUST
 
@@ -127,7 +132,7 @@ route), under 256 KB, answering within 10 seconds.
 | `orientation` | `portrait` (default) or `landscape`. |
 | `splash` | `true` keeps the app's cover up until `hideSplash()`. |
 | `publisher.tier` | `partner`. |
-| `publisher.name` | Your studio's name in the store, up to 120 characters. |
+| `publisher.name` | Your studio's name, up to 120 characters. The store shows the name of the studio's console account. |
 | `scopes` | What the game may do with the player: `identity:read` (their name and picture, to your server), `friends:read` (`g.friends.list()` in the page), `notify:send` and `results:write` (from your server). Ask for none you don't use. |
 | `permissions` | `camera`, `microphone`, `location`, `notification`, `storage`, `contacts`. Listed ones get the app's question when the game opens, and it won't open if refused; the phone itself asks only at `g.permissions.request(name)`. Prefer `[]` and asking at runtime. Android always refuses `storage`. |
 | `redirect_uris` | Only for signing players in from your own website (https://docs.ga3da.fun/auth): where they may be sent back, matched exactly. |
@@ -141,7 +146,8 @@ route), under 256 KB, answering within 10 seconds.
 | `room.chat` | The app's chat and emotes over your rooms: `true` when left out. `false` for a game so fast a player can't look away. The page never sees the chat and needs no code for it. |
 
 The tagline, description, icon, screenshots and category are **not** in the
-manifest; Gathering's team writes that store copy.
+manifest: the studio writes them in the console, on each version it sends to
+review (section 12).
 
 ## 6. The bootstrap (copy as is)
 
@@ -595,7 +601,7 @@ Most games don't need one. With one: the frame loads `entry?code=cod_…`; the
 code is valid for **one minute, one use**. The page sends it to the server; the
 server trades it at `POST /oauth/token` (`grant_type=authorization_code`, the
 `client_id` = manifest `id`, the `client_secret` kept in the server's
-environment, shown once at registration), then reads
+environment, shown once when the game is registered in the console), then reads
 `GET /v1/bridge/context` with the token. Key data on `player.id`; the phone
 number never appears, and the nickname, handle and avatar only with
 `identity:read`. Renew with `grant_type=refresh_token`: a renewed token is
@@ -620,7 +626,45 @@ was removed or suspended: stop, don't loop.
 
 The whole of it: https://docs.ga3da.fun/auth, /rooms and /notifications.
 
-## 12. Self-check before you answer
+## 12. Getting it into the store
+
+Gathering hosts no game files: the studio hosts the page and registers it.
+These steps are the studio's, not yours; say them to the person you built the
+game for when they ask how to ship it.
+
+1. **Host it** on an https origin of the studio's own, the manifest at
+   `/.well-known/gathering-game.json`, and check it from outside their
+   network: `curl -sS -o /dev/null -w '%{http_code} %{content_type}\n' <manifest URL>`
+   should print `200 application/json`.
+2. **Register it** in the console, https://console.ga3da.fun, signed in as a
+   publisher (the Gathering team sends a studio its account's one-time link:
+   ga3da.fun@gmail.com): **My games → Register a game** with the manifest's
+   address. Every problem comes back at once and nothing is made until it
+   passes. The `client_secret` is shown **once**, here; only a game with its
+   own server needs it (section 11).
+3. **Test it.** The first version is under test and seen by its testers
+   alone. A tester's code (eight symbols, 1 to 90 days) is made on the game's
+   page; a tester types it in the app under **Me → Beta games**, which shows
+   after tapping the version at the bottom of **Me** five times. A tester's
+   room plays the version under test and admits testers only. Testers load
+   whatever the `entry` serves, the moment it is deployed.
+4. **Send it to review** with the store copy, written on the version: a
+   tagline (required, up to 160 characters), an icon (required, a square PNG
+   or JPEG up to 2 MB), a description (up to 4,000 characters), a category
+   from the console's list, and up to six screenshots. A reviewer plays it and
+   approves it or asks for changes, with the reason.
+5. **Publish it.** Approved, **Publish** makes it the live game. Until its
+   first publish the game answers `404` to everybody but its testers.
+
+**The next version:** bump `version` in a manifest (the live version again is
+refused, `version: same_as_live`), host it at a test address of its own (say
+`/beta/`, with its own manifest) so players don't get it early, start the next
+version on the game's page with that address, and it goes the same way. The
+live manifest changes only through a published version.
+
+The whole of it: https://docs.ga3da.fun/listing.
+
+## 13. Self-check before you answer
 
 - [ ] `bridgeReady()` is copied as is; `browserStub()` makes the page play in
       a desktop browser (practice mode).

@@ -1217,7 +1217,7 @@ async function enterRoom(current) {
             <tr><td><code>orientation</code></td><td>no</td><td><code>portrait</code> (default) or <code>landscape</code>.</td></tr>
             <tr><td><code>splash</code></td><td>no</td><td><code>true</code> keeps the app's cover over your page until you call <code>hideSplash()</code>. Left up, the player sees "taking longer than usual" after 20 s.</td></tr>
             <tr><td><code>publisher.tier</code></td><td>yes</td><td><code>partner</code>. <code>first-party</code> is reserved for Gathering.</td></tr>
-            <tr><td><code>publisher.name</code></td><td>no</td><td>Your studio's name in the store, up to 120 characters.</td></tr>
+            <tr><td><code>publisher.name</code></td><td>no</td><td>Your studio's name, up to 120 characters. The store shows the name of your console account.</td></tr>
             <tr><td><code>scopes</code></td><td>no</td><td>What your game may do with the player: <code>identity:read</code> (their name and picture, to your server), <code>friends:read</code> (<code>friends.list()</code> in your page), <code>notify:send</code> and <code>results:write</code> (from your server).</td></tr>
             <tr><td><code>permissions</code></td><td>no</td><td><code>camera</code>, <code>microphone</code>, <code>location</code>, <code>notification</code>, <code>storage</code>, <code>contacts</code>. Every listed one gets the app's question on one sheet when the game opens, and the game won't open if refused; the phone itself asks only at <code>permissions.request</code>. For an optional one, leave the list empty and ask at runtime. Android always refuses <code>storage</code>.</td></tr>
             <tr><td><code>redirect_uris</code></td><td>no</td><td>Only for <a href="https://docs.ga3da.fun/auth">signing players in from your own website</a>: where they may be sent back, matched exactly.</td></tr>
@@ -1232,7 +1232,7 @@ async function enterRoom(current) {
           </tbody>
         </table>
       </div>
-      <div class="side-note"><span class="ms">menu_book</span><span>The tagline, description, icon, screenshots and category are <b>not in the manifest</b>. Gathering's team writes that store copy: send what you want it to say, an icon (PNG or JPEG, up to 2 MB) and up to six screenshots.</span></div>
+      <div class="side-note"><span class="ms">menu_book</span><span>The tagline, description, icon, screenshots and category are <b>not in the manifest</b>. You write them in the console, on each version you send to review: a tagline, a square icon (PNG or JPEG, up to 2 MB), a description and up to six screenshots.</span></div>
     </section>
 
     <!-- ======================================================= page rules -->
@@ -1382,9 +1382,10 @@ curl https://&lt;gathering-api&gt;/v1/bridge/context -H "Authorization: Bearer $
       <h2 class="st" id="ls-t"><span class="bars" aria-hidden="true"><i></i><i></i></span>Getting listed</h2>
       <ol class="route">
         <li class="plate-card"><div><b>Publish the manifest</b><p>And check it from outside your network: <code>200 application/json</code>.</p></div></li>
-        <li class="plate-card"><div><b>Send your origin to your Gathering contact</b><p>An admin registers it; the manifest is fetched and validated then. You get every error at once, or your <code>client_secret</code>.</p></div></li>
-        <li class="plate-card"><div><b>Gathering writes the store copy</b><p>Tagline, icon, description, screenshots and a category: <code>speed</code>, <code>brain</code>, <code>words</code>, <code>luck</code>, <code>guess</code>, <code>draw</code>, <code>party</code> or <code>other</code>.</p></div></li>
-        <li class="plate-card"><div><b>An admin publishes it</b><p>Until then the game answers 404 to players. New <code>version</code>, <code>entry</code> and <code>name</code> apply at once; wider scopes, changed permissions or a changed <code>room</code> block wait for an admin.</p></div></li>
+        <li class="plate-card"><div><b>Register it in the console</b><p>Signed in to <a href="https://console.ga3da.fun" target="_blank" rel="noopener">the console</a> as a publisher (ask <a href="mailto:ga3da.fun@gmail.com">ga3da.fun@gmail.com</a> for an account), <b>My games → Register a game</b> with the manifest's address. You get every error at once, or your <code>client_secret</code>, shown once.</p></div></li>
+        <li class="plate-card"><div><b>Your testers play it</b><p>Make a tester's code on the game's page. A tester types it in the app under <b>Me → Beta games</b>, shown after tapping the version at the bottom of <b>Me</b> five times; only testers see the version under test.</p></div></li>
+        <li class="plate-card"><div><b>Send it to review</b><p>With the store copy you write on the version: tagline, icon, description, screenshots and a category from the console's list. A reviewer approves it or asks for changes.</p></div></li>
+        <li class="plate-card"><div><b>You publish it</b><p>Until then the game answers 404 to everybody but its testers. Every later version goes the same way: a new <code>version</code>, testers, review, publish. <a href="https://docs.ga3da.fun/listing">Getting listed</a> has the whole of it.</p></div></li>
       </ol>
       <div class="side-note"><span class="ms">sports_esports</span><span>Two plain reference games show both room patterns: <b>إكس أو</b> (<a href="https://games.ga3da.fun/xo/" target="_blank" rel="noopener"><code>games.ga3da.fun/xo</code></a>, turn-based, authoritative host) and <b>سباق النقر</b> (<a href="https://games.ga3da.fun/tap/" target="_blank" rel="noopener"><code>games.ga3da.fun/tap</code></a>, real-time peers), each a page beside its manifest (<code>.well-known/gathering-game.json</code>), source and all. Each has a "المزيد" screen that runs every bridge call and shows the answer.</span></div>
     </section>
@@ -1424,8 +1425,8 @@ curl https://&lt;gathering-api&gt;/v1/bridge/context -H "Authorization: Bearer $
           <button class="key glass" type="button" data-copy="starter-text"><span class="ms">smart_toy</span><span class="lbl">Copy a starter prompt</span></button>
         </div>
         <div class="wells">
-          <div class="well"><b>643</b><span>lines of Markdown</span></div>
-          <div class="well"><b>12</b><span>sections</span></div>
+          <div class="well"><b>687</b><span>lines of Markdown</span></div>
+          <div class="well"><b>13</b><span>sections</span></div>
           <div class="well"><b>11</b><span>self-checks</span></div>
         </div>
       </div>
@@ -1444,7 +1445,9 @@ rule. When the request you were given conflicts with one, keep the rule and
 say which one and why.
 
 The full human reference is https://docs.ga3da.fun (the manifest, the bridge,
-rooms, your own server, notifications, tournaments). Two working games are
+rooms, your own server, notifications, tournaments, getting listed); the same
+pages as Markdown for you are listed at https://docs.ga3da.fun/llms.txt, and
+https://docs.ga3da.fun/llms-full.txt is all of them in one file. Two working games are
 plain pages whose source you can read: https://games.ga3da.fun/xo/
 (turn-based, authoritative host) and https://games.ga3da.fun/tap/ (real-time
 peers), each with its manifest at `.well-known/gathering-game.json`. This brief
@@ -1469,8 +1472,11 @@ is the part you need to build a game.
   one. Any framework is allowed; plain HTML/CSS/JS is preferred.
 - Every asset comes from the game's own origin. No CDNs, analytics or
   trackers.
-- After the files, the **self-check list** (section 12), each item ticked or
+- After the files, the **self-check list** (section 13), each item ticked or
   explained.
+- When asked for the store copy, a tagline (up to 160 characters) and a
+  description (up to 4,000), in the players' language, and a category
+  (section 12).
 
 ## 3. MUST
 
@@ -1564,7 +1570,7 @@ route), under 256 KB, answering within 10 seconds.
 | `orientation` | `portrait` (default) or `landscape`. |
 | `splash` | `true` keeps the app's cover up until `hideSplash()`. |
 | `publisher.tier` | `partner`. |
-| `publisher.name` | Your studio's name in the store, up to 120 characters. |
+| `publisher.name` | Your studio's name, up to 120 characters. The store shows the name of the studio's console account. |
 | `scopes` | What the game may do with the player: `identity:read` (their name and picture, to your server), `friends:read` (`g.friends.list()` in the page), `notify:send` and `results:write` (from your server). Ask for none you don't use. |
 | `permissions` | `camera`, `microphone`, `location`, `notification`, `storage`, `contacts`. Listed ones get the app's question when the game opens, and it won't open if refused; the phone itself asks only at `g.permissions.request(name)`. Prefer `[]` and asking at runtime. Android always refuses `storage`. |
 | `redirect_uris` | Only for signing players in from your own website (https://docs.ga3da.fun/auth): where they may be sent back, matched exactly. |
@@ -1578,7 +1584,8 @@ route), under 256 KB, answering within 10 seconds.
 | `room.chat` | The app's chat and emotes over your rooms: `true` when left out. `false` for a game so fast a player can't look away. The page never sees the chat and needs no code for it. |
 
 The tagline, description, icon, screenshots and category are **not** in the
-manifest; Gathering's team writes that store copy.
+manifest: the studio writes them in the console, on each version it sends to
+review (section 12).
 
 ## 6. The bootstrap (copy as is)
 
@@ -2032,7 +2039,7 @@ Most games don't need one. With one: the frame loads `entry?code=cod_…`; the
 code is valid for **one minute, one use**. The page sends it to the server; the
 server trades it at `POST /oauth/token` (`grant_type=authorization_code`, the
 `client_id` = manifest `id`, the `client_secret` kept in the server's
-environment, shown once at registration), then reads
+environment, shown once when the game is registered in the console), then reads
 `GET /v1/bridge/context` with the token. Key data on `player.id`; the phone
 number never appears, and the nickname, handle and avatar only with
 `identity:read`. Renew with `grant_type=refresh_token`: a renewed token is
@@ -2057,7 +2064,45 @@ was removed or suspended: stop, don't loop.
 
 The whole of it: https://docs.ga3da.fun/auth, /rooms and /notifications.
 
-## 12. Self-check before you answer
+## 12. Getting it into the store
+
+Gathering hosts no game files: the studio hosts the page and registers it.
+These steps are the studio's, not yours; say them to the person you built the
+game for when they ask how to ship it.
+
+1. **Host it** on an https origin of the studio's own, the manifest at
+   `/.well-known/gathering-game.json`, and check it from outside their
+   network: `curl -sS -o /dev/null -w '%{http_code} %{content_type}\n' &lt;manifest URL&gt;`
+   should print `200 application/json`.
+2. **Register it** in the console, https://console.ga3da.fun, signed in as a
+   publisher (the Gathering team sends a studio its account's one-time link:
+   ga3da.fun@gmail.com): **My games → Register a game** with the manifest's
+   address. Every problem comes back at once and nothing is made until it
+   passes. The `client_secret` is shown **once**, here; only a game with its
+   own server needs it (section 11).
+3. **Test it.** The first version is under test and seen by its testers
+   alone. A tester's code (eight symbols, 1 to 90 days) is made on the game's
+   page; a tester types it in the app under **Me → Beta games**, which shows
+   after tapping the version at the bottom of **Me** five times. A tester's
+   room plays the version under test and admits testers only. Testers load
+   whatever the `entry` serves, the moment it is deployed.
+4. **Send it to review** with the store copy, written on the version: a
+   tagline (required, up to 160 characters), an icon (required, a square PNG
+   or JPEG up to 2 MB), a description (up to 4,000 characters), a category
+   from the console's list, and up to six screenshots. A reviewer plays it and
+   approves it or asks for changes, with the reason.
+5. **Publish it.** Approved, **Publish** makes it the live game. Until its
+   first publish the game answers `404` to everybody but its testers.
+
+**The next version:** bump `version` in a manifest (the live version again is
+refused, `version: same_as_live`), host it at a test address of its own (say
+`/beta/`, with its own manifest) so players don't get it early, start the next
+version on the game's page with that address, and it goes the same way. The
+live manifest changes only through a published version.
+
+The whole of it: https://docs.ga3da.fun/listing.
+
+## 13. Self-check before you answer
 
 - [ ] `bridgeReady()` is copied as is; `browserStub()` makes the page play in
       a desktop browser (practice mode).
@@ -2107,7 +2152,7 @@ then the self-check list from the brief with each item ticked or explained.</pre
 <footer>
   <div class="wrap">
     <b>گعدة · Gathering</b>
-    <span>The full reference is <a href="https://docs.ga3da.fun/">docs.ga3da.fun</a>: <a href="https://docs.ga3da.fun/manifest">the manifest</a>, <a href="https://docs.ga3da.fun/bridge">the bridge</a>, <a href="https://docs.ga3da.fun/rooms">rooms</a>, <a href="https://docs.ga3da.fun/auth">your server</a>, <a href="https://docs.ga3da.fun/notifications">notifications</a> and <a href="https://docs.ga3da.fun/tournaments">tournaments</a>. Working games: <a href="https://games.ga3da.fun/xo/">إكس أو</a> and <a href="https://games.ga3da.fun/tap/">سباق النقر</a>.</span>
+    <span>The full reference is <a href="https://docs.ga3da.fun/">docs.ga3da.fun</a>: <a href="https://docs.ga3da.fun/manifest">the manifest</a>, <a href="https://docs.ga3da.fun/bridge">the bridge</a>, <a href="https://docs.ga3da.fun/rooms">rooms</a>, <a href="https://docs.ga3da.fun/auth">your server</a>, <a href="https://docs.ga3da.fun/notifications">notifications</a>, <a href="https://docs.ga3da.fun/tournaments">tournaments</a> and <a href="https://docs.ga3da.fun/listing">getting listed</a>, and for a model, <a href="https://docs.ga3da.fun/llms.txt">llms.txt</a>. Working games: <a href="https://games.ga3da.fun/xo/">إكس أو</a> and <a href="https://games.ga3da.fun/tap/">سباق النقر</a>.</span>
   </div>
 </footer>
 
