@@ -41,9 +41,16 @@ console.{$DOMAIN} {
 	}
 }
 
+# The docs, and their MCP server at /mcp (backend/cmd/mcp): a model building
+# a game reads and searches the docs and checks a manifest through it.
 docs.{$DOMAIN} {
 	encode zstd gzip
-	reverse_proxy docs:80
+	handle /mcp {
+		reverse_proxy mcp:8095
+	}
+	handle {
+		reverse_proxy docs:80
+	}
 }
 
 games.{$DOMAIN} {

@@ -35,6 +35,8 @@ scripts/games-local.sh [wifi|ip]   # the fixtures on :8091 at http://localhost (
 go run ./cmd/roomplayer -code K7M2QX -taps 10 -rounds 2   # (in backend/) a headless member: signs
                     # up with OTP_FIXED_CODE, joins by code, taps the tap race in every round over the
                     # relay, prints its place per round, leaves after -rounds finished rounds
+go run ./cmd/mcp    # (in backend/) the docs' MCP server on :8095 (docs.<domain>/mcp live), reading the
+                    # docs from DOCS_SOURCE (https://docs.ga3da.fun by default)
 ```
 
 Go tests need `TEST_DATABASE_URL` (and `TEST_REDIS_URL` for the whitelist
@@ -479,3 +481,19 @@ and `JWT_PRIVATE_KEY` (`make keys`); the sweep then signs in with that code.
   `VITE_CONSOLE_URL`, `VITE_SITE_URL`). `compose.yml` defaults
   `APP_STORE_URL` and `PLAY_STORE_URL` to the listings, so an invite link's
   page offers both stores.
+- The docs for AI models (2026-11-27, the user's ask: "an helper for LLM
+  like md file or mcp"): the docs site writes `llms.txt`, `llms-full.txt`
+  and a `.md` beside every page from its own MDX (`web/docs/mdx/llms.mjs`;
+  a component with no Markdown form fails the build), every page has "Copy
+  page" and "Markdown", and the page "Building with AI" (`/ai`) says how to
+  use them. `cmd/mcp` is the docs' MCP server at `https://docs.<domain>/mcp`
+  (the official go-sdk, stateless streamable HTTP with JSON answers):
+  `list_docs`, `search_docs`, `read_doc` and `get_minigame_brief` over the
+  docs service's own files (cached five minutes, the last copy kept while the
+  docs are down), and `check_manifest` through the registry's `HTTPFetcher`
+  and `Manifest.Check` (its `knownScopes` stands in for the scopes table:
+  `TestKnownScopesAreTheTables`); 60 requests a minute per address. Its own
+  compose service `mcp`, no secret and no database; Caddy sends
+  `docs.<domain>/mcp` to it (`deploy/hetzner/README.md`, "The docs' MCP
+  server"). The minigame brief in `../gathering_docs` gained "Getting it
+  into the store" (publishers) and points at both. Live the same day.

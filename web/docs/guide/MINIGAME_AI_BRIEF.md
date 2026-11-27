@@ -9,7 +9,10 @@ say which one and why.
 The full human reference is https://docs.ga3da.fun (the manifest, the bridge,
 rooms, your own server, notifications, tournaments, getting listed); the same
 pages as Markdown for you are listed at https://docs.ga3da.fun/llms.txt, and
-https://docs.ga3da.fun/llms-full.txt is all of them in one file. Two working games are
+https://docs.ga3da.fun/llms-full.txt is all of them in one file. Connected to
+the docs' MCP server (https://docs.ga3da.fun/mcp), search them with
+`search_docs` and check the manifest you write with `check_manifest`, which
+answers as registration will. Two working games are
 plain pages whose source you can read: https://games.ga3da.fun/xo/
 (turn-based, authoritative host) and https://games.ga3da.fun/tap/ (real-time
 peers), each with its manifest at `.well-known/gathering-game.json`. This brief

@@ -100,6 +100,29 @@ check them, send that folder, then rebuild only that service:
 The console goes out the same way, with `web/console` and the service
 `console`.
 
+Each docs build also writes `llms.txt`, `llms-full.txt` and a `.md` beside
+every page, for AI models (`web/docs/mdx/llms.mjs`).
+
+### The docs' MCP server
+
+`backend/cmd/mcp`, the service `mcp`, answers at `https://docs.<domain>/mcp`
+(Caddy sends `/mcp` there, everything else to the docs). It reads the docs from
+the `docs` service on the inside, so a docs deploy is all it needs to say
+something new; it is rebuilt only when its own code changes. It holds no
+secret and no database. Send `backend/` and this folder, build it, start it,
+then reload Caddy for a changed Caddyfile:
+
+    rsync -az --delete --exclude .env --exclude .files --exclude /bin backend/ root@<ip>:/opt/ga3da/gathering/backend/
+    rsync -az deploy/hetzner/ root@<ip>:/opt/ga3da/gathering/deploy/hetzner/
+    ssh root@<ip> "cd /opt/ga3da/gathering/deploy/hetzner && docker compose --env-file /opt/ga3da/secrets/ga3da.env build mcp &&
+      docker compose --env-file /opt/ga3da/secrets/ga3da.env up -d mcp &&
+      docker compose --env-file /opt/ga3da/secrets/ga3da.env exec -T caddy caddy reload --config /etc/caddy/ga3da/Caddyfile --adapter caddyfile"
+
+Check it with a tool call (`RATE_PER_MINUTE`, 60 by default, limits each address):
+
+    curl -s https://docs.ga3da.fun/mcp -H 'Content-Type: application/json' -H 'Accept: application/json, text/event-stream' \
+      -d '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"check_manifest","arguments":{"url":"https://games.ga3da.fun/xo/"}}}'
+
 ### Which build is live
 
 The console and the docs each say which build they are: the version in their

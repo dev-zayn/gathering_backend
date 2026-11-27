@@ -110,6 +110,7 @@ Read these before writing code for Gathering:
 - Lay the page out for a phone, Arabic first (right to left).
 - A game's own server is optional. With one, it trades the launch's one-time code for a token at \`/oauth/token\` (the \`client_secret\` and the token never reach the page), verifies players with the room ticket against the JWKS, and may post a round's results and send players notifications.
 - To build a whole game, give the model the minigame brief below: the rules, the manifest, the bootstrap, a template and a self-check in one file.
+- The same docs answer over MCP at ${ORIGIN}/mcp (streamable HTTP, public, read-only): search_docs, read_doc, list_docs, get_minigame_brief, and check_manifest, which checks a manifest exactly as registration will.
 `
 
 const DEVELOPER_MORE = `
@@ -117,6 +118,7 @@ const DEVELOPER_MORE = `
 
 - [The minigame brief for AI models](${ORIGIN}/guide/MINIGAME_AI_BRIEF.md): one file to hand a model that builds a game: the rules, the manifest, the bootstrap, a working template, room patterns and a self-check.
 - [The minigame guide](${ORIGIN}/guide/): the same, as a page for people, from the files to the checklist.
+- [The MCP server](${ORIGIN}/mcp): these docs over MCP (streamable HTTP), with check_manifest; how to add it is in Building with AI above.
 
 ## Optional
 

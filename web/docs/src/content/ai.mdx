@@ -1,0 +1,151 @@
+# Building with AI
+
+These docs as an AI model reads them: an MCP server your assistant can call, every page as plain Markdown, and a brief that builds a whole game. {{ className: 'lead' }}
+
+An assistant that guesses at Gathering writes a game that opens a socket, makes a new room to play again, or puts a field in the manifest nobody reads. Give it the docs instead. The three ways below say the same thing, made from the same pages.
+
+---
+
+## The MCP server
+
+<Row>
+  <Col>
+
+    At `https://docs.ga3da.fun/mcp`, over streamable HTTP. Public, read-only, and nothing to sign up for: add the address to your assistant and it can search these docs, read any page, read the minigame brief, and check your manifest the way registration will.
+
+    <Properties>
+      <Property name="search_docs({ query, limit? })" type="sections">
+        Every section of these docs that holds the words, the ones holding the most of them first, each with its page, heading and an excerpt. A bridge call such as `room.end`, an error code such as `another_game`, a field such as `room.players`, or plain words.
+      </Property>
+      <Property name="read_doc({ page, section? })" type="Markdown">
+        One page by its name — `manifest`, `bridge`, `rooms`, … — or, with `section`, only the part under the heading holding those words.
+      </Property>
+      <Property name="list_docs()" type="pages">
+        Every page in reading order: its name, title, what it covers and its address.
+      </Property>
+      <Property name="get_minigame_brief()" type="Markdown">
+        [The brief](#the-minigame-brief) for a model building a whole game. An assistant should read it before writing one.
+      </Property>
+      <Property name="check_manifest({ manifest } | { url })" type="result">
+        Your manifest checked as registration checks it, every problem at once. Give its JSON, or its address (or your game's origin) to check that it is public and reachable too. Fields Gathering does not read come back as `ignored`: a misspelling, or something that belongs in the store copy.
+      </Property>
+    </Properties>
+
+    Sixty requests a minute for each address. A manifest's address must be public, as at registration: a private or localhost one is refused, and the document is read up to 256 KB, for ten seconds at most.
+
+  </Col>
+  <Col sticky>
+
+    <CodeGroup title="Add it">
+
+    ```bash {{ title: 'Claude Code' }}
+    claude mcp add --transport http gathering https://docs.ga3da.fun/mcp
+    ```
+
+    ```jsonc {{ title: 'Cursor' }}
+    // .cursor/mcp.json
+    {
+      "mcpServers": {
+        "gathering": { "url": "https://docs.ga3da.fun/mcp" }
+      }
+    }
+    ```
+
+    ```jsonc {{ title: 'VS Code' }}
+    // .vscode/mcp.json
+    {
+      "servers": {
+        "gathering": { "type": "http", "url": "https://docs.ga3da.fun/mcp" }
+      }
+    }
+    ```
+
+    </CodeGroup>
+
+    <CodeGroup title="What check_manifest answers">
+
+    ```json
+    {
+      "ok": false,
+      "problems": {
+        "mode": "must be embedded",
+        "scopes": "unknown scope: orders:write"
+      },
+      "ignored": ["tagline"],
+      "next": "Fix every problem listed: registration refuses the manifest until none is left, …"
+    }
+    ```
+
+    </CodeGroup>
+
+  </Col>
+</Row>
+
+<Note>
+  In Claude, on the web or the desktop app: **Settings → Connectors → Add custom connector**, with the
+  same address. Any other assistant that speaks MCP over HTTP takes it the same way.
+</Note>
+
+---
+
+## The pages as Markdown
+
+<Row>
+  <Col>
+
+    Every page here is also a Markdown file, for an assistant that reads a link rather than calling a server.
+
+    <Properties>
+      <Property name="/llms.txt" type="the index">
+        What Gathering is, the rules a model gets wrong first, and a link to every page's Markdown. Point an assistant here first.
+      </Property>
+      <Property name="/llms-full.txt" type="every page">
+        All of the pages in one file, in reading order.
+      </Property>
+      <Property name="/<page>.md" type="one page">
+        Any page with `.md` after its address: [`/rooms.md`](/rooms.md) for Rooms, `/index.md` for the introduction.
+      </Property>
+    </Properties>
+
+    On every page, **Copy page** at the top copies it as Markdown, ready to paste into a chat; **Markdown** opens the file.
+
+  </Col>
+  <Col sticky>
+
+    <CodeGroup title="Read it as a model does">
+
+    ```bash {{ title: 'cURL' }}
+    curl https://docs.ga3da.fun/llms.txt
+    curl https://docs.ga3da.fun/rooms.md
+    ```
+
+    </CodeGroup>
+
+  </Col>
+</Row>
+
+---
+
+## The minigame brief
+
+<Row>
+  <Col>
+
+    [`/guide/MINIGAME_AI_BRIEF.md`](/guide/MINIGAME_AI_BRIEF.md) is one file to hand a model with what you want built. It holds what to build and what to hand back, the rules every game follows, the manifest, the bootstrap to copy as it is, a working template, the room patterns, the error codes, getting it into the store, and a self-check the model answers with its files.
+
+    [The minigame guide](/guide/) is the same for people: a whole game built on one page, from the files to the checklist.
+
+  </Col>
+  <Col sticky>
+
+    <CodeGroup title="A first message">
+
+    ```text
+    Read https://docs.ga3da.fun/guide/MINIGAME_AI_BRIEF.md and follow it.
+    Build a game for Gathering: <what you want, for how many players>.
+    ```
+
+    </CodeGroup>
+
+  </Col>
+</Row>

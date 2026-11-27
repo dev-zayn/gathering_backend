@@ -126,6 +126,25 @@ services:
       DOCS_USER: ${DOCS_USER:?}
       DOCS_PASSWORD: ${DOCS_PASSWORD:?}
 
+  # The docs' MCP server (backend/cmd/mcp), at docs.<domain>/mcp: the docs
+  # read from the docs service on the inside, a manifest checked as
+  # registration checks it. No secret, no database, nothing written.
+  mcp:
+    <<: *service
+    build:
+      context: ../..
+      dockerfile: deploy/docker/Dockerfile
+      args: { CMD: mcp }
+    environment:
+      DOCS_SOURCE: http://docs
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8095/healthz"]
+      interval: 30s
+      retries: 3
+      start_period: 10s
+    depends_on:
+      - docs
+
   games:
     <<: *service
     build:

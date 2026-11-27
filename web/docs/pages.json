@@ -24,6 +24,14 @@
     "icon": "Store"
   },
   {
+    "href": "/ai",
+    "file": "ai",
+    "title": "Building with AI",
+    "description": "The docs for an AI model: an MCP server that searches them and checks your manifest, every page as Markdown, and the brief that builds a whole game.",
+    "group": "Getting started",
+    "icon": "Sparkles"
+  },
+  {
     "href": "/auth",
     "file": "auth",
     "title": "Authentication",
