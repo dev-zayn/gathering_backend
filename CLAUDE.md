@@ -481,6 +481,28 @@ and `JWT_PRIVATE_KEY` (`make keys`); the sweep then signs in with that code.
   `VITE_CONSOLE_URL`, `VITE_SITE_URL`). `compose.yml` defaults
   `APP_STORE_URL` and `PLAY_STORE_URL` to the listings, so an invite link's
   page offers both stores.
+- Categories and a game's publisher, platform side (2026-11-24, the user's
+  ask: "change game publisher from dashboard", "crud categories at
+  dashboard"), to `docs/CATEGORIES.md` and `docs/PUBLISHERS.md` "A game's
+  publisher": migration `00017_categories.sql` (`game_categories`, seeded
+  with the eight there were and the app's words, `other` at 1000; `games`
+  and `game_builds` reference it), `enum.GameCategory` keeps only
+  `CategoryOther`, `biz/games/categories.go` (`Registry.Categories`,
+  `CreateCategory`, `EditCategory`, `DeleteCategory` moving games and builds
+  to other; `category_exists`, `category_protected`; every category a game,
+  a build or the store's filter names is checked against the table),
+  `biz/games/owner.go` (`Review.SetOwner`: `publisher: unknown|disabled`,
+  `build_open` when taking the publisher away with a build open; the name
+  players see follows the account). Routes `admin-categories` (now with
+  `items`), `admin-category-create`, `admin-category-edit`,
+  `admin-category-delete`, `admin-game-owner`, the player's `categories`
+  (`GET /v1/categories`), and `publisher-categories` with `items`. biztest
+  keeps `game_categories` as vocabulary (a test cleans up the categories it
+  makes). The console's Categories page (`/categories`, under Games), a
+  game's "Change" publisher in "Reaching every player", every category
+  label from the API (`useCategories`). e2e `TestCategoriesAndAGamesPublisher`.
+  The local `.env` turns Google sign-in on: run the sweep with
+  `E2E_SSO=google,apple`.
 - The docs for AI models (2026-11-27, the user's ask: "an helper for LLM
   like md file or mcp"): the docs site writes `llms.txt`, `llms-full.txt`
   and a `.md` beside every page from its own MDX (`web/docs/mdx/llms.mjs`;

@@ -62,8 +62,14 @@ type Detail struct {
 // A tester's games under test come first, each as its build
 // (docs/PUBLISHERS.md). A category narrows it.
 func (c *Catalogue) List(ctx context.Context, playerID, category string) ([]Listed, error) {
-	if category != "" && !enum.GameCategory(category).Valid() {
-		return nil, errors.Invalid(map[string]string{"category": "unknown"})
+	if category != "" {
+		bad := map[string]string{}
+		if err := checkCategory(ctx, c.db, category, bad); err != nil {
+			return nil, errors.Internal(err)
+		}
+		if len(bad) > 0 {
+			return nil, errors.Invalid(bad)
+		}
 	}
 
 	held, err := c.heldSet(ctx, playerID)

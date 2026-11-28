@@ -17,7 +17,7 @@ import (
 // has it. Opening one is the guest group's session mint.
 
 type gamesListRequest struct {
-	Category string `query:"category" doc:"One of speed, brain, words, luck, guess, draw, party, other. Empty is the whole store."`
+	Category string `query:"category" doc:"A key from GET /v1/categories. Empty is the whole store. Refused: category: unknown."`
 }
 
 // roomSummaryJSON is what a player reads before joining: how many, how fast,
@@ -120,6 +120,40 @@ func (h *Handler) registerGames(api huma.API) {
 			"the studio's. not_in_library when it was not there.",
 		Tags: []string{"games"}, Metadata: session, DefaultStatus: http.StatusNoContent,
 	}, h.removeGame)
+
+	huma.Register(api, huma.Operation{
+		OperationID: "categories", Method: http.MethodGet, Path: "/v1/categories",
+		Summary: "How the store groups games",
+		Description: "Every category in the store's order, with its name in Arabic and in " +
+			"English (docs/CATEGORIES.md). A game's category is one of these keys; a key " +
+			"the app has no row for is shown as other.",
+		Tags: []string{"games"}, Metadata: session,
+	}, h.categories)
+}
+
+type storeCategoryJSON struct {
+	ID     string `json:"id" example:"brain"`
+	NameAR string `json:"name_ar" example:"ذكاء"`
+	NameEN string `json:"name_en" example:"Brain"`
+}
+
+type storeCategoriesResponse struct {
+	Body struct {
+		Items []storeCategoryJSON `json:"items"`
+	}
+}
+
+func (h *Handler) categories(ctx context.Context, _ *struct{}) (*storeCategoriesResponse, error) {
+	rows, err := h.Games.Categories(ctx)
+	if err != nil {
+		return nil, err
+	}
+	out := &storeCategoriesResponse{}
+	out.Body.Items = make([]storeCategoryJSON, 0, len(rows))
+	for _, c := range rows {
+		out.Body.Items = append(out.Body.Items, storeCategoryJSON{ID: c.ID, NameAR: c.NameAR, NameEN: c.NameEN})
+	}
+	return out, nil
 }
 
 func (h *Handler) listGames(ctx context.Context, in *gamesListRequest) (*gamesListResponse, error) {

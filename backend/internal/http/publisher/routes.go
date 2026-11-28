@@ -16,7 +16,6 @@ import (
 	"github.com/jamaa/gathering/backend/internal/biz/games"
 	"github.com/jamaa/gathering/backend/internal/biz/identity"
 	"github.com/jamaa/gathering/backend/internal/biz/players"
-	"github.com/jamaa/gathering/backend/internal/data/enum"
 	"github.com/jamaa/gathering/backend/internal/data/model"
 	"github.com/jamaa/gathering/backend/internal/http/authn"
 	"github.com/jamaa/gathering/backend/internal/pkg/caller"
@@ -132,7 +131,9 @@ func (h *Handler) registerSession(api huma.API) {
 
 	huma.Register(api, huma.Operation{
 		OperationID: "publisher-categories", Method: http.MethodGet, Path: "/v1/publisher/categories",
-		Summary: "How the store groups games", Tags: []string{"publisher"}, Metadata: session,
+		Summary:     "How the store groups games",
+		Description: "Every category in the store's order (docs/CATEGORIES.md), for the picker.",
+		Tags:        []string{"publisher"}, Metadata: session,
 	}, h.categories)
 }
 
@@ -184,17 +185,30 @@ func (h *Handler) me(ctx context.Context, _ *struct{}) (*meResponse, error) {
 	return &meResponse{Body: publisherJSON{ID: p.ID, Name: p.Name, Email: p.Email}}, nil
 }
 
-type categoriesResponse struct {
+type studioCategoryJSON struct {
+	ID     string `json:"id" example:"brain"`
+	NameAR string `json:"name_ar" example:"ذكاء"`
+	NameEN string `json:"name_en" example:"Brain"`
+}
+
+type studioCategoriesResponse struct {
 	Body struct {
-		Categories []string `json:"categories"`
+		Categories []string             `json:"categories" doc:"The keys alone, in the store's order."`
+		Items      []studioCategoryJSON `json:"items"`
 	}
 }
 
-func (h *Handler) categories(_ context.Context, _ *struct{}) (*categoriesResponse, error) {
-	out := &categoriesResponse{}
-	out.Body.Categories = make([]string, 0, len(enum.Categories))
-	for _, c := range enum.Categories {
-		out.Body.Categories = append(out.Body.Categories, string(c))
+func (h *Handler) categories(ctx context.Context, _ *struct{}) (*studioCategoriesResponse, error) {
+	rows, err := h.Studio.Categories(ctx)
+	if err != nil {
+		return nil, err
+	}
+	out := &studioCategoriesResponse{}
+	out.Body.Categories = make([]string, 0, len(rows))
+	out.Body.Items = make([]studioCategoryJSON, 0, len(rows))
+	for _, c := range rows {
+		out.Body.Categories = append(out.Body.Categories, c.ID)
+		out.Body.Items = append(out.Body.Items, studioCategoryJSON{ID: c.ID, NameAR: c.NameAR, NameEN: c.NameEN})
 	}
 	return out, nil
 }

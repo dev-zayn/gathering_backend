@@ -1,13 +1,14 @@
 import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router-dom'
-import { ArrowLeft, Ban, KeyRound, RefreshCw, Sparkles, Upload, X } from 'lucide-react'
+import { ArrowLeft, Ban, Building2, KeyRound, RefreshCw, Sparkles, Upload, X } from 'lucide-react'
 
 import { api } from '../api.js'
 import Dialog from '../components/dialog.jsx'
 import { BuildBadge } from '../components/build-bits.jsx'
 import { Fact, ListingBadge, Note, SecretOnce, Tag, Tile } from '../components/game-bits.jsx'
-import { categoryLabel, needs, overdue, roomFacts, tierLabel, when } from '../lib/games.js'
+import { needs, overdue, roomFacts, tierLabel, useCategories, when } from '../lib/games.js'
+import { useMe } from '../lib/me.js'
 
 // One game: what its manifest says, where the document lives, the store copy
 // we write, and the switches that reach every player at once.
@@ -379,11 +380,7 @@ function StoreCopy({ game: g, onSaved, className = '' }) {
   const [description, setDescription] = useState(g.store?.description ?? '')
   const [category, setCategory] = useState(g.category ?? 'other')
   const [featured, setFeatured] = useState(Boolean(g.featured))
-  const categories = useQuery({
-    queryKey: ['categories'],
-    queryFn: () => api.get('/v1/admin/categories').then((r) => r.categories ?? []),
-    staleTime: Infinity,
-  })
+  const categories = useCategories()
   const save = useMutation({
     mutationFn: () =>
       api.patch(`/v1/admin/games/${g.id}`, {
@@ -428,9 +425,9 @@ function StoreCopy({ game: g, onSaved, className = '' }) {
           <label className="grid gap-1 text-sm font-semibold">
             Category
             <select className="field font-normal" value={category} onChange={(e) => setCategory(e.target.value)}>
-              {(categories.data?.length ? categories.data : [category]).map((c) => (
-                <option key={c} value={c}>
-                  {categoryLabel[c] ?? c}
+              {(categories.data?.length ? categories.data : [{ id: category, name_en: category }]).map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name_en} · {c.name_ar ?? ''}
                 </option>
               ))}
             </select>
@@ -542,6 +539,7 @@ function Actions({ game: g, busy, act }) {
   const [reason, setReason] = useState('')
   return (
     <Section title="Reaching every player">
+      <Ownership game={g} busy={busy} act={act} />
       <Row icon={Sparkles} title={g.featured ? 'Featured' : 'Not featured'} text={g.featured ? 'Leads the store, whatever its tier.' : 'Players find it where its category puts it.'}>
         <button
           type="button"
@@ -602,6 +600,90 @@ function Actions({ game: g, busy, act }) {
         </label>
       </Dialog>
     </Section>
+  )
+}
+
+// Whose game it is (docs/PUBLISHERS.md, "A game's publisher"): a studio's
+// account, or none. Handing it over moves the name players see with it; the
+// version on its way, the testers and their codes stay with the game.
+function Ownership({ game: g, busy, act }) {
+  const me = useMe()
+  const canWrite = me?.roles?.includes('admin')
+  const [open, setOpen] = useState(false)
+  const [pick, setPick] = useState('')
+  const accounts = useQuery({
+    queryKey: ['publishers'],
+    queryFn: () => api.get('/v1/admin/publishers'),
+    enabled: open,
+  })
+  const choices = (accounts.data?.items ?? []).filter((p) => p.status !== 'disabled')
+  const current = g.owner?.id ?? ''
+  const chosen = choices.find((p) => p.id === pick)
+
+  function start() {
+    setPick(current)
+    setOpen(true)
+  }
+
+  const said = pick
+    ? `${g.name} becomes ${chosen?.name ?? 'this studio'}’s game: its studio signs in to see it, and players see “${chosen?.name ?? ''}” as its publisher. The version on its way, its testers and their codes stay with the game.`
+    : `${g.name} is run from this console alone from now on. Players still see “${g.publisher}” until its manifest is read again.`
+
+  return (
+    <>
+      <Row
+        icon={Building2}
+        title={g.owner ? g.owner.name : 'No publisher'}
+        text={g.owner ? 'The studio whose game it is. Its versions come through review.' : 'Run from this console alone.'}
+      >
+        <button type="button" className="btn btn-secondary h-8 px-3 text-xs" disabled={Boolean(busy) || !canWrite} onClick={start}>
+          Change
+        </button>
+      </Row>
+      <Dialog
+        open={open}
+        onClose={() => setOpen(false)}
+        title={`Change ${g.name}’s publisher`}
+        description={`Now: ${g.owner ? g.owner.name : 'no publisher'}.`}
+        footer={
+          <>
+            <button type="button" className="btn btn-secondary" onClick={() => setOpen(false)}>
+              Cancel
+            </button>
+            <button
+              type="button"
+              className="btn btn-primary"
+              disabled={Boolean(busy) || pick === current || (pick !== '' && !chosen)}
+              onClick={() => {
+                setOpen(false)
+                act('owner', pick ? `Now ${chosen?.name}’s game` : 'No publisher now', () =>
+                  api.put(`/v1/admin/games/${g.id}/owner`, { publisher: pick }),
+                )
+              }}
+            >
+              {pick ? 'Hand it over' : 'Take it back'}
+            </button>
+          </>
+        }
+      >
+        <label className="grid gap-1 text-sm font-semibold">
+          Publisher
+          <select className="field font-normal" value={pick} onChange={(e) => setPick(e.target.value)} disabled={accounts.isLoading}>
+            <option value="">None — run from this console</option>
+            {choices.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.name} ({p.email})
+              </option>
+            ))}
+          </select>
+        </label>
+        {accounts.isError && <p className="text-bad mt-2 text-sm">{accounts.error.message}</p>}
+        {pick !== current && <p className="text-ink-2 mt-3 text-sm">{said}</p>}
+        {!pick && g.build && pick !== current && (
+          <p className="text-bad mt-2 text-sm">Version {g.build.version} is on its way: it has to be published or discarded first.</p>
+        )}
+      </Dialog>
+    </>
   )
 }
 

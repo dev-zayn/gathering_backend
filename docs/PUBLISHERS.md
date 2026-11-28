@@ -110,6 +110,11 @@ its own version, which it set.
 
 ## The player's routes (scope `session`)
 
+In the app the way in stays out of sight: أنا (Me) shows الألعاب التجريبية
+(Beta games) once its version line is tapped five times in a row, kept on
+that phone until a sign-out, and whenever the store lists a game the player
+tests. Studios tell their testers so with the code.
+
 ### `POST /v1/tests` (operation `test-join`)
 
 `{ "code": "K7M2-QX4P" }`. **200** `{ game: {id, name, icon}, version,
@@ -334,3 +339,30 @@ sign-in.
 `GET /v1/admin/games` and `admin-game` carry `owner: {id, name} | null` (the
 publisher account; the old `publisher` field is still the manifest's words)
 and `build: {id, status, version} | null` (the open build).
+
+### A game's publisher (added 2026-11-24)
+
+`PUT /v1/admin/games/{game}/owner` (`admin-game-owner`) `{publisher}`: the
+publisher account whose game it is from now on, or `""` for none (the
+console alone runs it, as with a game made before publishers). **200** the
+game, as `admin-game` answers it.
+
+Refusals, in the order they are checked:
+
+| Status | Code | When |
+| --- | --- | --- |
+| 404 | `not_found` | no such game |
+| 422 | `invalid_fields` | `publisher: unknown` (no such account), `publisher: disabled` (switched off) |
+| 409 | `build_open` | taking the publisher away while a build is open: nobody could publish it. Withdraw it, or wait for its end |
+
+What moves with it: the game's `publisher` (the name players see) becomes
+the new account's name; with none, it stays as it was until a re-read of
+the manifest writes the manifest's words. The open build, the testers, their
+codes, the tier, the listing and the store copy stay with the game: a new
+studio carries on from where the last one was. The same publisher again
+changes nothing and writes nothing. Audit `game.owner_changed` (area
+`games`, subject the game, `{from, to}`: account ids, `""` for none).
+
+The console: a game's page has "Publisher" with "Change" (a dialog: every
+account that is not switched off, and "None"), behind a confirmation that
+names the game, the old publisher and the new.

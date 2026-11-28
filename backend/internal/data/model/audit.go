@@ -89,6 +89,14 @@ const (
 	// ActionListed is the store copy being written: which fields, never the
 	// words, since the row holds them.
 	ActionListed = "game.listed"
+	// ActionOwnerChanged is a game handed to another publisher account, or
+	// to none (docs/PUBLISHERS.md "A game's publisher").
+	ActionOwnerChanged = "game.owner_changed"
+
+	// The store's categories (docs/CATEGORIES.md), area games.
+	ActionCategoryCreated = "category.created"
+	ActionCategoryEdited  = "category.edited"
+	ActionCategoryDeleted = "category.deleted"
 
 	// A player's library: the first open puts a game on it, a remove takes
 	// it off and ends the game's tokens with it.

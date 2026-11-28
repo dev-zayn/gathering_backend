@@ -37,6 +37,9 @@ const sentences = {
   not_in_review: 'That version is not in review any more.',
   not_approved: 'Only an approved version can be published.',
   testers_only: 'Only the game’s testers can do that.',
+  // Categories (docs/CATEGORIES.md).
+  category_exists: 'A category with that key already exists.',
+  category_protected: 'Other stays: it is where a game goes when nothing else fits.',
 }
 
 // A field's problem, said in words. The key is `field:problem` as the API
@@ -77,6 +80,15 @@ const fieldSentences = {
   'tagline:too_long': 'The tagline is at most 160 characters.',
   'description:too_long': 'The description is at most 4000 characters.',
   'category:unknown': 'Pick a category from the list.',
+  'id:required': 'Give it a key.',
+  'id:invalid': 'A key is 2 to 32 of a–z, 0–9 and -, starting with a letter.',
+  'name_ar:required': 'Write the Arabic name.',
+  'name_ar:too_long': 'The Arabic name is at most 40 characters.',
+  'name_en:required': 'Write the English name.',
+  'name_en:too_long': 'The English name is at most 40 characters.',
+  'position:0_to_10000': 'The position is a whole number from 0 to 10000.',
+  'publisher:unknown': 'That publisher account is not there any more.',
+  'publisher:disabled': 'That publisher account is switched off. Switch it back on first.',
   'notes:too_long': 'The notes are at most 2000 characters.',
   'note:required': 'Say what to fix.',
   'note:too_long': 'The note is at most 2000 characters.',

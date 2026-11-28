@@ -485,8 +485,10 @@ func (r *Registry) Feature(ctx context.Context, actor, id string, on bool) (*mod
 // itself, and the switch that puts it first.
 func (r *Registry) Listing(ctx context.Context, actor, id string, in model.Listing) (*model.Game, error) {
 	bad := map[string]string{}
-	if in.Category != nil && !enum.GameCategory(*in.Category).Valid() {
-		bad["category"] = "unknown"
+	if in.Category != nil {
+		if err := checkCategory(ctx, r.db, *in.Category, bad); err != nil {
+			return nil, errors.Internal(err)
+		}
 	}
 	if in.Tagline != nil && model.TooLong(*in.Tagline, model.MaxTagline) {
 		bad["tagline"] = "too_long"

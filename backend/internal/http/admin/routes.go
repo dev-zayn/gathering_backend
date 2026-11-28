@@ -64,6 +64,7 @@ func (h *Handler) Register(api huma.API) {
 	h.registerAdmin(api)
 	h.registerPlayers(api)
 	h.registerRegistry(api)
+	h.registerCategories(api)
 	h.registerDashboard(api)
 	h.registerAudit(api)
 	h.registerRooms(api)

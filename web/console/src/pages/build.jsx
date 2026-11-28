@@ -7,7 +7,7 @@ import { api } from '../api.js'
 import Dialog from '../components/dialog.jsx'
 import { BuildBadge, Changes, CodeChip, ManifestFacts, ReviewWords, RoomFacts, Steps } from '../components/build-bits.jsx'
 import { Fact, ListingBadge, Note, Tile } from '../components/game-bits.jsx'
-import { categoryLabel, when } from '../lib/games.js'
+import { categoryName, useCategories, when } from '../lib/games.js'
 import { useMe } from '../lib/me.js'
 
 // One build as the reviewer reads it (docs/PUBLISHERS.md): what its manifest
@@ -15,6 +15,7 @@ import { useMe } from '../lib/me.js'
 // the publisher's notes, codes to play it with in the app, and the two
 // answers.
 export default function Build() {
+  const categories = useCategories()
   const { id } = useParams()
   const me = useMe()
   const canWrite = me?.roles?.includes('admin')
@@ -124,7 +125,7 @@ export default function Build() {
         <section className="card grid content-start gap-3 p-4 lg:col-span-2">
           <h2 className="text-sm font-extrabold">The store copy it would carry</h2>
           <Fact label="Tagline">{b.store.tagline}</Fact>
-          <Fact label="Category">{categoryLabel[b.store.category] ?? b.store.category}</Fact>
+          <Fact label="Category">{categoryName(categories.data, b.store.category)}</Fact>
           <Fact label="Description">
             {b.store.description && <span className="whitespace-pre-wrap">{b.store.description}</span>}
           </Fact>
@@ -144,7 +145,7 @@ export default function Build() {
         <section className="card grid content-start gap-3 p-4">
           <h2 className="text-sm font-extrabold">Play it</h2>
           <p className="text-ink-2 text-sm">
-            In the app, as a player: Me → Beta games, then one of these codes. Opening the entry in a browser shows the
+            In the app, as a player: Me, tap the version at the bottom five times, then Beta games and one of these codes. Opening the entry in a browser shows the
             page alone, without the app around it.
           </p>
           {invites.length === 0 ? (

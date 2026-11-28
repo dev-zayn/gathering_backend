@@ -114,3 +114,22 @@ func (Scope) TableName() string { return "scopes" }
 // ModeOf is how a game opens. There is one mode and the row does not store
 // it; the launch answers it so the app reads one field, not a rule.
 func ModeOf(Game) enum.Mode { return enum.ModeEmbedded }
+
+// Category is one of the store's groups (docs/CATEGORIES.md): the key games
+// carry, and its name in each language the app speaks.
+type Category struct {
+	ID        string `gorm:"primaryKey"`
+	NameAR    string `gorm:"column:name_ar"`
+	NameEN    string `gorm:"column:name_en"`
+	Position  int
+	CreatedAt time.Time
+	UpdatedAt time.Time
+}
+
+func (Category) TableName() string { return "game_categories" }
+
+// The widths of a category, as the migration made them.
+const (
+	MaxCategoryName  = 40
+	MaxCategoryPlace = 10000
+)

@@ -1,35 +1,12 @@
 package enum
 
-// GameCategory is how the store groups a game. A closed list, so the store's
-// sections are ours and a studio cannot invent a ninth. Adding one is a line
-// below; the console and the docs read this list.
+// GameCategory is how the store groups a game: a key of the
+// game_categories table, which an admin keeps (docs/CATEGORIES.md). Other is
+// the one that always exists: a new game waits there, and a deleted
+// category's games go there.
 type GameCategory string
 
-const (
-	CategorySpeed GameCategory = "speed"
-	CategoryBrain GameCategory = "brain"
-	CategoryWords GameCategory = "words"
-	CategoryLuck  GameCategory = "luck"
-	CategoryGuess GameCategory = "guess"
-	CategoryDraw  GameCategory = "draw"
-	CategoryParty GameCategory = "party"
-	CategoryOther GameCategory = "other"
-)
-
-// Categories is the list in the order the store shows it. Other is last: it
-// is where a newly registered game waits until an admin files it.
-var Categories = []GameCategory{
-	CategorySpeed,
-	CategoryBrain,
-	CategoryWords,
-	CategoryLuck,
-	CategoryGuess,
-	CategoryDraw,
-	CategoryParty,
-	CategoryOther,
-}
-
-func (c GameCategory) Valid() bool { return in(Categories, c) }
+const CategoryOther GameCategory = "other"
 
 // Listing is what the registry thinks of a game. Only Published is visible to
 // a player — the other two are a 404, not a 403.

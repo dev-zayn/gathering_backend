@@ -17,6 +17,7 @@ import {
   ScrollText,
   ShieldCheck,
   Sun,
+  Tags,
   Trophy,
   Users,
   X,
@@ -36,6 +37,7 @@ const adminGroups = [
   [
     { to: '/', label: 'Dashboard', icon: LayoutDashboard, end: true },
     { to: '/games', label: 'Games', icon: Gamepad2 },
+    { to: '/categories', label: 'Categories', icon: Tags },
     { to: '/review', label: 'Review', icon: ClipboardCheck },
     { to: '/players', label: 'Players', icon: Users },
     { to: '/reports', label: 'Reports', icon: Flag },

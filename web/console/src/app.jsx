@@ -19,6 +19,7 @@ import StudioAccount from './pages/studio/account.jsx'
 import Dashboard from './pages/dashboard.jsx'
 import Games from './pages/games.jsx'
 import Game from './pages/game.jsx'
+import Categories from './pages/categories.jsx'
 import Players from './pages/players.jsx'
 import Reports from './pages/reports.jsx'
 import Rooms from './pages/rooms.jsx'
@@ -154,6 +155,7 @@ export default function App() {
             <Route index element={<Dashboard />} />
             <Route path="games" element={<Games />} />
             <Route path="games/:id" element={<Game />} />
+            <Route path="categories" element={<Categories />} />
             <Route path="review" element={<Review />} />
             <Route path="builds/:id" element={<Build />} />
             <Route path="publishers" element={<Publishers />} />

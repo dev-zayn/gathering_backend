@@ -155,6 +155,13 @@ type moveRequest struct {
 	}
 }
 
+type ownerRequest struct {
+	Game string `path:"game"`
+	Body struct {
+		Publisher string `json:"publisher" example:"pub_8Xk2Qm7Lp4Rz9Tn3" doc:"A publisher account's id, or \"\" for none. Refused: publisher: unknown, publisher: disabled."`
+	}
+}
+
 type featureRequest struct {
 	Game string `path:"game"`
 	Body struct {
@@ -186,12 +193,6 @@ type reachResponse struct {
 		// of shelves, and not the number of players.
 		Players int `json:"players"`
 		Total   int `json:"total" doc:"Every shelf, summed."`
-	}
-}
-
-type categoriesResponse struct {
-	Body struct {
-		Categories []string `json:"categories"`
 	}
 }
 
@@ -337,6 +338,20 @@ func (h *Handler) registerRegistry(api huma.API) {
 	}, h.move)
 
 	huma.Register(api, huma.Operation{
+		OperationID: "admin-game-owner",
+		Method:      http.MethodPut,
+		Path:        "/v1/admin/games/{game}/owner",
+		Summary:     "Hand the game to another publisher",
+		Description: "The publisher account whose game it is from now on, or \"\" for none. " +
+			"The name players see becomes the account's; the open build, the testers and " +
+			"their codes stay with the game. Refused: 404 not_found; 422 publisher: unknown " +
+			"or disabled; 409 build_open when taking the publisher away from a game with a " +
+			"build open (docs/PUBLISHERS.md).",
+		Tags:     []string{"admin"},
+		Metadata: write,
+	}, h.owner)
+
+	huma.Register(api, huma.Operation{
 		OperationID: "admin-game-icon",
 		Method:      http.MethodPut,
 		Path:        "/v1/admin/games/{game}/icon",
@@ -367,26 +382,6 @@ func (h *Handler) registerRegistry(api huma.API) {
 		Tags:        []string{"admin"},
 		Metadata:    write,
 	}, h.removeScreenshot)
-
-	huma.Register(api, huma.Operation{
-		OperationID: "admin-categories",
-		Method:      http.MethodGet,
-		Path:        "/v1/admin/categories",
-		Summary:     "How the store groups games",
-		Description: "The closed list a category must come from, in the order the store " +
-			"shows it. The console's picker and filter read it here rather than guessing.",
-		Tags:     []string{"admin"},
-		Metadata: admin,
-	}, h.categories)
-}
-
-func (h *Handler) categories(_ context.Context, _ *struct{}) (*categoriesResponse, error) {
-	out := &categoriesResponse{}
-	out.Body.Categories = make([]string, 0, len(enum.Categories))
-	for _, c := range enum.Categories {
-		out.Body.Categories = append(out.Body.Categories, string(c))
-	}
-	return out, nil
 }
 
 func (h *Handler) reach(ctx context.Context, _ *struct{}) (*reachResponse, error) {
@@ -519,6 +514,10 @@ func readPicture(form multipart.Form) (games.Picture, error) {
 
 func (h *Handler) move(ctx context.Context, in *moveRequest) (*registryGameResponse, error) {
 	return h.registryGame(ctx)(h.Registry.Move(ctx, actor(ctx), in.Game, in.Body.URL))
+}
+
+func (h *Handler) owner(ctx context.Context, in *ownerRequest) (*registryGameResponse, error) {
+	return h.registryGame(ctx)(h.Review.SetOwner(ctx, actor(ctx), in.Game, in.Body.Publisher))
 }
 
 func (h *Handler) publish(ctx context.Context, in *gamePath) (*registryGameResponse, error) {

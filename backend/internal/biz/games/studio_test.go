@@ -45,6 +45,7 @@ type studioKit struct {
 	cat     *Catalogue
 	fetcher *biztest.Fetcher
 	files   *biztest.Files
+	audit   *biztest.Audit
 	who     Account
 	other   Account
 }
@@ -54,14 +55,15 @@ func newStudioKit(t *testing.T) *studioKit {
 	db := biztest.DB(t)
 	fetcher := biztest.NewFetcher()
 	fetcher.Docs[diceURL] = diceManifest("1.0.0")
-	reg := NewRegistry(db, fetcher, &biztest.Audit{}, nil)
+	audit := &biztest.Audit{}
+	reg := NewRegistry(db, fetcher, audit, nil)
 	files := biztest.NewFiles()
 	reg.Files = files
 	studio := NewStudio(reg, alphabet)
 
 	k := &studioKit{
 		db: db, studio: studio, review: NewReview(studio), cat: NewCatalogue(db, nil, nil),
-		fetcher: fetcher, files: files,
+		fetcher: fetcher, files: files, audit: audit,
 		who:   Account{ID: "pub_aaaaaaaaaaaaaaaa", Name: "Dice Studio"},
 		other: Account{ID: "pub_bbbbbbbbbbbbbbbb", Name: "Another Studio"},
 	}

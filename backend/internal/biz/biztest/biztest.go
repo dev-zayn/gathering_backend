@@ -59,8 +59,9 @@ func DB(t *testing.T) *gorm.DB {
 }
 
 // vocabulary is what the migrations seed. Truncating it reads as broken data,
-// not an empty one.
-var vocabulary = map[string]bool{"scopes": true}
+// not an empty one. The store's categories are seeded too, and every game
+// needs one: a test that makes or changes a category cleans up after itself.
+var vocabulary = map[string]bool{"scopes": true, "game_categories": true}
 
 // truncate empties every table but the vocabulary, read from the catalogue
 // rather than listed: each milestone brings tables of its own, and a list

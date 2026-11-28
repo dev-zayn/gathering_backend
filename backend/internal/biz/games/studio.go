@@ -290,8 +290,10 @@ func (s *Studio) Edit(ctx context.Context, who Account, buildID string, in Build
 	if in.Description != nil && model.TooLong(strings.TrimSpace(*in.Description), model.MaxDescription) {
 		bad["description"] = "too_long"
 	}
-	if in.Category != nil && !enum.GameCategory(*in.Category).Valid() {
-		bad["category"] = "unknown"
+	if in.Category != nil {
+		if err := checkCategory(ctx, s.db, *in.Category, bad); err != nil {
+			return nil, errors.Internal(err)
+		}
 	}
 	if in.Notes != nil && model.TooLong(strings.TrimSpace(*in.Notes), model.MaxBuildNotes) {
 		bad["notes"] = "too_long"

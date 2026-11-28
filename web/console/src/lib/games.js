@@ -1,17 +1,23 @@
+import { useQuery } from '@tanstack/react-query'
+
+import { api } from '../api.js'
+
 // The registry's closed lists, in the API's words, with the label each wears
 // on a screen. The lists themselves are the API's; these are only the words.
 export const LISTINGS = ['all', 'published', 'unpublished', 'suspended']
 
-export const categoryLabel = {
-  speed: 'Speed',
-  brain: 'Brain',
-  words: 'Words',
-  luck: 'Luck',
-  guess: 'Guess',
-  draw: 'Draw',
-  party: 'Party',
-  other: 'Other',
+// The store's categories (docs/CATEGORIES.md), kept on the Categories page:
+// every picker and label reads them from the API, the admin's route by
+// default, a publisher's from its own.
+export function useCategories(path = '/v1/admin/categories') {
+  return useQuery({
+    queryKey: ['categories', path],
+    queryFn: () => api.get(path).then((r) => r.items ?? []),
+  })
 }
+
+// A category's English name; its key while the list loads, or for one gone.
+export const categoryName = (items, key) => items?.find((c) => c.id === key)?.name_en ?? key
 
 export const tierLabel = { 'first-party': 'Ours', partner: 'A studio' }
 

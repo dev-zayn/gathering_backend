@@ -650,7 +650,7 @@ func TestPublishSuspendAndFeature(t *testing.T) {
 
 	category := "brain"
 	g, err = uc.Listing(ctx, "adm_1", xo, model.Listing{Category: &category})
-	if err != nil || g.Category != enum.CategoryBrain {
+	if err != nil || g.Category != "brain" {
 		t.Fatalf("listing: %v %s", err, g.Category)
 	}
 	unknown := "sports"

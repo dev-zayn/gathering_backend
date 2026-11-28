@@ -74,7 +74,7 @@ function FirstSteps() {
   const steps = [
     ['Host your game', 'Put the game and its manifest at /.well-known/gathering-game.json on a server of yours.'],
     ['Register it here', 'Give us the address. We read the manifest; nothing about the game is typed here.'],
-    ['Invite testers', 'Make a code and share it. Testers type it in the app: Me → Beta games.'],
+    ['Invite testers', 'Make a code and share it. Testers type it in the app: Me, tap the version at the bottom five times, then Beta games.'],
     ['Send it to review', 'Add a tagline and an icon, then send it. Once approved, you publish it.'],
   ]
   return (

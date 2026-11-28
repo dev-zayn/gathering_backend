@@ -8,7 +8,7 @@ import Dialog from '../../components/dialog.jsx'
 import { BuildBadge, Changes, CodeChip, ManifestFacts, ReviewWords, RoomFacts, Steps } from '../../components/build-bits.jsx'
 import { ListingBadge, Note, SecretOnce, Tile } from '../../components/game-bits.jsx'
 import { inviteLive, inviteState } from '../../lib/builds.js'
-import { categoryLabel, when } from '../../lib/games.js'
+import { useCategories, when } from '../../lib/games.js'
 
 // One of the publisher's games (docs/PUBLISHERS.md): what players have now,
 // the version on its way with every step it can take from where it stands,
@@ -325,11 +325,7 @@ function StoreCopy({ build: b, disabled, onSaved }) {
   const [description, setDescription] = useState(b.store.description ?? '')
   const [category, setCategory] = useState(b.store.category ?? 'other')
   const [notes, setNotes] = useState(b.notes ?? '')
-  const categories = useQuery({
-    queryKey: ['studio', 'categories'],
-    queryFn: () => api.get('/v1/publisher/categories').then((r) => r.categories ?? []),
-    staleTime: Infinity,
-  })
+  const categories = useCategories('/v1/publisher/categories')
   const save = useMutation({
     mutationFn: () =>
       api.patch(`/v1/publisher/builds/${b.id}`, {
@@ -374,9 +370,9 @@ function StoreCopy({ build: b, disabled, onSaved }) {
         <label className="grid gap-1 text-sm font-semibold">
           Category
           <select className="field font-normal" value={category} onChange={(e) => setCategory(e.target.value)}>
-            {(categories.data?.length ? categories.data : [category]).map((c) => (
-              <option key={c} value={c}>
-                {categoryLabel[c] ?? c}
+            {(categories.data?.length ? categories.data : [{ id: category, name_en: category }]).map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name_en} · {c.name_ar ?? ''}
               </option>
             ))}
           </select>
@@ -546,7 +542,7 @@ function Testers({ game: g }) {
   return (
     <Section title={`Testers · ${testers.length}`} aside={<NewCode game={g} onMade={changed} />}>
       <p className="text-ink-2 text-sm">
-        A tester types a code in the app (Me → Beta games) and plays the version on its way instead of the live
+        A tester types a code in the app (Me, tap the version at the bottom five times, then Beta games) and plays the version on its way instead of the live
         one, in their own rooms too. Only testers can join a tester’s room.
       </p>
       {error && <p className="text-bad text-sm">{error}</p>}
@@ -657,7 +653,7 @@ function NewCode({ game: g, onMade }) {
         title={made ? 'Share this code' : 'A new tester’s code'}
         description={
           made
-            ? 'Testers open the app, then Me → Beta games, and type it there.'
+            ? 'Testers open Me in the app, tap the version at the bottom five times, then Beta games, and type it there.'
             : 'Whoever types it in the app tests this game from then on.'
         }
         footer={
