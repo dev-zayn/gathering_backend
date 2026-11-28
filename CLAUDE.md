@@ -519,3 +519,23 @@ and `JWT_PRIVATE_KEY` (`make keys`); the sweep then signs in with that code.
   `docs.<domain>/mcp` to it (`deploy/hetzner/README.md`, "The docs' MCP
   server"). The minigame brief in `../gathering_docs` gained "Getting it
   into the store" (publishers) and points at both. Live the same day.
+- Scores from a game played alone (2026-11-28, the user's ask: solo modes and
+  "the platform score"), to `docs/SCORES.md` (written first; ACCOUNTS.md
+  amended): a game declares boards in its manifest (`scores.boards`: `id`,
+  `order` high|low, optional `min`/`max`, at most 8; `model.ScoresBlock`,
+  checked by `Manifest.Check` under `scores.boards`, first problem only, so
+  the registry, builds and the docs' MCP `check_manifest` refuse a bad one),
+  read from the published game's manifest kept whole in its row (no column).
+  Migration `00018_scores.sql` (`best_scores`: one row per game, board and
+  player, the best and the plays), `enum.ScoreOrder` (`Beats`),
+  `biz/scores` (`Submit`: one upsert whose comparison is the board's order,
+  `new_best` only when strictly better; refusals `not_found`, then every
+  field (`board: required|unknown`, `score: required|below_min|above_max`),
+  then 200 an hour per player and game; `Board`: the caller and friends in
+  the board's order, equal bests sharing a rank, listed by `best_at`), routes
+  `game-score` (`POST /v1/games/{game}/scores`) and `game-scores` (`GET
+  /v1/games/{game}/scores/{board}?scope=friends`), `biz.Deletion` deleting a
+  player's rows. Tests `biz/scores/scores_test.go`, the manifest's, the
+  deletion's; the e2e `TestScores` (the sweep's studio declares a board),
+  run against an api on the new code on :8097 over a throwaway database.
+  The docs site's Manifest and Bridge pages ("Scores"). Not deployed.

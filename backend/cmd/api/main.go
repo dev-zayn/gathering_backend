@@ -28,6 +28,7 @@ import (
 	"github.com/jamaa/gathering/backend/internal/biz/relay"
 	"github.com/jamaa/gathering/backend/internal/biz/reports"
 	"github.com/jamaa/gathering/backend/internal/biz/rooms"
+	"github.com/jamaa/gathering/backend/internal/biz/scores"
 	"github.com/jamaa/gathering/backend/internal/biz/tournaments"
 	"github.com/jamaa/gathering/backend/internal/conf"
 	"github.com/jamaa/gathering/backend/internal/data"
@@ -335,6 +336,7 @@ func main() {
 	friendRules.Presence = presence
 	friendRules.Files, friendRules.AvatarTTL = bucket, cfg.Files.AvatarTTL
 	friendRules.Audit = playersAudit
+	scoreRules := &scores.Service{DB: pg, Limiter: identity.NewLimiter(rdb), Files: bucket, AvatarTTL: cfg.Files.AvatarTTL}
 
 	// The rooms, and the relay that carries their frames. Each needs the
 	// other: the rules publish through the hub, and the hub asks the rules
@@ -431,6 +433,7 @@ func main() {
 		Deletion: deletion,
 		Switch:   switchRules,
 		Reports:  reportRules,
+		Scores:   scoreRules,
 		Devices:  devices,
 
 		Profiles: profiles,

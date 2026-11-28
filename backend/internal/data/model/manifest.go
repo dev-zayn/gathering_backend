@@ -66,6 +66,10 @@ type Manifest struct {
 	// by it and the relay enforces it. The game page never configures a room
 	// itself.
 	Room RoomBlock `json:"room"`
+
+	// Scores is the boards a game keeps scores on when played alone
+	// (docs/SCORES.md). Optional.
+	Scores ScoresBlock `json:"scores"`
 }
 
 // RoomBlock is the manifest's room block. It is also one jsonb column of the
@@ -196,6 +200,9 @@ func (m *Manifest) Check(knownScopes map[string]bool) map[string]string {
 		m.Room.State = enum.StateBlob
 	} else if !m.Room.State.Valid() {
 		bad["room.state"] = "must be blob or none"
+	}
+	if p := m.Scores.problem(); p != "" {
+		bad["scores.boards"] = p
 	}
 	return bad
 }

@@ -1425,7 +1425,7 @@ curl https://&lt;gathering-api&gt;/v1/bridge/context -H "Authorization: Bearer $
           <button class="key glass" type="button" data-copy="starter-text"><span class="ms">smart_toy</span><span class="lbl">Copy a starter prompt</span></button>
         </div>
         <div class="wells">
-          <div class="well"><b>690</b><span>lines of Markdown</span></div>
+          <div class="well"><b>693</b><span>lines of Markdown</span></div>
           <div class="well"><b>13</b><span>sections</span></div>
           <div class="well"><b>11</b><span>self-checks</span></div>
         </div>
@@ -1582,6 +1582,7 @@ route), under 256 KB, answering within 10 seconds.
 | `room.pace` | `turn` or `realtime` (shown to players). |
 | `room.state` | `blob` (default: a shared, versioned JSON state) or `none` (messages only). |
 | `room.lan` | Whether the game may be played on a same-Wi-Fi relay with no internet. Every room plays through the cloud relay today. |
+| `scores.boards` | Optional boards for a game played alone, at most 8: `{ id, order: 'high' \| 'low', min?, max? }`; `id` 2–32 of `a-z0-9-` starting with a letter, never renamed; a score outside `min`/`max` is refused. |
 | `room.rejoin` | Whether a member who left may come back while a round is playing. Between rounds anybody who left may. |
 | `room.spectators` | Watchers allowed. Reserved: no room holds spectators yet. |
 | `room.chat` | The app's chat and emotes over your rooms: `true` when left out. `false` for a game so fast a player can't look away. The page never sees the chat and needs no code for it. |
@@ -2006,6 +2007,7 @@ https://docs.ga3da.fun/tournaments.
 | camera / mic / location | `await g.permissions.request('microphone')` → `granted`, `denied`, `permanentlyDenied`…; then the web API. On Android the frame doesn't yet pass the camera, microphone or location to the page's web APIs, and `&lt;input type="file"&gt;` opens nothing there: build without them. |
 | links, clipboard | `await g.openExternalUrl(url)`; `g.copyToClipboard(text)`, `await g.getFromClipboard()` |
 | friends | `g.friends.status(id)`, `g.friends.add(id)` (the app asks the player first), `g.friends.list()` (needs `friends:read`), `g.friends.invite(id)` |
+| a best score / high-score table | Keep it on the phone, and when `g.scores` exists: `g.scores.submit({ board, score })` → `{ best, newBest, plays }` for a board the manifest declares, `g.scores.board(board)` → `{ order, entries: [{ id, nickname, avatarUrl, rank, best, plays, you }] }` among friends. Never wait on either. |
 | device and app info, logs | `await g.getDeviceInfo()` (`isDarkMode` is the app's look, not the phone's setting; `languageCode`…), `await g.getAppInfo()`, `g.log(…)` |
 
 ## 10. Error codes
@@ -2029,6 +2031,7 @@ try {
 | `scope_required` | The manifest lacks the scope (e.g. `friends.list` without `friends:read`). |
 | `cancelled` | The player closed the app's sheet: say nothing. |
 | `offline` / `failed` | No network / failed without a code. |
+| `too_many_requests` | `scores.submit` over 200 an hour for one game. |
 | `in_room`, `not_a_room_game`, `invalid_code`, `in_another_room`, `room_not_found`, `room_full`, `room_closed`, `room_started`, `another_game`, `friends_only`, `kicked`, `not_found` (the game isn't published), `too_few_players`, `not_member` | `room.create`/`join`/`start` and the platform's refusals: put each in your own Arabic words. |
 | `room_not_started`, `invalid_fields` | `room.end` with no round playing / a scores line that names nobody in the room, twice, or ranks below 1; also `room.kick` naming yourself or someone not in the room, and `room.create` with an unknown `visibility`. |
 | `tournament_room`, `not_in_match`, `not_in_tournament` | `room.kick` or `friends.invite` in a match room / a join into a match that isn't yours / `tournament.open()` outside a match room. |

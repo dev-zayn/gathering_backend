@@ -19,6 +19,7 @@ import (
 	"github.com/jamaa/gathering/backend/internal/biz/relay"
 	"github.com/jamaa/gathering/backend/internal/biz/reports"
 	"github.com/jamaa/gathering/backend/internal/biz/rooms"
+	"github.com/jamaa/gathering/backend/internal/biz/scores"
 	"github.com/jamaa/gathering/backend/internal/biz/tournaments"
 	"github.com/jamaa/gathering/backend/internal/http/admin"
 	"github.com/jamaa/gathering/backend/internal/http/authn"
@@ -77,6 +78,9 @@ type Deps struct {
 
 	// Reports is a player reporting another, and the console reading them.
 	Reports *reports.Service
+
+	// Scores is a game played alone keeping bests on its boards.
+	Scores *scores.Service
 
 	// Publishers is the studios' accounts and sessions; Studio their games,
 	// builds and testers, and the testers' own routes; Review the admin's
@@ -150,6 +154,7 @@ func Mount(api huma.API, d Deps) {
 
 		Tournaments: d.Tournaments,
 		Reports:     d.Reports,
+		Scores:      d.Scores,
 		Studio:      d.Studio,
 	}).Register(api)
 

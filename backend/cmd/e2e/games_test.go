@@ -567,6 +567,10 @@ func serveStudio(t *testing.T, id string, scopes ...string) string {
 				"players": map[string]int{"min": 2, "max": 2},
 				"host":    "authoritative", "pace": "turn", "lan": true, "state": "blob",
 			},
+			// A board for a game played alone (docs/SCORES.md, TestScores).
+			"scores": map[string]any{"boards": []map[string]any{
+				{"id": "sweep-time", "order": "low", "min": 100, "max": 60000},
+			}},
 		})
 	})
 	mux.HandleFunc("/play/", func(w http.ResponseWriter, _ *http.Request) {

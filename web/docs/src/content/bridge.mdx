@@ -151,6 +151,38 @@ A player who blocked yours is never named: they read as `not_found`, as somebody
 player's whole circle — so it is the one behind a scope: ask for `friends:read` only if your game
 does something with it.
 
+## Scores
+
+`window.gathering.scores`: a game played alone — a reaction test, a run against the clock, a hand
+won against the computer — keeps the player's best on a **board** your
+[manifest](/manifest#every-field) declares under `scores.boards`, and reads it among the
+player's friends. A board is apart from a room's [results](/rooms#results): it changes no
+leaderboard, history or tournament.
+
+```json {{ title: 'gathering-game.json' }}
+"scores": { "boards": [{ "id": "reaction", "order": "low", "min": 100, "max": 3000 }] }
+```
+
+| Call | Answers |
+| --- | --- |
+| `scores.submit({ board, score })` | `{ board, score, best, newBest, plays }`: the player's best after this score, whether this one became it (strictly better, or the first), and how many they have sent; rejects `invalid_fields` (a board you did not declare, a score outside its `min`/`max`, or not a number), `not_found` (your game is not in the store yet: a test build), `too_many_requests` (200 an hour), `offline`, `timeout` or `failed` |
+| `scores.board(board)` | `{ board, order, entries: [{ id, nickname, avatarUrl, rank, best, plays, you }] }`: the player and their friends with a score on it, ranked in the board's order, equal bests sharing a rank; rejects `not_found` for a board you did not declare |
+
+```js {{ title: 'run-over.js' }}
+// The phone's own best first: it shows with no app, in a browser, offline.
+showBest(saveLocalBest(ms))
+gathering?.scores
+  ?.submit({ board: 'reaction', score: ms })
+  .then(() => gathering.scores.board('reaction'))
+  .then((board) => showFriends(board.entries))
+  .catch(() => {}) // the screen never waits on it
+```
+
+Check for `gathering.scores` before you use it: an app from before scores has none, and a page
+opened in a browser has no `gathering` at all. A score is your page's word, as a host's
+`room.end` is a round's; the bounds keep an honest page honest. Your game always sends to its
+own boards: the app names the game, never the page.
+
 ## Inviting to the room
 
 `room.invite()` opens the app's invite sheet over the room: the player's friends with where they

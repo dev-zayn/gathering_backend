@@ -254,3 +254,56 @@ func TestARoomBlocksChat(t *testing.T) {
 		t.Fatalf("on marshals to %s: an old block would read as changed", b)
 	}
 }
+
+// A game's boards (docs/SCORES.md): the first problem only, under one key.
+func TestManifestCheckOnTheScoresBlock(t *testing.T) {
+	low, high := 80.0, 2000.0
+	ok := Board{ID: "reaction", Order: enum.ScoreLow, Min: &low, Max: &high}
+	for _, c := range []struct {
+		boards []Board
+		want   string
+	}{
+		{[]Board{{ID: "r", Order: enum.ScoreLow}}, "bad id: r"},
+		{[]Board{{ID: "Time", Order: enum.ScoreLow}}, "bad id: Time"},
+		{[]Board{{ID: "9lives", Order: enum.ScoreHigh}}, "bad id: 9lives"},
+		{[]Board{ok, ok}, "duplicate id: reaction"},
+		{[]Board{{ID: "sprint"}}, "unknown order: "},
+		{[]Board{{ID: "sprint", Order: "fast"}}, "unknown order: fast"},
+		{[]Board{{ID: "sprint", Order: enum.ScoreLow, Min: &high, Max: &low}}, "min above max: sprint"},
+		{make([]Board, MaxBoards+1), "too_many"},
+	} {
+		m := good()
+		m.Scores.Boards = c.boards
+		if got := m.Check(known)["scores.boards"]; got != c.want {
+			t.Errorf("%v: got %q, want %q", c.boards, got, c.want)
+		}
+	}
+
+	// No block, an empty one, and a full one with and without bounds are fine.
+	for _, boards := range [][]Board{nil, {}, {ok, {ID: "points", Order: enum.ScoreHigh}, {ID: "best-of-5", Order: enum.ScoreLow, Min: &low}}} {
+		m := good()
+		m.Scores.Boards = boards
+		if bad := m.Check(known); len(bad) > 0 {
+			t.Errorf("%v was refused: %v", boards, bad)
+		}
+	}
+}
+
+// The block reads from a manifest as a game writes it.
+func TestScoresBlockReadsFromTheDocument(t *testing.T) {
+	var m Manifest
+	err := json.Unmarshal([]byte(`{"scores":{"boards":[{"id":"reaction","order":"low","min":100,"max":3000},{"id":"points","order":"high"}]}}`), &m)
+	if err != nil {
+		t.Fatal(err)
+	}
+	b := m.Scores.Board("reaction")
+	if b == nil || b.Order != enum.ScoreLow || b.Min == nil || *b.Min != 100 || b.Max == nil || *b.Max != 3000 {
+		t.Fatalf("reaction: %+v", b)
+	}
+	if p := m.Scores.Board("points"); p == nil || p.Min != nil || p.Max != nil {
+		t.Fatalf("points: %+v", p)
+	}
+	if m.Scores.Board("sprint") != nil {
+		t.Fatal("a board the block does not declare was found")
+	}
+}

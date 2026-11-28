@@ -123,6 +123,9 @@ func TestDeletingAnAccount(t *testing.T) {
 	exec(t, f.db, `INSERT INTO reports (id, reporter_id, player_id, reason, created_at)
 	               VALUES ('rpt_1', ?, ?, 'name', ?), ('rpt_2', ?, ?, 'photo', ?)`,
 		sara.ID, ali.ID, now, ali.ID, sara.ID, now)
+	exec(t, f.db, `INSERT INTO best_scores (game_id, board, player_id, best, plays, best_at, last_at)
+	               VALUES ('studio.xo', 'reaction', ?, 231, 3, ?, ?), ('studio.xo', 'reaction', ?, 250, 1, ?, ?)`,
+		sara.ID, now, now, ali.ID, now, now)
 
 	if err := f.Do(ctx, sara.ID); err != nil {
 		t.Fatal(err)
@@ -146,6 +149,7 @@ func TestDeletingAnAccount(t *testing.T) {
 		"library":       "player_id = ?",
 		"game_tokens":   "player_id = ?",
 		"reports":       "reporter_id = @p OR player_id = @p",
+		"best_scores":   "player_id = ?",
 	} {
 		arg := any(sara.ID)
 		if where != "player_id = ?" {
@@ -165,6 +169,9 @@ func TestDeletingAnAccount(t *testing.T) {
 	}
 	if count(t, f.db, "notifications", "id = 'ntf_3'") != 1 {
 		t.Error("somebody else's notification went")
+	}
+	if count(t, f.db, "best_scores", "player_id = ?", ali.ID) != 1 {
+		t.Error("somebody else's best went")
 	}
 	if p, _ := identity.NewPlayerStore(f.db).ByID(ctx, ali.ID); p == nil || p.DeletedAt != nil {
 		t.Error("the friend went too")

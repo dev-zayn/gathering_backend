@@ -13,6 +13,7 @@ import (
 	"github.com/jamaa/gathering/backend/internal/biz/players"
 	"github.com/jamaa/gathering/backend/internal/biz/reports"
 	"github.com/jamaa/gathering/backend/internal/biz/rooms"
+	"github.com/jamaa/gathering/backend/internal/biz/scores"
 	"github.com/jamaa/gathering/backend/internal/biz/tournaments"
 	"github.com/jamaa/gathering/backend/internal/pkg/files"
 )
@@ -50,6 +51,9 @@ type Handler struct {
 	// Reports is a player reporting another (docs/REPORTS.md).
 	Reports *reports.Service
 
+	// Scores is a game played alone keeping bests on its boards (docs/SCORES.md).
+	Scores *scores.Service
+
 	// Studio is the testers' side of a publisher's games: joining by a code,
 	// the list, leaving (docs/PUBLISHERS.md).
 	Studio *games.Studio
@@ -67,6 +71,7 @@ func (h *Handler) Register(api huma.API) {
 	h.registerRooms(api)
 	h.registerResults(api)
 	h.registerFriends(api)
+	h.registerScores(api)
 	h.registerNotifications(api)
 	h.registerTournaments(api)
 	h.registerTests(api)
